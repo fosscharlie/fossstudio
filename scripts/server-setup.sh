@@ -3,6 +3,9 @@
 # Run as root on the VPS: bash server-setup.sh
 set -euo pipefail
 
+echo "== Base packages =="
+apt-get update -qq && apt-get install -y -qq curl rsync
+
 echo "== Installing Docker =="
 if ! command -v docker >/dev/null; then
   curl -fsSL https://get.docker.com | sh

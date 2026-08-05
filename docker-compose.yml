@@ -9,6 +9,7 @@ services:
     env_file: .env
     environment:
       DATA_DIR: /data
+      WEB_DIR: /app/web
     volumes:
       - ${DATA_PATH:-./data}:/data
       - ./web:/app/web:ro
