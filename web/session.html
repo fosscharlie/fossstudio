@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FOSS Studio session</title>
+<link rel="stylesheet" href="/css/session.css">
+</head>
+<body>
+
+<!-- Preview: pick devices and name before joining -->
+<div id="preview" class="preview">
+  <div class="preview-card">
+    <h1 id="previewTitle">Ready to join?</h1>
+    <div class="preview-video-wrap">
+      <video id="previewVideo" autoplay playsinline muted></video>
+      <div id="micMeter" class="mic-meter"><div id="micMeterFill"></div></div>
+    </div>
+    <label>Camera
+      <select id="camSelect"></select>
+    </label>
+    <label>Microphone
+      <select id="micSelect"></select>
+    </label>
+    <label>Your name
+      <input id="nameInput" maxlength="40" autocomplete="name" placeholder="Shown under your video">
+    </label>
+    <button id="joinBtn" disabled>Join session</button>
+    <p id="previewError" class="error" hidden></p>
+  </div>
+</div>
+
+<!-- Live session -->
+<div id="session" class="session" hidden>
+  <header id="banner" class="banner">FOSS Studio</header>
+  <main id="grid" class="grid"></main>
+  <footer class="controls">
+    <button id="muteBtn" class="ctl" title="Mute microphone">🎙️</button>
+    <button id="camBtn" class="ctl" title="Turn camera off">🎥</button>
+    <button id="leaveBtn" class="ctl leave" title="Leave session">✕</button>
+  </footer>
+</div>
+
+<script src="/assets/mediasoup-client.js"></script>
+<script src="/js/session.js"></script>
+</body>
+</html>

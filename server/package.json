@@ -8,10 +8,16 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "build:client": "esbuild client/mediasoup-client-entry.js --bundle --minify --format=iife --global-name=mediasoupClient --outfile=../web/assets/mediasoup-client.js"
   },
   "dependencies": {
     "express": "^4.21.2",
+    "mediasoup": "^3.24.0",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1",
+    "mediasoup-client": "^3.21.0"
   }
 }
