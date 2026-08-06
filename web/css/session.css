@@ -182,18 +182,22 @@ body {
   object-fit: contain;
 }
 #bannerTitle {
+  /* Never wider than the 250px logo width: clamp with an ellipsis */
   width: 250px;
   font-weight: 700;
   font-size: 0.85rem;
   line-height: 1.15;
-  max-height: 30px;
   overflow: hidden;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
 }
-/* No logo: the title text fills the whole block */
+/* No logo: the title text fills the whole block, up to three lines */
 .banner:not(.has-logo) #bannerTitle {
   font-size: 1.05rem;
   line-height: 1.25;
-  max-height: 80px;
+  -webkit-line-clamp: 3;
 }
 .banner.blank:not(.recording):not(.live) { display: none; }
 .hp-build {

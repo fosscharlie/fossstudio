@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Episode title in the logo block never exceeds the 250px logo width:
+  one ellipsised line beside a logo, up to three lines when text-only
+
 - **Podcast logo block**: upload a logo in Settings → Themes (about
   250×50) and it appears above the episode title in a compact block
   floating over the video — text-only when there's no logo — baked
