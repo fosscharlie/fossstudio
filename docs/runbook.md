@@ -1,7 +1,7 @@
 # FOSSStudio Runbook
 
 Plain-language guide for keeping FOSSStudio running. **Almost everything
-lives in the dashboard** — https://fossstudio.fosscharlie.uk/host/ →
+lives in the dashboard** — https://app.fossstudio.org/host/ →
 System tab. This file is for when the dashboard itself is unreachable.
 
 ## Day-to-day (no terminal needed)

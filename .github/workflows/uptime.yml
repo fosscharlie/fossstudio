@@ -14,7 +14,7 @@ jobs:
       - name: Check health endpoint
         id: health
         run: |
-          if curl -fsS --max-time 20 https://fossstudio.fosscharlie.uk/healthz | grep -q '"ok":true'; then
+          if curl -fsS --max-time 20 https://app.fossstudio.org/healthz | grep -q '"ok":true'; then
             echo "up=yes" >> "$GITHUB_OUTPUT"
           else
             echo "up=no" >> "$GITHUB_OUTPUT"
@@ -31,7 +31,7 @@ jobs:
           to: ${{ secrets.ALERT_EMAIL }}
           subject: "FOSSStudio is DOWN"
           body: |
-            The uptime check couldn't reach https://fossstudio.fosscharlie.uk/healthz just now.
+            The uptime check couldn't reach https://app.fossstudio.org/healthz just now.
 
             What to try (from the runbook):
             1. Wait 5 minutes — it may be restarting.

@@ -17,19 +17,20 @@
 
   // ---------- navigation ----------
 
+  // Admins manage hosts and the system; hosts run shows.
   const MENUS = [
-    { id: "sessions", label: "Sessions", subs: [{ id: "sessions", label: "Your sessions" }] },
-    { id: "recordings", label: "Recordings", subs: [
+    { id: "sessions", label: "Sessions", hostOnly: true, subs: [{ id: "sessions", label: "Your sessions" }] },
+    { id: "recordings", label: "Recordings", hostOnly: true, subs: [
       { id: "library", label: "Library" }
     ] },
     { id: "settings", label: "Settings", subs: [
       { id: "account", label: "Account" },
       { id: "twofactor", label: "Two-factor" },
-      { id: "streaming", label: "Streaming" },
-      { id: "branding", label: "Podcast banner" },
-      { id: "wallpaper", label: "Wallpaper" }
+      { id: "streaming", label: "Streaming", hostOnly: true },
+      { id: "branding", label: "Podcast banner", hostOnly: true },
+      { id: "wallpaper", label: "Wallpaper", hostOnly: true }
     ] },
-    { id: "users", label: "Users", adminOnly: true, subs: [{ id: "users", label: "Manage users" }] },
+    { id: "users", label: "Hosts", adminOnly: true, subs: [{ id: "users", label: "Manage hosts" }] },
     { id: "system", label: "System", adminOnly: true, subs: [
       { id: "service", label: "Service" },
       { id: "backups", label: "Backups" },
@@ -38,17 +39,26 @@
   ];
 
   let me = { role: "subadmin", username: "" };
-  let currentMenu = MENUS[0];
+  let currentMenu = null;
+
+  function visibleMenus() {
+    return MENUS.filter((m) =>
+      !(m.adminOnly && me.role !== "admin") &&
+      !(m.hostOnly && me.role === "admin"));
+  }
+
+  function visibleSubs(menu) {
+    return menu.subs.filter((s) => !(s.hostOnly && me.role === "admin"));
+  }
 
   function renderMainMenu() {
     const nav = $("mainMenu");
     nav.innerHTML = "";
-    for (const menu of MENUS) {
-      if (menu.adminOnly && me.role !== "admin") continue;
+    for (const menu of visibleMenus()) {
       const b = document.createElement("button");
       b.textContent = menu.label;
       b.classList.toggle("active", menu === currentMenu);
-      b.onclick = () => { currentMenu = menu; renderMainMenu(); showSub(menu.subs[0].id); };
+      b.onclick = () => { currentMenu = menu; renderMainMenu(); showSub(visibleSubs(menu)[0].id); };
       nav.appendChild(b);
     }
   }
@@ -56,7 +66,7 @@
   function showSub(subId) {
     const nav = $("subMenu");
     nav.innerHTML = "";
-    for (const sub of currentMenu.subs) {
+    for (const sub of visibleSubs(currentMenu)) {
       const b = document.createElement("button");
       b.textContent = sub.label;
       b.classList.toggle("active", sub.id === subId);
@@ -176,7 +186,7 @@
       row.innerHTML = `
         <div>
           <div class="title"></div>
-          <div class="meta">${u.role}${u.totpEnabled ? " · 2FA on" : ""}</div>
+          <div class="meta">${u.role === "admin" ? "admin" : "host"}${u.totpEnabled ? " · 2FA on" : ""}</div>
         </div>
         <span class="spacer"></span>`;
       row.querySelector(".title").textContent = u.username;
@@ -504,21 +514,25 @@
   (async () => {
     me = await apiFetch("/api/me");
     if (!me.authed) { location.href = "/host/login.html"; return; }
-    $("whoami").textContent = `${me.username} (${me.role === "admin" ? "admin" : "sub-admin"})`;
+    $("whoami").textContent = `${me.username} (${me.role === "admin" ? "admin" : "host"})`;
     $("accountName").textContent = me.username;
     $("accountRole").textContent = me.role === "admin"
-      ? "Admin — full access, including user management and System."
-      : "Sub-admin — your own sessions, recordings and settings.";
+      ? "Admin — creates and manages hosts, and looks after the system. Hosting shows is what host accounts are for."
+      : "Host — your own sessions, recordings and settings.";
+    currentMenu = visibleMenus()[0];
     renderMainMenu();
-    showSub(currentMenu.subs[0].id);
-    loadSessions();
-    loadRecordings();
-    loadSettings();
+    showSub(visibleSubs(currentMenu)[0].id);
     load2fa();
-    loadUsers();
-    loadBackups();
-    loadLogs();
-    setInterval(loadSessions, 10000);   // keep the live badges fresh
-    setInterval(loadRecordings, 15000); // pick up processing -> ready
+    if (me.role === "admin") {
+      loadUsers();
+      loadBackups();
+      loadLogs();
+    } else {
+      loadSessions();
+      loadRecordings();
+      loadSettings();
+      setInterval(loadSessions, 10000);   // keep the live badges fresh
+      setInterval(loadRecordings, 15000); // pick up processing -> ready
+    }
   })();
 })();

@@ -156,17 +156,17 @@
       <!-- Users (admin) -->
       <section id="pane-users" class="stack" hidden>
         <div class="panel">
-          <h2>Add a user</h2>
-          <p class="hint" style="margin-bottom:0.8rem">Sub-admins get their own sessions, recordings, theme and stream key — they can't touch System or other people's shows.</p>
+          <h2>Add a host</h2>
+          <p class="hint" style="margin-bottom:0.8rem">Hosts run shows: they get their own sessions, recordings, theme and stream key. They can't touch System or anyone else's show.</p>
           <form id="newUserForm" style="display:flex; gap:0.75rem; flex-wrap:wrap">
             <input type="text" id="newUserName" placeholder="username" autocomplete="off" style="flex:1; min-width:8rem">
             <input type="password" id="newUserPass" placeholder="password (10+ chars)" autocomplete="new-password" style="flex:1; min-width:10rem">
-            <button class="btn primary" type="submit">Add sub-admin</button>
+            <button class="btn primary" type="submit">Add host</button>
           </form>
           <p class="msg err" id="userMsg" hidden></p>
         </div>
         <div class="panel">
-          <h2>Users</h2>
+          <h2>Hosts</h2>
           <div id="userList"><p class="hint">Loading…</p></div>
         </div>
       </section>

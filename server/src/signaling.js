@@ -53,10 +53,11 @@ export function attachSignaling(httpServer) {
             room = await getOrCreateRoom(roomId);
             room.ownerId = session.ownerId;
             const name = String(data.name || "").trim().slice(0, NAME_MAX) || "Guest";
-            // Host role needs a dashboard login AND rights over this
-            // session (its owner, or any admin) — never client-claimed.
+            // Host role needs a dashboard login AND ownership of this
+            // session — never client-claimed. Admins manage the system;
+            // they don't host shows.
             const auth = isAuthedRequest(req);
-            const canHost = auth && (auth.role === "admin" || auth.uid === session.ownerId);
+            const canHost = auth && auth.uid === session.ownerId;
             const role = canHost && data.role === "host" ? "host" : "guest";
             peer = addPeer(room, { name, role, socket });
             const settings = await getSettings(room.ownerId);

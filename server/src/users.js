@@ -26,7 +26,7 @@ async function load() {
     const legacySettings = await readJson("settings.json", {});
     users = [{
       id: crypto.randomUUID(),
-      username: "charlie",
+      username: "admin",
       role: "admin",
       passwordHash: legacyAuth?.passwordHash || hashPassword(config.hostPassword),
       totpEnabled: legacyAuth?.totpEnabled || false,
@@ -40,7 +40,7 @@ async function load() {
       for (const s of sessions) s.ownerId = s.ownerId || users[0].id;
       await writeJson("sessions.json", sessions);
     }
-    console.log("migrated single-user auth to users.json (username: charlie)");
+    console.log("migrated single-user auth to users.json (username: admin)");
   }
   cache = users;
   return users;

@@ -188,6 +188,9 @@ api.get("/sessions", requireAuth, async (req, res) => {
 });
 
 api.post("/sessions", requireAuth, async (req, res) => {
+  if (req.user.role === "admin") {
+    return res.status(403).json({ error: "Admins manage hosts; sessions belong to host accounts." });
+  }
   res.json(await createSession(req.user, req.body.title));
 });
 

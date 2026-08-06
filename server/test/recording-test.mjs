@@ -24,8 +24,8 @@ const check = (label, ok) => { console.log(`${ok ? "OK  " : "FAIL"} ${label}`); 
 const hostCtx = await browser.newContext({ permissions: ["camera", "microphone"] });
 const dash = await hostCtx.newPage();
 await dash.goto(`${B}/host/login.html`);
-await dash.fill("#username", "charlie");
-await dash.fill("#password", PW);
+await dash.fill("#username", "testhost");
+await dash.fill("#password", "testhostpass123");
 await dash.click("button[type=submit]");
 await dash.waitForURL("**/host/");
 await dash.evaluate(async (mode) => {
