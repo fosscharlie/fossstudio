@@ -13,6 +13,9 @@ All notable changes to FOSSStudio are documented here.
   banner colour live from nine swatches or a hex code in the host panel
 - Host panel restyled to the Lightmorphic house look, with a close
   button; session controls swapped emoji for modern line icons
+- Host panel simplified: every row (including your own) has Spotlight
+  and Mute buttons — the separate layout buttons are gone; toggling the
+  active Spotlight returns to the grid
 
 - **Fix**: joining with noise suppression crashed some Chromium-based
   browsers (seen in Brave Origin) — session audio is now routed to the

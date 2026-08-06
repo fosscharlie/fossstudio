@@ -18,7 +18,6 @@
     session: $("session"), banner: $("banner"), grid: $("grid"),
     muteBtn: $("muteBtn"), camBtn: $("camBtn"), leaveBtn: $("leaveBtn"),
     hostPanelBtn: $("hostPanelBtn"), hostPanel: $("hostPanel"),
-    hpGridBtn: $("hpGridBtn"), hpSpotSelfBtn: $("hpSpotSelfBtn"),
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
     hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn"),
     hpServerRec: $("hpServerRec"), hpServerRecRow: $("hpServerRecRow"),
@@ -476,10 +475,6 @@
       const cols = mobile ? (n > 1 ? 2 : 1) : Math.ceil(Math.sqrt(n));
       els.grid.style.setProperty("--cols", cols);
     }
-    if (isHost) {
-      els.hpGridBtn.classList.toggle("active", !spot);
-      els.hpSpotSelfBtn.classList.toggle("active", spot && control.spotlightPeerId === selfId);
-    }
   }
   matchMedia("(max-width: 700px)").addEventListener("change", applyLayout);
 
@@ -558,30 +553,28 @@
       row.innerHTML = `
         <div class="hp-name">
           <span></span>
-          ${isSelf ? "" : `<button class="hp-btn mute">${muted ? "Unmute" : "Mute"}</button>
-          <button class="hp-btn spot">Spotlight</button>`}
+          <button class="hp-btn mute">${muted ? "Unmute" : "Mute"}</button>
+          <button class="hp-btn spot">Spotlight</button>
         </div>
         <input type="range" min="0" max="150" value="${vol}" aria-label="Volume">
         <span class="hp-vol">${vol}%</span>`;
       row.querySelector("span").textContent = isSelf ? `${tile.name} (you)` : tile.name;
-      if (!isSelf) {
-        const muteBtn = row.querySelector(".mute");
-        muteBtn.classList.toggle("active", muted);
-        muteBtn.onclick = () => {
-          request("hostControl", { action: "mute", peerId, muted: !muted });
-        };
-        const spotBtn = row.querySelector(".spot");
-        spotBtn.classList.toggle(
-          "active",
-          control.layout === "spotlight" && control.spotlightPeerId === peerId
-        );
-        spotBtn.onclick = () => {
-          const active = control.layout === "spotlight" && control.spotlightPeerId === peerId;
-          request("hostControl", active
-            ? { action: "layout", layout: "grid" }
-            : { action: "layout", layout: "spotlight", peerId });
-        };
-      }
+      const muteBtn = row.querySelector(".mute");
+      muteBtn.classList.toggle("active", muted);
+      muteBtn.onclick = () => {
+        request("hostControl", { action: "mute", peerId, muted: !muted });
+      };
+      const spotBtn = row.querySelector(".spot");
+      spotBtn.classList.toggle(
+        "active",
+        control.layout === "spotlight" && control.spotlightPeerId === peerId
+      );
+      spotBtn.onclick = () => {
+        const active = control.layout === "spotlight" && control.spotlightPeerId === peerId;
+        request("hostControl", active
+          ? { action: "layout", layout: "grid" }
+          : { action: "layout", layout: "spotlight", peerId });
+      };
       const slider = row.querySelector("input");
       const volLabel = row.querySelector(".hp-vol");
       let sendTimer = null;
@@ -667,9 +660,6 @@
 
   els.hostPanelBtn.onclick = () => { els.hostPanel.hidden = !els.hostPanel.hidden; };
   $("hpCloseBtn").onclick = () => { els.hostPanel.hidden = true; };
-  els.hpGridBtn.onclick = () => request("hostControl", { action: "layout", layout: "grid" });
-  els.hpSpotSelfBtn.onclick = () =>
-    request("hostControl", { action: "layout", layout: "spotlight", peerId: selfId });
   els.hpMuteAllBtn.onclick = () =>
     request("hostControl", { action: "muteAll" })
       .catch((e) => console.error("mute all failed:", e.message));

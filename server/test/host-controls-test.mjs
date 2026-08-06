@@ -56,7 +56,7 @@ check("theme banner applied from settings",
 
 // Open panel, spotlight the guest
 await host.click("#hostPanelBtn");
-await host.click(".hp-guest .spot");
+await host.$$eval(".hp-guest .spot", (btns) => btns[1].click());
 await new Promise((r) => setTimeout(r, 1500));
 check("guest's layout switched to spotlight",
   await guest.$eval("#grid", (el) => el.classList.contains("spotlight")));
@@ -72,8 +72,8 @@ await new Promise((r) => setTimeout(r, 1000));
 check("guest received volume control state",
   await guest.evaluate(() => true)); // control apply has no visible DOM; checked via layout above
 
-// Back to grid
-await host.click("#hpGridBtn");
+// Back to grid: toggling the active spotlight off
+await host.$$eval(".hp-guest .spot.active", (btns) => btns[0].click());
 await new Promise((r) => setTimeout(r, 1000));
 check("layout back to grid on guest",
   await guest.$eval("#grid", (el) => !el.classList.contains("spotlight")));

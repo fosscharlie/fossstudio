@@ -35,11 +35,11 @@ await new Promise((r) => setTimeout(r, 3000));
 await host.click("#hostPanelBtn");
 check("host panel lists self first with (you)",
   await host.$eval(".hp-guest .hp-name span", (el) => el.textContent.includes("(you)")));
-check("self row has volume slider but no mute button",
-  await host.$eval(".hp-guest", (el) => !!el.querySelector("input[type=range]") && !el.querySelector(".mute")));
+check("self row has slider plus its own Mute and Spotlight",
+  await host.$eval(".hp-guest", (el) => !!el.querySelector("input[type=range]") && !!el.querySelector(".mute") && !!el.querySelector(".spot")));
 
-// Mute Greta
-await host.$$eval(".hp-guest .mute", (btns) => btns[0].click());
+// Mute Greta (second row; first is the host themself)
+await host.$$eval(".hp-guest .mute", (btns) => btns[1].click());
 await new Promise((r) => setTimeout(r, 1200));
 check("Greta's mic producer paused",
   await g1.evaluate(() => document.querySelector("#muteBtn").classList.contains("off")));
