@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Settings naming: the "Podcast banner" submenu and its
+  "Advertising / support banner" panel are both now "Ad Banner"
+
 - **Everyone joins muted** — the host too, even when alone; unmute
   yourself when you're ready to talk
 - Themes pane order: Accent colour, Podcast logo, Background colour,

@@ -29,7 +29,7 @@
       { id: "twofactor", label: "Two-factor" },
       { id: "streaming", label: "Streaming", hostOnly: true },
       { id: "themes", label: "Themes", hostOnly: true },
-      { id: "banner", label: "Podcast banner", hostOnly: true }
+      { id: "banner", label: "Ad Banner", hostOnly: true }
     ] },
     { id: "system", label: "System", adminOnly: true, subs: [
       { id: "service", label: "Service" },
