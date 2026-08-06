@@ -249,19 +249,6 @@ body {
   background: var(--banner-c, #1e2127);
   color: var(--banner-fg, #ffffff);
 }
-/* Muted: a small red mic-off badge in the tile's top-right corner */
-.tile.muted::after {
-  content: "";
-  position: absolute;
-  top: 2cqw;
-  right: 2cqw;
-  width: clamp(26px, 7cqw, 44px);
-  height: clamp(26px, 7cqw, 44px);
-  border-radius: 50%;
-  background: #f34236 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M15 9.3V5a3 3 0 0 0-5.9-.8'/%3E%3Cpath d='M9 9v2a3 3 0 0 0 5.1 2.1'/%3E%3Cpath d='M5 10v1a7 7 0 0 0 11.5 5.4M19 10v1c0 1-.2 1.9-.6 2.8'/%3E%3Cpath d='M12 18v3'/%3E%3Cpath d='M3 3l18 18'/%3E%3C/svg%3E") center / 58% no-repeat;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-  z-index: 4;
-}
 .tile .name {
   font-size: clamp(0.7rem, 4.6cqw, 2.2rem);
   font-weight: 700;
