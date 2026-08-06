@@ -59,6 +59,7 @@ body {
   gap: 0.3rem;
   font-size: 0.85rem;
   color: var(--muted);
+  min-width: 0; /* long device names truncate instead of overflowing */
 }
 .preview-card .soft { color: var(--muted); font-weight: 400; }
 .preview-card input[type="range"] { accent-color: var(--accent, #4a7dbd); padding: 0; }
@@ -89,6 +90,10 @@ body {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.55rem 0.7rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
 }
 #joinBtn {
   font: inherit;
