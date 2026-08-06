@@ -16,8 +16,8 @@ const mk = (title) => fetch(`${B}/api/sessions`, {
   headers: { "Content-Type": "application/json", Cookie: cookie },
   body: JSON.stringify({ title })
 }).then((r) => r.json());
-await mk("Episode 41 — Package managers, ranked");
-await mk("Episode 40 — The systemd episode");
+await mk("Episode 41: Package Managers, Ranked");
+await mk("Episode 40: The systemd Episode");
 const sessionA = await mk("Episode 42: Live From FOSDEM");
 const sessionB = await mk("Episode 39: Homelab Horror Stories");
 

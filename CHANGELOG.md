@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Dashboard main-menu highlight is now a solid accent chip with white
+  text (the translucent accent wash made the label hard to read)
+
 - Website: even spacing between the feature blocks (no double-height
   gaps); screenshot taglines shortened so nothing is cut off
 - Session tagline text slightly smaller so realistic taglines fit the

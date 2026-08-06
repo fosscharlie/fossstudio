@@ -458,10 +458,11 @@
     root.setProperty("--accent-hover", `rgb(${Math.round(r * 0.85)}, ${Math.round(g * 0.85)}, ${Math.round(b * 0.85)})`);
     root.setProperty("--on-accent",
       (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? "#3a3208" : "#ffffff");
-    // Menu highlights use the container pair: a translucent wash of the
-    // accent with the accent itself as text
-    root.setProperty("--accent-container", `rgba(${r}, ${g}, ${b}, 0.16)`);
-    root.setProperty("--on-accent-container", hex);
+    // Menu highlights: a solid chip of the accent deepened into brand
+    // navy, with white text — readable for every accent, both themes
+    const mix = (c, n) => Math.round(c * 0.35 + n * 0.65);
+    root.setProperty("--accent-container", `rgb(${mix(r, 17)}, ${mix(g, 24)}, ${mix(b, 39)})`);
+    root.setProperty("--on-accent-container", "#ffffff");
   }
 
   async function loadSettings() {
