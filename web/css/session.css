@@ -161,7 +161,11 @@ body {
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
-  width: 266px;
+  /* Absolutely-positioned grid children stretch to their row without
+     an explicit height - keep the block content-sized */
+  height: fit-content;
+  /* Scales down with the viewport so small screens keep their video */
+  width: clamp(150px, 24vw, 266px);
   padding: 0.4rem 0.5rem;
   display: flex;
   flex-direction: column;
@@ -177,15 +181,15 @@ body {
 .banner.host-drag { cursor: grab; }
 .banner.host-drag:active { cursor: grabbing; }
 #bannerLogo {
-  max-width: 250px;
-  max-height: 50px;
+  max-width: clamp(140px, 22.5vw, 250px);
+  max-height: clamp(28px, 4.5vw, 50px);
   object-fit: contain;
 }
 #bannerTitle {
-  /* Never wider than the 250px logo width: clamp with an ellipsis */
-  width: 250px;
+  /* Never wider than the logo width: clamp with an ellipsis */
+  width: clamp(140px, 22.5vw, 250px);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: clamp(0.62rem, 1.2vw, 0.85rem);
   line-height: 1.15;
   overflow: hidden;
   overflow-wrap: break-word;
@@ -195,7 +199,7 @@ body {
 }
 /* No logo: the title text fills the whole block, up to three lines */
 .banner:not(.has-logo) #bannerTitle {
-  font-size: 1.05rem;
+  font-size: clamp(0.72rem, 1.5vw, 1.05rem);
   line-height: 1.25;
   -webkit-line-clamp: 3;
 }
@@ -229,9 +233,10 @@ body {
   position: relative;
   flex: 1;
   display: grid;
-  /* Roomy, even spacing all round so the wallpaper shows through */
-  gap: 16px;
-  padding: 16px;
+  /* Wide, even spacing all round so the wallpaper shows through -
+     80px on desktop, scaling down with the viewport */
+  gap: clamp(16px, 5.5vw, 80px);
+  padding: clamp(16px, 5.5vw, 80px);
   overflow: hidden;
   grid-template-columns: repeat(var(--cols, 1), 1fr);
   align-content: center;
@@ -589,7 +594,7 @@ body.dim-ui .banner:hover { opacity: 1; }
    can always see yourself where you'll appear in the recording. Tiles
    start below the default logo/title block position. */
 @media (max-width: 700px) {
-  .grid { align-content: start; padding-top: 108px; }
+  .grid { align-content: start; padding-top: 84px; }
   .tile { aspect-ratio: 16 / 9; }
 }
 

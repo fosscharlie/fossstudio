@@ -4,6 +4,13 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Fix**: the logo/title block stretched to the height of a video row
+  on the host's screen when a second participant joined
+- The block now **scales down with the viewport** so tablets and
+  phones lose less video space to it
+- Video spacing set to **80px** — sides, top, bottom and between
+  tiles — scaling down proportionally on smaller screens
+
 - Episode title in the logo block never exceeds the 250px logo width:
   one ellipsised line beside a logo, up to three lines when text-only
 
