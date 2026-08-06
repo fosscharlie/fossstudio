@@ -61,6 +61,23 @@ const g1Muted = await g1.evaluate(() => document.querySelector("#muteBtn").class
 const g2Muted = await g2.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"));
 check(`mute-all mutes guests (${g1Muted},${g2Muted}) but not the host (${hostMuted})`,
   g1Muted && g2Muted && !hostMuted);
+check("Mute all button lights up and flips to Unmute all",
+  await host.$eval("#hpMuteAllBtn", (el) =>
+    el.classList.contains("active") && el.textContent === "Unmute all"));
+
+// Clicking again unmutes everyone
+await host.click("#hpMuteAllBtn");
+await new Promise((r) => setTimeout(r, 1200));
+check("Unmute all unmutes both guests",
+  !(await g1.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))) &&
+  !(await g2.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))));
+check("Mute all button back to normal",
+  await host.$eval("#hpMuteAllBtn", (el) =>
+    !el.classList.contains("active") && el.textContent === "Mute all"));
+
+// Mute everyone again so the unmute-one-guest check still applies
+await host.click("#hpMuteAllBtn");
+await new Promise((r) => setTimeout(r, 1200));
 
 // Host unmutes Gus from the panel
 await host.$$eval(".hp-guest .mute", (btns) => {

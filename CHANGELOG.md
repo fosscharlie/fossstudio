@@ -4,6 +4,18 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Session banner shows the episode title** you typed when creating the
+  session — the per-host "podcast name" setting is gone, so one system
+  can run several different podcasts side by side
+- **Accent colour is now the dashboard's own** (menus, buttons and
+  highlights, applied and saved the moment you click a swatch — no save
+  button); the session view no longer follows it
+- **Mute all is now a real toggle**: it lights up and flips to "Unmute
+  all" once every guest is muted, and clicking it again unmutes them
+- **Auto level is a button** beside "Go live" (equaliser icon, lights up
+  when on) instead of a toggle row
+- Wallpaper settings now state the ideal size (1920×1080)
+
 - **What you see is what you record**: the lower-third name banners are
   now baked into the combined recording and composited onto the live
   stream, exactly as they look on screen (colours, names, taglines).

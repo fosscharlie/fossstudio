@@ -7,7 +7,6 @@ import { hashPassword } from "./auth.js";
 import { config } from "./config.js";
 
 export const USER_SETTINGS_DEFAULTS = {
-  podcastName: "FOSSStudio",
   accent: "#fbc711",
   wallpaper: null,
   streamUrl: "rtmp://a.rtmp.youtube.com/live2",

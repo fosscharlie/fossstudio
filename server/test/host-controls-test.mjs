@@ -48,11 +48,9 @@ check("host panel is open for the host by default",
   await host.$eval("#hostPanel", (el) => !el.hidden));
 check("guest without login cookie does NOT get the host panel",
   await guest.$eval("#hostPanel", (el) => el.hidden));
-const themeName = await host.evaluate(() =>
-  fetch(`/api/theme?room=${location.pathname.split("/")[2]}`)
-    .then((r) => r.json()).then((t) => t.podcastName));
-check("theme banner applied from settings",
-  (await host.$eval("#banner", (el) => el.textContent)) === themeName);
+// The top banner shows this session's episode title, not a per-host name
+check("top banner shows the session title",
+  (await host.$eval("#banner", (el) => el.textContent)) === "Automated test");
 
 // Spotlight the guest from the always-open panel
 await host.$$eval(".hp-guest .spot", (btns) => btns[1].click());

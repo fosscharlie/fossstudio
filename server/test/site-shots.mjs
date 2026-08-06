@@ -18,8 +18,8 @@ const mk = (title) => fetch(`${B}/api/sessions`, {
 }).then((r) => r.json());
 await mk("Episode 41 — Package managers, ranked");
 await mk("Episode 40 — The systemd episode");
-const sessionA = await mk("Episode 42 — Live from FOSDEM");
-const sessionB = await mk("Episode 39 — Homelab horror stories");
+const sessionA = await mk("Episode 42: Live From FOSDEM");
+const sessionB = await mk("Episode 39: Homelab Horror Stories");
 
 async function studio(cam, name, tagline, sessionId, asHost) {
   const browser = await chromium.launch({

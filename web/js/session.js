@@ -397,10 +397,8 @@
   // ---------- Theme ----------
 
   function applyTheme(theme) {
-    document.title = `${theme.podcastName} — live`;
-    els.banner.textContent = theme.podcastName;
-    document.documentElement.style.setProperty("--accent", theme.accent);
-    els.banner.style.borderBottom = `2px solid ${theme.accent}`;
+    document.title = theme.title ? `${theme.title} — live` : "FOSSStudio — live";
+    els.banner.textContent = theme.title || "";
     if (theme.wallpaper) {
       els.grid.style.backgroundImage = `url(${theme.wallpaper})`;
       els.session.classList.add("wallpapered");
@@ -619,7 +617,16 @@
       }
     }
     applyAutoGain(!!control.autoGain);
-    els.hpAutoGain.checked = !!control.autoGain;
+    els.hpAutoGain.classList.toggle("active", !!control.autoGain);
+    if (isHost) {
+      // Light up "Mute all" (and offer the way back) once every guest is muted
+      const others = [...tiles.keys()].filter((id) => id !== selfId);
+      const allMuted = others.length > 0 && others.every((id) => control.muted?.[id]);
+      els.hpMuteAllBtn.classList.toggle("active", allMuted);
+      els.hpMuteAllBtn.textContent = allMuted ? "Unmute all" : "Mute all";
+      els.hpMuteAllBtn.dataset.tip = allMuted
+        ? "Unmute every guest at once" : "Mute every guest at once";
+    }
     applyLayout();
     if (isHost) renderHostGuests();
     scheduleBannerSnapshots();
@@ -916,10 +923,16 @@
     request("hostControl", { action: "overlay", kind: "ad" })
       .catch((e) => alert(e.message));
   els.hpMuteAllBtn.onclick = () =>
-    request("hostControl", { action: "muteAll" })
+    request("hostControl", {
+      action: "muteAll",
+      muted: !els.hpMuteAllBtn.classList.contains("active")
+    })
       .catch((e) => console.error("mute all failed:", e.message));
-  els.hpAutoGain.onchange = () =>
-    request("hostControl", { action: "autoGain", enabled: els.hpAutoGain.checked });
+  els.hpAutoGain.onclick = () =>
+    request("hostControl", {
+      action: "autoGain",
+      enabled: !els.hpAutoGain.classList.contains("active")
+    });
   els.hpRecordBtn.onclick = () =>
     request("hostControl", {
       action: "record",

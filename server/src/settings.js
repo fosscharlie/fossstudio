@@ -9,9 +9,6 @@ export async function getSettings(uid) {
 
 export async function updateSettings(uid, patch) {
   const clean = {};
-  if (typeof patch.podcastName === "string") {
-    clean.podcastName = patch.podcastName.trim().slice(0, 80) || "FOSSStudio";
-  }
   if (typeof patch.accent === "string" && /^#[0-9a-fA-F]{6}$/.test(patch.accent)) {
     clean.accent = patch.accent.toLowerCase();
   }

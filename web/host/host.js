@@ -432,12 +432,25 @@
       b.style.background = hex;
       b.dataset.tip = hex;
       b.setAttribute("aria-label", `Accent ${hex}`);
-      b.onclick = () => { currentAccent = hex; renderSwatches(); applyAccent(hex); };
+      b.onclick = async () => {
+        currentAccent = hex;
+        renderSwatches();
+        applyAccent(hex);
+        // No save button: picking a colour stores it straight away
+        await apiFetch("/api/settings", {
+          method: "PUT",
+          body: JSON.stringify({ accent: hex })
+        });
+        $("themeMsg").hidden = false;
+        clearTimeout(applyAccent.msgTimer);
+        applyAccent.msgTimer = setTimeout(() => { $("themeMsg").hidden = true; }, 2000);
+      };
       wrap.appendChild(b);
     }
   }
 
-  // The accent restyles this dashboard too, not just the session view
+  // The accent colour styles this dashboard (buttons, toggles and the
+  // menu highlights) — the session view keeps its own look
   function applyAccent(hex) {
     const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
     const root = document.documentElement.style;
@@ -445,13 +458,16 @@
     root.setProperty("--accent-hover", `rgb(${Math.round(r * 0.85)}, ${Math.round(g * 0.85)}, ${Math.round(b * 0.85)})`);
     root.setProperty("--on-accent",
       (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? "#3a3208" : "#ffffff");
+    // Menu highlights use the container pair: a translucent wash of the
+    // accent with the accent itself as text
+    root.setProperty("--accent-container", `rgba(${r}, ${g}, ${b}, 0.16)`);
+    root.setProperty("--on-accent-container", hex);
   }
 
   async function loadSettings() {
     const s = await apiFetch("/api/settings");
     $("streamUrl").value = s.streamUrl || "";
     $("streamKey").value = s.streamKey || "";
-    $("podcastName").value = s.podcastName;
     currentAccent = s.accent;
     renderSwatches();
     applyAccent(currentAccent);
@@ -470,20 +486,6 @@
     }
   }
 
-  // One settings record behind two panes: either save button stores both
-  async function saveTheme(msgId) {
-    await apiFetch("/api/settings", {
-      method: "PUT",
-      body: JSON.stringify({
-        podcastName: $("podcastName").value,
-        accent: currentAccent
-      })
-    });
-    $(msgId).hidden = false;
-    setTimeout(() => { $(msgId).hidden = true; }, 2000);
-  }
-  $("saveThemeBtn").onclick = () => saveTheme("themeMsg");
-  $("saveNameBtn").onclick = () => saveTheme("nameMsg");
 
   function updateAdPreview(has) {
     const el = $("adPreview");

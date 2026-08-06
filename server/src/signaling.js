@@ -70,7 +70,6 @@ export function attachSignaling(httpServer) {
             peer = addPeer(room, { name, tagline, role, socket });
             room.control.noise[peer.id] = !!data.noiseOn;
             const settings = await getSettings(room.ownerId);
-            if (!room.control.bannerColor) room.control.bannerColor = settings.accent;
             const { findById } = await import("./users.js");
             const canServerRecord = role === "host" &&
               !!(await findById(room.ownerId))?.allowServerRecording;
@@ -83,8 +82,9 @@ export function attachSignaling(httpServer) {
               control: room.control,
               streaming: isStreaming(room.id),
               theme: {
-                podcastName: settings.podcastName,
-                accent: settings.accent,
+                // The top banner shows this session's episode title —
+                // one system can run several different podcasts
+                title: session.title === "Untitled session" ? "" : session.title,
                 wallpaper: settings.wallpaper ? `/api/wallpaper/${room.ownerId}` : null
               },
               peers: [...room.peers.values()]
@@ -246,11 +246,15 @@ export function attachSignaling(httpServer) {
                 break;
               }
               case "muteAll": {
+                const muted = data.muted !== false; // default: mute
                 for (const p2 of room.peers.values()) {
                   if (p2.id === peer.id) continue; // not the host themself
-                  c.muted[p2.id] = true;
+                  c.muted[p2.id] = muted;
+                  if (muted) delete c.hands[p2.id];
                   for (const prod of p2.producers.values()) {
-                    if (prod.kind === "audio") await prod.pause();
+                    if (prod.kind === "audio") {
+                      muted ? await prod.pause() : await prod.resume();
+                    }
                   }
                 }
                 break;

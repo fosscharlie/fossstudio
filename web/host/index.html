@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio — Host</title>
-<link rel="stylesheet" href="/host/host.css?v=20260806c">
+<link rel="stylesheet" href="/host/host.css?v=20260806d">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -67,12 +67,9 @@
       <section id="pane-themes" class="stack" hidden>
         <div class="panel">
           <h2>Accent colour</h2>
-          <p class="hint" style="margin-bottom:0.5rem">Used across your studio — this dashboard and the highlights in the session view.</p>
+          <p class="hint" style="margin-bottom:0.5rem">The highlight colour of this dashboard. Click a colour and it's applied and saved straight away.</p>
           <div class="swatches" id="swatches"></div>
-          <div style="margin-top:0.8rem">
-            <button class="btn primary" id="saveThemeBtn">Save theme</button>
-            <span class="msg ok" id="themeMsg" hidden>✓ Saved</span>
-          </div>
+          <span class="msg ok" id="themeMsg" style="display:inline-block; margin-top:0.6rem" hidden>✓ Saved</span>
         </div>
         <div class="panel">
           <h2>Wallpaper</h2>
@@ -82,21 +79,12 @@
             <button class="btn" id="wallpaperRemove">Remove</button>
             <input type="file" id="wallpaperFile" accept="image/jpeg,image/png,image/webp" hidden>
           </div>
-          <p class="hint" style="margin-top:0.5rem">Shown behind the video grid. JPEG, PNG or WebP, up to 8 MB.</p>
+          <p class="hint" style="margin-top:0.5rem">Shown behind the video grid. 1920×1080 pixels is the ideal size (anything with the same 16:9 shape works). JPEG, PNG or WebP, up to 8 MB.</p>
         </div>
       </section>
 
-      <!-- Settings: podcast banner (name + advertising banner) -->
+      <!-- Settings: podcast banner (advertising/support banner) -->
       <section id="pane-banner" class="stack" hidden>
-        <div class="panel">
-          <h2>Podcast name</h2>
-          <div class="field">
-            <label for="podcastName">Name shown at the top of every session</label>
-            <input type="text" id="podcastName" maxlength="80">
-          </div>
-          <button class="btn primary" id="saveNameBtn">Save name</button>
-          <span class="msg ok" id="nameMsg" hidden>✓ Saved</span>
-        </div>
         <div class="panel">
           <h2>Advertising / support banner</h2>
           <p class="hint" style="margin-bottom:0.8rem">Shown when you press "Ad" in the host panel — in everyone's session view, baked into recordings and on the live stream. Good for sponsors or supporter shout-outs. Wide and short works best (e.g. 900×150). JPEG, PNG or WebP, up to 4 MB.</p>
@@ -235,6 +223,6 @@
   </div>
 </div>
 
-<script src="/host/host.js?v=20260806c"></script>
+<script src="/host/host.js?v=20260806d"></script>
 </body>
 </html>
