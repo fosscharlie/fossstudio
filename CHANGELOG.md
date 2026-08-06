@@ -28,9 +28,8 @@ All notable changes to FOSSStudio are documented here.
   changing colours while live causes a ~2-second stream blip while the
   compositor relaunches
 - **Settings reorganised**: *Themes* (accent colour + wallpaper) and
-  *Podcast banner* (podcast name + advertising/support banner upload,
-  moved out of Streaming). The accent colour now restyles the host
-  dashboard itself, not just the session view
+  *Podcast banner* (the advertising/support banner upload, moved out of
+  Streaming)
 - **Compact host panel**: guests sit in boxed cards, two per row, with
   the name centred — ten guests fit without scrolling (verified by an
   automated ten-guest test); Mute all / Subscribe / Ad share one line;
