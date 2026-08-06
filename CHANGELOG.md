@@ -4,6 +4,10 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Fix**: joining with noise suppression crashed some Chromium-based
+  browsers (seen in Brave Origin) — session audio is now routed to the
+  chosen speaker via an audio element instead of the AudioContext call
+  that triggered the crash
 - Crash safety: if a join attempt never finishes (e.g. the tab crashed
   while noise suppression was starting), the next visit turns noise
   suppression off automatically and says so

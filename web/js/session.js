@@ -404,8 +404,26 @@
     return tiles.get(peerId);
   }
 
+  let masterDest = null;
+  let outputEl = null;
+
+  function audioSink() {
+    const ctx = ensureAudioCtx();
+    if (!masterDest) {
+      masterDest = ctx.createMediaStreamDestination();
+      outputEl = new Audio();
+      outputEl.srcObject = masterDest.stream;
+      outputEl.autoplay = true;
+      if (sinkSupported && els.spkSelect.value) {
+        outputEl.setSinkId(els.spkSelect.value).catch(() => {});
+      }
+      outputEl.play().catch(() => {});
+    }
+    return masterDest;
+  }
+
   function attachAudio(peerId, track) {
-    if (!audioCtx) audioCtx = new AudioContext();
+    ensureAudioCtx();
     const tile = tiles.get(peerId);
     if (!tile) return;
     // Chrome quirk: a remote track must be attached to a media element
@@ -414,7 +432,7 @@
     const src = audioCtx.createMediaStreamSource(new MediaStream([track]));
     const gain = audioCtx.createGain();
     gain.gain.value = control.volumes[peerId] ?? 1;
-    src.connect(gain).connect(audioCtx.destination);
+    src.connect(gain).connect(audioSink());
     tile.gain = gain;
   }
 
@@ -701,11 +719,6 @@
         appData: { source: "camera" }
       });
 
-      // Route everyone's audio to the chosen speaker where supported
-      if (sinkSupported && els.spkSelect.value && audioCtx?.setSinkId) {
-        audioCtx.setSinkId(els.spkSelect.value).catch(() => {});
-      }
-
       const selfTile = makeTile(selfId, selfName, true, els.taglineInput.value.trim());
       selfTile.stream.addTrack(videoTrack);
       applyMirror();
@@ -763,6 +776,8 @@
     tiles.forEach((t) => t.el.remove());
     tiles.clear();
     sendTransport?.close(); recvTransport?.close();
+    if (outputEl) { outputEl.pause(); outputEl.srcObject = null; outputEl = null; }
+    masterDest = null;
     els.session.hidden = true;
     els.hostPanel.hidden = true;
     els.preview.hidden = false;
