@@ -271,6 +271,19 @@ input[type="text"], input[type="password"], input[type="number"] {
 .toggle input:checked + .track::after { transform: translateX(1.15rem); background: var(--on-accent); }
 .toggle input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* ---------- Per-host settings drawer ---------- */
+
+.host-settings {
+  grid-column: 1 / -1;
+  flex-basis: 100%;
+  margin: 0.5rem 0 0.25rem;
+  padding: 0.9rem 1rem;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.host-settings .toggle + .toggle { margin-top: 0.7rem; }
+
 /* ---------- Feedback ---------- */
 
 .msg { border-radius: var(--radius); padding: 0.6rem 0.9rem; font-size: 0.9rem; margin-top: 0.75rem; }

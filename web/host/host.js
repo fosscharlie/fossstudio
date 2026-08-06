@@ -91,6 +91,7 @@
     open: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M21 3l-9 9M9 21H5a2 2 0 0 1-2-2V7"/></svg>',
     del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>',
     key: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="M11 12L21 2M16 7l3 3"/></svg>',
+    gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a7.97 7.97 0 0 0 .1-3l2-1.2-2-3.4-2.2.7a8 8 0 0 0-2.6-1.5L14.3 4h-4l-.4 2.6a8 8 0 0 0-2.6 1.5l-2.2-.7-2 3.4 2 1.2a7.97 7.97 0 0 0 .1 3l-2 1.2 2 3.4 2.2-.7a8 8 0 0 0 2.6 1.5l.4 2.6h4l.4-2.6a8 8 0 0 0 2.6-1.5l2.2.7 2-3.4z"/></svg>',
     tick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5L20 7"/></svg>'
   };
 
@@ -192,19 +193,29 @@
         <span class="spacer"></span>`;
       row.querySelector(".title").textContent = u.username;
       if (u.role !== "admin") {
-        const perm = document.createElement("label");
-        perm.className = "toggle";
-        perm.style.marginRight = "0.5rem";
-        perm.title = "Allow server-side recording";
-        perm.innerHTML = `<input type="checkbox" ${u.allowServerRecording ? "checked" : ""}>
-          <span class="track"></span><span class="hint">server rec</span>`;
-        perm.querySelector("input").onchange = async (e) => {
+        // Each host gets its own settings drawer
+        const drawer = document.createElement("div");
+        drawer.className = "host-settings";
+        drawer.hidden = true;
+        drawer.innerHTML = `
+          <label class="toggle">
+            <input type="checkbox" ${u.allowServerRecording ? "checked" : ""}>
+            <span class="track"></span>
+            <span>Allow server-side recording<br>
+              <span class="hint">Heavier on the server — suits shows with 2–3 guests. The host then switches it on per session in their host panel.</span></span>
+          </label>`;
+        drawer.querySelector("input").onchange = async (e) => {
           await apiFetch(`/api/users/${u.id}/permissions`, {
             method: "POST",
             body: JSON.stringify({ allowServerRecording: e.target.checked })
           }).catch((err) => showUserMsg(err.message));
         };
-        row.appendChild(perm);
+        const gear = iconBtn("gear", `Settings for ${u.username}`, () => {
+          drawer.hidden = !drawer.hidden;
+          gear.classList.toggle("done", !drawer.hidden);
+        });
+        row.appendChild(gear);
+        row.settingsDrawer = drawer;
       }
       const reset = iconBtn("key", "Set a new password for this user", async () => {
         const pw = prompt(`New password for ${u.username} (10+ characters):`);
@@ -228,6 +239,7 @@
         }));
       }
       list.appendChild(row);
+      if (row.settingsDrawer) list.appendChild(row.settingsDrawer);
     }
   }
 
@@ -246,13 +258,11 @@
         method: "POST",
         body: JSON.stringify({
           username: $("newUserName").value,
-          email: $("newUserEmail").value,
-          allowServerRecording: $("newUserServerRec").checked
+          email: $("newUserEmail").value
         })
       });
       $("newUserName").value = "";
       $("newUserEmail").value = "";
-      $("newUserServerRec").checked = false;
       if (r.emailed) {
         showUserMsg("✓ Invite emailed — they have 7 days to accept.", true);
       } else {
