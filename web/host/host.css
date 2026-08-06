@@ -174,7 +174,8 @@ button, input, select { font: inherit; }
 label { display: block; font-size: 0.9375rem; font-weight: 600; margin-bottom: 0.3rem; }
 .hint { font-size: 0.8125rem; font-weight: 400; color: var(--muted-fg); }
 
-input[type="text"], input[type="password"], input[type="number"] {
+input[type="text"], input[type="password"], input[type="number"],
+input[type="email"], input[type="url"] {
   display: block;
   width: 100%;
   padding: 0.55rem 0.75rem;
