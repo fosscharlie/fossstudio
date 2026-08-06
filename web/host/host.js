@@ -114,7 +114,7 @@
     const b = document.createElement("button");
     b.className = "iconbtn";
     b.innerHTML = ICONS[icon];
-    b.title = label;
+    b.dataset.tip = label;
     b.setAttribute("aria-label", label);
     b.onclick = onClick;
     return b;
@@ -127,11 +127,11 @@
       if (b.classList.contains("confirm")) { onConfirm(); return; }
       b.classList.add("confirm");
       b.innerHTML = ICONS.tick;
-      b.title = "Click again to confirm";
+      b.dataset.tip = "Click again to confirm";
       setTimeout(() => {
         b.classList.remove("confirm");
         b.innerHTML = ICONS[icon];
-        b.title = label;
+        b.dataset.tip = label;
       }, 4000);
     });
     return b;
@@ -430,7 +430,7 @@
       const b = document.createElement("button");
       b.className = "swatch" + (hex === currentAccent ? " active" : "");
       b.style.background = hex;
-      b.title = hex;
+      b.dataset.tip = hex;
       b.setAttribute("aria-label", `Accent ${hex}`);
       b.onclick = () => { currentAccent = hex; renderSwatches(); };
       wrap.appendChild(b);

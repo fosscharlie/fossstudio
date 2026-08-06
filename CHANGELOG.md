@@ -4,7 +4,8 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
-_Nothing yet._
+- Tooltips follow the house style everywhere: lozenge-shaped, matching
+  the background with an outlined edge — replacing browser-native ones
 
 ## 1.1.0 — 2026-08-06
 

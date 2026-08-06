@@ -757,7 +757,7 @@
     muting ? micProducer.pause() : micProducer.resume();
     micProducer.track.enabled = !muting;
     els.muteBtn.classList.toggle("off", muting);
-    els.muteBtn.title = muting ? "Unmute microphone" : "Mute microphone";
+    els.muteBtn.dataset.tip = muting ? "Unmute microphone" : "Mute microphone";
   };
 
   els.camBtn.onclick = () => {
@@ -766,7 +766,7 @@
     stopping ? camProducer.pause() : camProducer.resume();
     camProducer.track.enabled = !stopping;
     els.camBtn.classList.toggle("off", stopping);
-    els.camBtn.title = stopping ? "Turn camera on" : "Turn camera off";
+    els.camBtn.dataset.tip = stopping ? "Turn camera on" : "Turn camera off";
   };
 
   els.leaveBtn.onclick = () => {
@@ -775,6 +775,12 @@
   };
 
   window.addEventListener("beforeunload", () => { try { ws && ws.close(); } catch { /* ignore */ } });
+
+  // House style: custom pill tooltips, never the browser's native ones
+  for (const el of document.querySelectorAll("[title]")) {
+    el.dataset.tip = el.getAttribute("title");
+    el.removeAttribute("title");
+  }
 
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
 
