@@ -59,6 +59,7 @@ export function attachSignaling(httpServer) {
             if (!session) return fail("This session link doesn't exist.");
             room = await getOrCreateRoom(roomId);
             room.ownerId = session.ownerId;
+            room.title = session.title === "Untitled session" ? "" : session.title;
             const name = String(data.name || "").trim().slice(0, NAME_MAX) || "Guest";
             const tagline = String(data.tagline || "").trim().slice(0, 32);
             // Host role needs a dashboard login AND ownership of this
@@ -147,6 +148,16 @@ export function attachSignaling(httpServer) {
                 await fs.writeFile(path.join(recDir(rec.id), "raw", name), buf);
                 const rp = rec.peers.get(pid);
                 if (rp) rp.banner = name;
+              }
+            }
+            // Episode-title chip, composited top-centre of the video
+            if (typeof data.title === "string" && data.title.startsWith(PREFIX) &&
+                data.title.length <= 400_000) {
+              const buf = Buffer.from(data.title.slice(PREFIX.length), "base64");
+              await fs.writeFile(path.join(dir, "__title.png"), buf);
+              if (rec) {
+                await fs.writeFile(path.join(recDir(rec.id), "raw", "title.png"), buf);
+                rec.titleFile = "title.png";
               }
             }
             // Live graph is fixed at launch: relaunch to show new banners

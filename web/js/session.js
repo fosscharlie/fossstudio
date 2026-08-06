@@ -399,6 +399,9 @@
   function applyTheme(theme) {
     document.title = theme.title ? `${theme.title} — live` : "FOSSStudio — live";
     els.banner.textContent = theme.title || "";
+    const top = document.getElementById("sessionTop");
+    top.textContent = theme.title || "";
+    top.hidden = !theme.title;
     if (theme.wallpaper) {
       els.grid.style.backgroundImage = `url(${theme.wallpaper})`;
       els.session.classList.add("wallpapered");
@@ -657,12 +660,39 @@
       const tagline = third.querySelector(".tagline")?.textContent || "";
       images[peerId] = drawBannerPng(name, tagline, cs.backgroundColor, cs.color);
     }
+    const titleText = els.banner.textContent.trim();
+    const title = titleText ? drawTitlePng(titleText) : null;
     // Only send when something actually changed — while live, the server
     // relaunches the stream to pick banners up, which costs a short blip
-    const payload = JSON.stringify(images);
+    const payload = JSON.stringify([images, title]);
     if (payload === lastBannerPayload || !Object.keys(images).length) return;
     lastBannerPayload = payload;
-    await request("bannerSnapshots", { images });
+    await request("bannerSnapshots", { images, title });
+  }
+
+  // The episode-title chip, drawn for a 1280-wide composite: the same
+  // solid dark chip that floats over the grid on screen
+  function drawTitlePng(text) {
+    const c = document.createElement("canvas");
+    const x = c.getContext("2d");
+    const font = "700 40px Manrope, sans-serif";
+    x.font = font;
+    const padX = 44, H = 78, r = 16;
+    const tw = Math.min(x.measureText(text).width, 1000);
+    const W = Math.ceil(tw + 2 * padX);
+    c.width = W; c.height = H;
+    x.font = font; // canvas resize resets the context
+    x.beginPath();
+    x.roundRect(0, 0, W, H, r);
+    x.fillStyle = "#1e2127";
+    x.fill();
+    x.strokeStyle = "rgba(255, 255, 255, 0.18)";
+    x.lineWidth = 2;
+    x.stroke();
+    x.fillStyle = "#ffffff";
+    x.textBaseline = "middle";
+    x.fillText(ellipsize(x, text, W - 2 * padX), padX, H / 2 + 2);
+    return c.toDataURL("image/png");
   }
 
   function ellipsize(ctx, text, maxW) {
@@ -875,7 +905,7 @@
     if (kind === "subscribe") {
       el.innerHTML = `
         <div class="lo-btn">SUBSCRIBE</div>
-        <div class="lo-bell"><span>🔔</span></div>
+        <div class="lo-bell"><svg viewBox="0 0 24 24" fill="none" stroke="#5f4c06" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
         <div class="lo-msg">
           <div class="lo-t">Enjoying The Show?</div>
           <div class="lo-s">Subscribe And Turn On <b>All Notifications</b></div>
@@ -1192,7 +1222,13 @@
     }
   } catch { /* ignore */ }
 
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
+  if ("serviceWorker" in navigator) {
+    // Register AND force an update check: an old worker with a stale
+    // cache must never keep serving yesterday's session code
+    navigator.serviceWorker.register("/sw.js")
+      .then((reg) => reg.update())
+      .catch(() => {});
+  }
 
   initPreview();
 })();

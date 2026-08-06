@@ -381,7 +381,7 @@
         </div>
         <span class="badge"></span>
         <span class="spacer"></span>`;
-      row.querySelector(".title").textContent = `Session ${r.roomId}`;
+      row.querySelector(".title").textContent = r.title || `Session ${r.roomId}`;
       row.querySelector(".meta").textContent =
         `${when}${mins ? ` · ${mins} min` : ""} · ${r.mode === "server" ? "server-side" : "browser-side"}`;
       row.querySelector(".badge").textContent = STATUS_LABELS[r.status] || r.status;
@@ -656,7 +656,13 @@
     }
   };
 
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
+  if ("serviceWorker" in navigator) {
+    // Register AND force an update check, so a stale worker can't pin
+    // old dashboard code
+    navigator.serviceWorker.register("/sw.js")
+      .then((reg) => reg.update())
+      .catch(() => {});
+  }
 
   // ---------- boot ----------
 

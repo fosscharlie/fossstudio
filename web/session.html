@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FOSSStudio session</title>
-<link rel="stylesheet" href="/css/session.css?v=20260806f">
+<link rel="stylesheet" href="/css/session.css?v=20260806g">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -50,9 +50,12 @@
 
 <!-- Live session -->
 <div id="session" class="session" hidden>
-  <header id="banner" class="banner">FOSSStudio</header>
+  <header id="sessionTop" class="session-top" hidden></header>
   <div class="session-body">
-  <main id="grid" class="grid"></main>
+  <main id="grid" class="grid">
+    <!-- Episode title: floats over the video itself, not a page bar -->
+    <header id="banner" class="banner"></header>
+  </main>
 
   <!-- Host-only control panel (always open for the host) -->
   <aside id="hostPanel" class="host-panel" hidden>
@@ -85,6 +88,7 @@
       </div>
     </div>
     <div id="hpGuests"></div>
+    <div class="hp-build">Build 20260806g</div>
   </aside>
   </div>
   <footer class="controls">
@@ -98,7 +102,7 @@
   </footer>
 </div>
 
-<script src="/assets/mediasoup-client.js?v=20260806f"></script>
-<script src="/js/session.js?v=20260806f"></script>
+<script src="/assets/mediasoup-client.js?v=20260806g"></script>
+<script src="/js/session.js?v=20260806g"></script>
 </body>
 </html>

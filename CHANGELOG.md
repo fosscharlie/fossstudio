@@ -4,6 +4,21 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Episode title, front and centre**: shown in a large chip floating
+  over the video (plus a slim bar at the top of the page), and baked
+  into the combined recording and the live stream, top-centre — so the
+  published video is titled like the screen
+- **Recordings are named after the episode** instead of the session
+  code; episode titles are now required when creating a session
+- **Better mute indicator**: a red round mic-off badge in the tile's
+  corner replaces the 🔇 emoji
+- **Subscribe overlay bell** is now a proper drawn bell that rings
+  (fast decaying swing) — in the session overlay and in the video baked
+  into recordings and streams
+- Session pages and the service worker are served with no-store
+  caching and force a worker update on load, and the host panel shows
+  a small build number — ending stale-code confusion for good
+
 - Dashboard main-menu highlight is now a solid accent chip with white
   text (the translucent accent wash made the label hard to read)
 

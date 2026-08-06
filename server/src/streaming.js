@@ -118,10 +118,21 @@ async function launch(state) {
       ? `[${audios[0].i}:a]aresample=44100[aout]`
       : `${audios.map((a) => `[${a.i}:a]`).join("")}amix=inputs=${audios.length}:normalize=0,aresample=44100[aout]`;
 
+  // Episode-title chip, top-centre — same as it floats over the grid
+  let finalLabel = "[vout]";
+  let titleArgs = [];
+  let titleFilter = "";
+  const titlePng = path.join(config.dataDir, "banners", room.id, "__title.png");
+  if (await fs.access(titlePng).then(() => true, () => false)) {
+    const ti = nextIdx++;
+    titleArgs = ["-loop", "1", "-framerate", "5", "-i", titlePng];
+    titleFilter = `;${finalLabel}[${ti}:v]overlay=x=(main_w-overlay_w)/2:y=14:eof_action=repeat[vtl]`;
+    finalLabel = "[vtl]";
+  }
+
   // Optional one-shot overlay (subscribe reminder / ad banner): part of
   // this launch's graph, slides in, auto-expires via its enable window.
   let overlayArgs = [];
-  let finalLabel = "[vout]";
   let overlayFilter = "";
   if (overlay) {
     const oi = nextIdx;
@@ -130,10 +141,10 @@ async function launch(state) {
       `'main_h-(overlay_h+${margin})*clip(min(t/0.5\,(${D}-t)/0.5)\,0\,1)+${margin}*0'`;
     if (overlay.kind === "subscribe") {
       overlayArgs = ["-i", path.join(ASSETS, "subscribe.mp4")];
-      overlayFilter = `;[${oi}:v]scale=1280:-2[ovv];[vout][ovv]overlay=x=0:y=${slide(0)}:eof_action=pass:enable='lte(t\,${D})'[vfin]`;
+      overlayFilter = `;[${oi}:v]scale=1280:-2[ovv];${finalLabel}[ovv]overlay=x=0:y=${slide(0)}:eof_action=pass:enable='lte(t\,${D})'[vfin]`;
     } else {
       overlayArgs = ["-loop", "1", "-i", overlay.file];
-      overlayFilter = `;[${oi}:v]scale=-2:150[ovv];[vout][ovv]overlay=x=main_w-overlay_w-24:y=${slide(24)}:eof_action=pass:enable='lte(t\,${D})'[vfin]`;
+      overlayFilter = `;[${oi}:v]scale=-2:150[ovv];${finalLabel}[ovv]overlay=x=main_w-overlay_w-24:y=${slide(24)}:eof_action=pass:enable='lte(t\,${D})'[vfin]`;
     }
     finalLabel = "[vfin]";
   }
@@ -152,8 +163,9 @@ async function launch(state) {
       "-i", x.sdpPath
     ]),
     ...bannerArgs,
+    ...titleArgs,
     ...overlayArgs,
-    "-filter_complex", `${scaled};${stack};${amix}${overlayFilter}`,
+    "-filter_complex", `${scaled};${stack};${amix}${titleFilter}${overlayFilter}`,
     "-map", finalLabel, "-map", "[aout]",
     "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
     "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k", "-g", "60",

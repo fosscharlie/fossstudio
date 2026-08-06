@@ -83,6 +83,7 @@ check(`recording processed (status: ${rec?.status})`, rec?.status === "ready");
 const flacs = (rec?.files || []).filter((f) => f.endsWith(".flac"));
 check(`two FLACs present (${flacs.join(", ")})`, flacs.length === 2);
 check("combined.mkv present", (rec?.files || []).includes("combined.mkv"));
+check(`recording named after the episode (${rec?.title})`, rec?.title === "Automated test");
 
 // The host's browser should have uploaded a lower-third PNG per person
 if (rec) {
@@ -114,6 +115,24 @@ if (rec?.status === "ready") {
     } catch {
       check(`${f}: probe failed`, false);
     }
+  }
+
+  // The episode-title chip is baked in top-centre: dark chip pixels
+  try {
+    const rgb = execFileSync(`${process.env.HOME}/.local/bin/ffmpeg`, [
+      "-loglevel", "error", "-ss", "5", "-i", `${OUT}/combined.mkv`,
+      "-vf", "crop=40:10:620:40", "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"
+    ]);
+    let r = 0, g = 0, b = 0;
+    const n = rgb.length / 3;
+    for (let i = 0; i + 2 < rgb.length; i += 3) { r += rgb[i]; g += rgb[i + 1]; b += rgb[i + 2]; }
+    r /= n; g /= n; b /= n;
+    // The crop covers chip + white text: expect a neutral grey mix,
+    // nothing like the saturated video behind it
+    check(`episode title baked top-centre (rgb ${r.toFixed(0)},${g.toFixed(0)},${b.toFixed(0)})`,
+      Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && r < 180);
+  } catch (e) {
+    check(`title pixel probe failed: ${e.message}`, false);
   }
 
   // Lower-thirds are baked in: the bottom-left corner of the first tile

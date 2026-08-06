@@ -72,6 +72,7 @@ export async function startRecording(room, mode) {
     roomId: room.id,
     ownerId: room.ownerId || null,
     mode,
+    title: room.title || "",
     startedAt: Date.now(),
     peers: new Map(), // peerId -> {name, files:{}, clientStartOffsetMs, done}
     overlays: [],     // {kind, offsetMs, file?} baked into combined.mkv
@@ -87,6 +88,11 @@ export async function startRecording(room, mode) {
   try {
     for (const f of await fs.readdir(bdir)) {
       if (!f.endsWith(".png")) continue;
+      if (f === "__title.png") {
+        await fs.copyFile(path.join(bdir, f), path.join(recDir(recId), "raw", "title.png"));
+        rec.titleFile = "title.png";
+        continue;
+      }
       const pid = f.slice(0, -4);
       const name = `banner-${pid}.png`;
       await fs.copyFile(path.join(bdir, f), path.join(recDir(recId), "raw", name));
@@ -99,7 +105,7 @@ export async function startRecording(room, mode) {
 
   await saveIndex({
     id: recId, roomId: room.id, ownerId: rec.ownerId, mode, startedAt: rec.startedAt,
-    status: "recording", title: room.id, files: []
+    status: "recording", title: rec.title, files: []
   });
   return rec;
 }
@@ -164,7 +170,8 @@ function maybeFinalize(rec) {
   finalize(rec).catch(async (err) => {
     console.error("recording processing failed:", err);
     await saveIndex({
-      id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, startedAt: rec.startedAt,
+      id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, title: rec.title,
+      startedAt: rec.startedAt,
       status: "failed", error: "Processing failed — the raw files are kept.", files: []
     });
   });
@@ -172,12 +179,14 @@ function maybeFinalize(rec) {
 
 async function finalize(rec) {
   await saveIndex({
-    id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, startedAt: rec.startedAt,
+    id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, title: rec.title,
+    startedAt: rec.startedAt,
     endedAt: Date.now(), status: "processing", files: []
   });
   const files = await processRecording(rec);
   await saveIndex({
-    id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, startedAt: rec.startedAt,
+    id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, title: rec.title,
+    startedAt: rec.startedAt,
     endedAt: Date.now(), status: "ready", files
   });
   const { notifyUser } = await import("../push.js");

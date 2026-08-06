@@ -112,9 +112,16 @@ export async function processRecording(rec) {
     const stack = videos.length === 1
       ? `[v0]copy[vout]`
       : `${videos.map((p, i) => `[v${i}]`).join("")}xstack=inputs=${videos.length}:layout=${layout.join("|")}:fill=black[vout]`;
-    // Bake in any overlays triggered during the recording
+    // Episode-title chip, top-centre — same as it floats over the grid
     let finalLabel = "[vout]";
     let overlayFilters = "";
+    const titleFile = rec.titleFile && path.join(raw, rec.titleFile);
+    if (titleFile && await exists(titleFile)) {
+      const ti = addInput(titleFile, 0);
+      overlayFilters += `;${finalLabel}[${ti}:v]overlay=x=(main_w-overlay_w)/2:y=14:eof_action=repeat[vtl]`;
+      finalLabel = "[vtl]";
+    }
+    // Bake in any overlays triggered during the recording
     (rec.overlays || []).forEach((ov, i) => {
       const t0 = (ov.offsetMs / 1000).toFixed(2);
       const dur = ov.kind === "subscribe" ? 6 : 18;

@@ -17,6 +17,11 @@ app.use((req, res, next) => {
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("Referrer-Policy", "same-origin");
   res.setHeader("Permissions-Policy", "camera=(self), microphone=(self), geolocation=()");
+  // Pages and the service worker must always come from the server —
+  // a cached copy pins old asset versions and serves stale app code
+  if (/^\/(s\/|host\/?$|sw\.js$)|\.html$|^\/$/.test(req.path)) {
+    res.setHeader("Cache-Control", "no-store");
+  }
   next();
 });
 

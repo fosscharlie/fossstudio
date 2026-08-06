@@ -326,7 +326,9 @@ api.post("/sessions", requireAuth, async (req, res) => {
   if (req.user.role === "admin") {
     return res.status(403).json({ error: "Admins manage hosts; sessions belong to host accounts." });
   }
-  res.json(await createSession(req.user, req.body.title));
+  const title = String(req.body.title || "").trim();
+  if (!title) return res.status(400).json({ error: "Give the episode a title — it names the session and its recordings." });
+  res.json(await createSession(req.user, title));
 });
 
 api.delete("/sessions/:id", requireAuth, async (req, res) => {
