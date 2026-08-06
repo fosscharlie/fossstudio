@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio — Host</title>
 <link rel="stylesheet" href="/host/host.css">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icons/icon-192.png">
+<meta name="theme-color" content="#14161a">
 </head>
 <body>
 <div class="shell">
@@ -133,9 +136,29 @@
 
   <!-- System -->
   <section id="sec-system" class="stack" hidden>
-    <div class="panel">
-      <h2>System</h2>
-      <p class="hint">Restart, backups, logs, and updates land here in a later phase of the build.</p>
+    <div class="grid-2">
+      <div class="panel stack">
+        <div>
+          <h2>Service</h2>
+          <div style="display:flex; gap:0.6rem; flex-wrap:wrap">
+            <button class="btn" id="restartBtn">Restart studio</button>
+            <a class="btn" href="/api/ops/export">Download everything (zip)</a>
+            <button class="btn" id="pushBtn">Enable notifications</button>
+          </div>
+          <p class="msg" id="systemMsg" hidden></p>
+        </div>
+        <div>
+          <h2>Backups</h2>
+          <p class="hint" style="margin-bottom:0.6rem">Settings and session history are backed up automatically every day. Recordings aren't included — download those from the Recordings tab.</p>
+          <button class="btn primary" id="backupNowBtn">Back up now</button>
+          <div id="backupList" style="margin-top:0.8rem"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Recent log</h2>
+        <button class="btn" id="refreshLogsBtn" style="margin-bottom:0.6rem">Refresh</button>
+        <pre id="logBox" style="font-size:0.72rem; line-height:1.5; overflow:auto; max-height:26rem; white-space:pre-wrap; word-break:break-all"></pre>
+      </div>
     </div>
   </section>
 </div>

@@ -69,6 +69,10 @@ export function attachSignaling(httpServer) {
                 .map(peerSummary)
             });
             broadcast(room, peer.id, { event: "peerJoined", data: peerSummary(peer) });
+            if (role === "guest" && room.peers.size === 1) {
+              const { notifyHost } = await import("./push.js");
+              notifyHost("Guest waiting", `${name} just joined session ${room.id}.`).catch(() => {});
+            }
             // Someone joining mid-recording starts recording too
             const rec = activeRecording(room.id);
             if (rec && addPeerToRecording(rec, peer)) {

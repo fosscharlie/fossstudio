@@ -1,0 +1,42 @@
+# Uptime check from outside the VPS: every 15 minutes GitHub's runners
+# hit the health endpoint; on failure Charlie gets an email via SMTP.
+# Needs repo secrets: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, ALERT_EMAIL
+name: uptime
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check health endpoint
+        id: health
+        run: |
+          if curl -fsS --max-time 20 https://fossstudio.fosscharlie.uk/healthz | grep -q '"ok":true'; then
+            echo "up=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "up=no" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Email alert if down
+        if: steps.health.outputs.up == 'no'
+        uses: dawidd6/action-send-mail@v4
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          from: FOSSStudio uptime <${{ secrets.SMTP_USER }}>
+          to: ${{ secrets.ALERT_EMAIL }}
+          subject: "FOSSStudio is DOWN"
+          body: |
+            The uptime check couldn't reach https://fossstudio.fosscharlie.uk/healthz just now.
+
+            What to try (from the runbook):
+            1. Wait 5 minutes — it may be restarting.
+            2. SSH to the VPS and run: cd /opt/fossstudio/current && docker compose -p fossstudio restart
+            3. If a deploy just happened, roll back: scripts/rollback.sh
+      - name: Fail the run if down (so it shows red)
+        if: steps.health.outputs.up == 'no'
+        run: exit 1

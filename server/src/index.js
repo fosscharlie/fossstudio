@@ -6,6 +6,8 @@ import { startMediasoup } from "./media.js";
 import { attachSignaling } from "./signaling.js";
 import { api } from "./api.js";
 import { isAuthedRequest } from "./auth.js";
+import { scheduleDailyBackups, sendAlertEmail } from "./ops.js";
+import { initPush } from "./push.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -39,6 +41,16 @@ const server = http.createServer(app);
 attachSignaling(server);
 
 await startMediasoup();
+await initPush();
+scheduleDailyBackups();
+
+process.on("uncaughtException", (err) => {
+  console.error("uncaught exception:", err.stack || err.message);
+  sendAlertEmail("FOSSStudio hit an error", String(err.stack || err.message)).catch(() => {});
+});
+process.on("unhandledRejection", (err) => {
+  console.error("unhandled rejection:", err?.stack || String(err));
+});
 
 // Only Caddy talks to the app directly, so bind to loopback.
 server.listen(config.httpPort, "127.0.0.1", () => {

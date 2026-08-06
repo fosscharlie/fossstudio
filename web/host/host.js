@@ -308,12 +308,99 @@
     } catch (err) { msg.textContent = err.message; msg.hidden = false; }
   };
 
+  // ---------- system ----------
+
+  const sysMsg = (text, ok = true) => {
+    const m = $("systemMsg");
+    m.className = `msg ${ok ? "ok" : "err"}`;
+    m.textContent = text;
+    m.hidden = false;
+    setTimeout(() => { m.hidden = true; }, 4000);
+  };
+
+  $("restartBtn").onclick = async () => {
+    await apiFetch("/api/ops/restart", { method: "POST" });
+    sysMsg("Restarting — back in a few seconds…");
+    setTimeout(() => location.reload(), 6000);
+  };
+
+  $("backupNowBtn").onclick = async () => {
+    const { name } = await apiFetch("/api/ops/backup", { method: "POST" });
+    sysMsg(`✓ Backup made: ${name}`);
+    loadBackups();
+  };
+
+  async function loadBackups() {
+    const list = $("backupList");
+    const backups = await apiFetch("/api/ops/backups");
+    list.innerHTML = backups.length ? "" : '<p class="hint">No backups yet.</p>';
+    for (const b of backups) {
+      const row = document.createElement("div");
+      row.className = "session-row";
+      row.innerHTML = `<div><div class="title" style="font-size:0.85rem"></div>
+        <div class="meta">${(b.size / 1024).toFixed(0)} KB</div></div><span class="spacer"></span>`;
+      row.querySelector(".title").textContent = b.name;
+      const dl = iconBtn("open", "Download backup", () => {
+        location.href = `/api/ops/backups/${encodeURIComponent(b.name)}`;
+      });
+      // Restore uses the same two-step inline confirm as delete
+      const restore = iconBtn("copy", "Restore this backup", () => {
+        if (restore.classList.contains("confirm")) {
+          apiFetch("/api/ops/restore", { method: "POST", body: JSON.stringify({ name: b.name }) })
+            .then(() => sysMsg("✓ Backup restored. Restart to apply everywhere."))
+            .catch((e) => sysMsg(e.message, false));
+          return;
+        }
+        restore.classList.add("confirm");
+        restore.innerHTML = ICONS.tick;
+        restore.title = "Click again to confirm restore";
+        setTimeout(() => {
+          restore.classList.remove("confirm");
+          restore.innerHTML = ICONS.copy;
+          restore.title = "Restore this backup";
+        }, 4000);
+      });
+      row.append(dl, restore);
+      list.appendChild(row);
+    }
+  }
+
+  $("refreshLogsBtn").onclick = loadLogs;
+  async function loadLogs() {
+    const { lines } = await apiFetch("/api/ops/logs");
+    $("logBox").textContent = lines.slice(-200).join("\n") || "No log lines yet.";
+    $("logBox").scrollTop = $("logBox").scrollHeight;
+  }
+
+  // ---------- push notifications ----------
+
+  $("pushBtn").onclick = async () => {
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") return sysMsg("Notifications were blocked in the browser.", false);
+      const reg = await navigator.serviceWorker.ready;
+      const { key } = await apiFetch("/api/push/key");
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: key
+      });
+      await apiFetch("/api/push/subscribe", { method: "POST", body: JSON.stringify(sub) });
+      sysMsg("✓ You'll get a notification when a guest arrives or a recording is ready.");
+    } catch {
+      sysMsg("Couldn't enable notifications on this browser.", false);
+    }
+  };
+
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
+
   // ---------- boot ----------
 
   loadSessions();
   loadRecordings();
   loadTheme();
   load2fa();
+  loadBackups();
+  loadLogs();
   setInterval(loadSessions, 10000);   // keep the live badges fresh
   setInterval(loadRecordings, 15000); // pick up processing -> ready
 })();

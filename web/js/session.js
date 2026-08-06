@@ -578,5 +578,7 @@
 
   window.addEventListener("beforeunload", () => { try { ws && ws.close(); } catch { /* ignore */ } });
 
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
+
   initPreview();
 })();

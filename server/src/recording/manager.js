@@ -151,6 +151,9 @@ async function finalize(rec) {
     id: rec.id, roomId: rec.roomId, mode: rec.mode, startedAt: rec.startedAt,
     endedAt: Date.now(), status: "ready", files
   });
+  const { notifyHost } = await import("../push.js");
+  notifyHost("Recording ready", `Session ${rec.roomId} is processed — ${files.length} files to download.`)
+    .catch(() => {});
 }
 
 export async function deleteRecording(id) {

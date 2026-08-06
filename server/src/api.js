@@ -13,6 +13,11 @@ import {
   verifyUploadToken, appendChunk, markPeerDone,
   listRecordings, deleteRecording, recDir
 } from "./recording/manager.js";
+import {
+  recentLogs, makeBackup, listBackups, backupPath,
+  restoreBackup, restartApp, streamFullExport
+} from "./ops.js";
+import { publicKey, addSubscription } from "./push.js";
 
 export const api = express.Router();
 api.use(express.json({ limit: "64kb" }));
@@ -179,5 +184,57 @@ api.get("/recordings/:id/files/:file", requireAuth, (req, res) => {
 
 api.delete("/recordings/:id", requireAuth, async (req, res) => {
   await deleteRecording(path.basename(req.params.id));
+  res.json({ ok: true });
+});
+
+// ---------- ops: logs, backups, restart, export ----------
+
+api.get("/ops/logs", requireAuth, (req, res) => {
+  res.json({ lines: recentLogs() });
+});
+
+api.post("/ops/backup", requireAuth, async (req, res) => {
+  res.json({ name: await makeBackup() });
+});
+
+api.get("/ops/backups", requireAuth, async (req, res) => {
+  res.json(await listBackups());
+});
+
+api.get("/ops/backups/:name", requireAuth, (req, res) => {
+  const name = path.basename(req.params.name);
+  res.download(backupPath(name), name, (err) => {
+    if (err && !res.headersSent) res.status(404).json({ error: "backup not found" });
+  });
+});
+
+api.post("/ops/restore", requireAuth, async (req, res) => {
+  try {
+    await restoreBackup(String(req.body.name || ""));
+    res.json({ ok: true });
+  } catch {
+    res.status(400).json({ error: "Couldn't restore that backup." });
+  }
+});
+
+api.post("/ops/restart", requireAuth, (req, res) => {
+  res.json({ ok: true });
+  restartApp();
+});
+
+api.get("/ops/export", requireAuth, (req, res) => {
+  streamFullExport(res);
+});
+
+// ---------- push notifications ----------
+
+api.get("/push/key", requireAuth, (req, res) => {
+  res.json({ key: publicKey() });
+});
+
+api.post("/push/subscribe", requireAuth, async (req, res) => {
+  const sub = req.body;
+  if (!sub?.endpoint || !sub?.keys) return res.status(400).json({ error: "bad subscription" });
+  await addSubscription(sub);
   res.json({ ok: true });
 });
