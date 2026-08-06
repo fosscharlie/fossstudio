@@ -19,8 +19,8 @@ import { startStream, stopStream, isStreaming, refreshStream } from "./streaming
 
 const ROOM_ID_RE = /^[a-zA-Z0-9_-]{4,32}$/;
 const BANNER_PALETTE = [
-  "#fbc711", "#f34236", "#e8207e", "#9b26ae", "#3d51b4",
-  "#2295f1", "#019587", "#4bae4f", "#fe9700"
+  "#fbc711", "#f34236", "#e8207e", "#9b26ae",
+  "#3d51b4", "#2295f1", "#019587", "#4bae4f"
 ];
 const NAME_MAX = 24;
 

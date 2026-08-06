@@ -383,7 +383,8 @@ body.dim-ui .banner:hover { opacity: 1; }
 .host-panel .toggle input:checked + .track::after { transform: translateX(1.15rem); background: var(--lm-on-accent); }
 .hp-color { margin: 0.9rem 0; }
 .hp-color-label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; }
-.hp-swatches { display: flex; gap: 0.4rem; flex-wrap: nowrap; margin-bottom: 0.5rem; }
+.hp-color-row { display: flex; gap: 0.5rem; align-items: center; }
+.hp-swatches { display: flex; gap: 0.35rem; flex-wrap: nowrap; }
 .hp-swatch {
   flex-shrink: 0;
   width: 1.55rem; height: 1.55rem;
@@ -399,7 +400,9 @@ body.dim-ui .banner:hover { opacity: 1; }
 #hpBannerHex {
   font: inherit;
   font-size: 0.85rem;
-  width: 6.5rem;
+  flex: 1;
+  min-width: 0;
+  width: 4.5rem;
   padding: 0.35rem 0.6rem;
   border: 1px solid var(--lm-line);
   border-radius: 0.6rem;

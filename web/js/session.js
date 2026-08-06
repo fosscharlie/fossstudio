@@ -513,8 +513,8 @@
   matchMedia("(max-width: 700px)").addEventListener("change", applyLayout);
 
   const BANNER_COLOURS = [
-    "#fbc711", "#f34236", "#e8207e", "#9b26ae", "#3d51b4",
-    "#2295f1", "#019587", "#4bae4f", "#fe9700"
+    "#fbc711", "#f34236", "#e8207e", "#9b26ae",
+    "#3d51b4", "#2295f1", "#019587", "#4bae4f"
   ];
 
   function sendBannerColor(c) {
