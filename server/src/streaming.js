@@ -125,8 +125,11 @@ async function launch(state) {
   const titlePng = path.join(config.dataDir, "banners", room.id, "__title.png");
   if (await fs.access(titlePng).then(() => true, () => false)) {
     const ti = nextIdx++;
+    const pos = room.control?.titlePos || { x: 0.5, y: 0 };
+    const px = Number(pos.x).toFixed(3), py = Number(pos.y).toFixed(3);
     titleArgs = ["-loop", "1", "-framerate", "5", "-i", titlePng];
-    titleFilter = `;${finalLabel}[${ti}:v]overlay=x=(main_w-overlay_w)/2:y=14:eof_action=repeat[vtl]`;
+    titleFilter = `;[${ti}:v]scale=210:-2[tls];${finalLabel}[tls]overlay=` +
+      `x=(main_w-overlay_w)*${px}:y=(main_h-overlay_h)*${py}+14*(1-${py}):eof_action=repeat[vtl]`;
     finalLabel = "[vtl]";
   }
 
@@ -159,7 +162,7 @@ async function launch(state) {
     // the whitelist/probing flags are per-input options: precede every -i
     ...inputs.flatMap((x) => [
       "-protocol_whitelist", "file,udp,rtp",
-      "-analyzeduration", "10M", "-probesize", "10M",
+      "-analyzeduration", "20M", "-probesize", "20M",
       "-i", x.sdpPath
     ]),
     ...bannerArgs,
@@ -189,7 +192,7 @@ async function launch(state) {
   for (const c of cleanup.consumers) await c.resume();
   // ffmpeg needs a keyframe to lock onto each video stream; ask a few
   // times in case the first request races its port setup
-  for (const delay of [0, 1000, 2000, 4000]) {
+  for (const delay of [0, 1000, 2000, 4000, 8000, 12000]) {
     setTimeout(() => {
       for (const c of cleanup.consumers) {
         if (c.kind === "video" && !c.closed) c.requestKeyFrame().catch(() => {});

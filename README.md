@@ -21,9 +21,10 @@ dashboard. Live at https://app.fossstudio.org.
   server-side (a per-host permission, picked per session — locked while
   recording or live). Output: one combined MKV + a lossless FLAC per
   participant, named after the episode. The combined video matches the
-  screen: everyone's tile, their lower-third name banners, the episode
-  title top-centre, and any subscribe/ad overlays you triggered, at the
-  moment you triggered them.
+  screen: everyone's tile, their lower-third name banners, the podcast
+  logo + episode title block (draggable anywhere by the host), and any
+  subscribe/ad overlays you triggered, at the moment you triggered
+  them.
 - **Streaming:** server-composited RTMP out to YouTube, with the same
   lower-third banners and overlays as the session view.
 - **Noise suppression:** RNNoise in the guest's browser (WASM worklet).

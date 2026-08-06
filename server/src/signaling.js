@@ -85,9 +85,10 @@ export function attachSignaling(httpServer) {
               control: room.control,
               streaming: isStreaming(room.id),
               theme: {
-                // The top banner shows this session's episode title —
+                // The block shows this session's episode title —
                 // one system can run several different podcasts
                 title: session.title === "Untitled session" ? "" : session.title,
+                logo: settings.logo ? `/api/logo/${room.ownerId}` : null,
                 wallpaper: settings.wallpaper ? `/api/wallpaper/${room.ownerId}` : null
               },
               peers: [...room.peers.values()]
@@ -179,13 +180,11 @@ export function attachSignaling(httpServer) {
 
           case "selfMute": {
             if (!peer) return fail("not joined");
+            // Mute is carried as silence in the track itself (the client
+            // disables it); producers stay active so recordings and the
+            // live-stream mixer keep receiving frames
             room.control.muted[peer.id] = !!data.muted;
             if (!data.muted) delete room.control.hands[peer.id];
-            for (const prod of peer.producers.values()) {
-              if (prod.kind === "audio") {
-                data.muted ? await prod.pause() : await prod.resume();
-              }
-            }
             reply({});
             broadcast(room, null, { event: "control", data: room.control });
             break;
@@ -251,11 +250,15 @@ export function attachSignaling(httpServer) {
                 if (!target) return fail("no such guest");
                 c.muted[target.id] = !!data.muted;
                 if (!data.muted) delete c.hands[target.id];
-                for (const prod of target.producers.values()) {
-                  if (prod.kind === "audio") {
-                    data.muted ? await prod.pause() : await prod.resume();
-                  }
-                }
+                break;
+              }
+              case "titlePos": {
+                // Host dragged the logo/title block; fractions of the
+                // free space so every screen and the compositors agree
+                const clamp = (v) => Math.min(1, Math.max(0, Number(v) || 0));
+                c.titlePos = { x: clamp(data.x), y: clamp(data.y) };
+                const recPos = activeRecording(room.id);
+                if (recPos) recPos.titlePos = c.titlePos;
                 break;
               }
               case "muteAll": {
@@ -264,11 +267,6 @@ export function attachSignaling(httpServer) {
                   // Everyone means everyone — the host included
                   c.muted[p2.id] = muted;
                   if (muted) delete c.hands[p2.id];
-                  for (const prod of p2.producers.values()) {
-                    if (prod.kind === "audio") {
-                      muted ? await prod.pause() : await prod.resume();
-                    }
-                  }
                 }
                 break;
               }
@@ -381,10 +379,6 @@ export function attachSignaling(httpServer) {
             });
             peer.producers.set(producer.id, producer);
             producer.on("transportclose", () => peer.producers.delete(producer.id));
-            // Join-muted (or host-muted) peers: their mic arrives paused
-            if (producer.kind === "audio" && room.control.muted[peer.id]) {
-              await producer.pause();
-            }
             reply({ producerId: producer.id });
             broadcast(room, peer.id, {
               event: "newProducer",

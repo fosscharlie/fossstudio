@@ -106,9 +106,10 @@ try {
   let tr = 0, tg = 0, tb = 0;
   for (let i = 0; i + 2 < 3 * tn; i += 3) { tr += trgb[i]; tg += trgb[i + 1]; tb += trgb[i + 2]; }
   tr /= tn; tg /= tn; tb /= tn;
-  // Neutral chip-plus-text mix, unlike the saturated video behind
+  // The block (chip, text, maybe a logo) covers this area: anything
+  // but the raw green video behind it proves it was composited
   check(`episode title on the stream (rgb ${tr.toFixed(0)},${tg.toFixed(0)},${tb.toFixed(0)})`,
-    Math.abs(tr - tg) < 20 && Math.abs(tg - tb) < 20 && tr < 180);
+    !(tg > 100 && tr < 60 && tb < 60));
 } catch (e) {
   check(`probe failed: ${e.message.slice(0, 80)}`, false);
 }

@@ -336,6 +336,51 @@ api.delete("/sessions/:id", requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// Podcast logo (part of the theme): shown above the episode title on
+// the video and baked into recordings/streams
+api.post("/logo", requireAuth,
+  express.raw({ type: ["image/jpeg", "image/png", "image/webp"], limit: "2mb" }),
+  async (req, res) => {
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+      return res.status(400).json({ error: "Send a JPEG, PNG, or WebP image." });
+    }
+    const ext = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }[req.headers["content-type"]];
+    const name = `logo-${req.user.uid}.${ext}`;
+    const dir = path.join(config.dataDir, "uploads");
+    await fs.mkdir(dir, { recursive: true });
+    for (const f of await fs.readdir(dir)) {
+      if (f.startsWith(`logo-${req.user.uid}.`)) await fs.unlink(path.join(dir, f));
+    }
+    await fs.writeFile(path.join(dir, name), req.body);
+    await updateSettings(req.user.uid, { logo: name });
+    res.json({ ok: true });
+  });
+
+api.delete("/logo", requireAuth, async (req, res) => {
+  const dir = path.join(config.dataDir, "uploads");
+  try {
+    for (const f of await fs.readdir(dir)) {
+      if (f.startsWith(`logo-${req.user.uid}.`)) await fs.unlink(path.join(dir, f));
+    }
+  } catch { /* nothing uploaded yet */ }
+  await updateSettings(req.user.uid, { logo: null });
+  res.json({ ok: true });
+});
+
+// Public: guests need the logo inside the session view
+api.get("/logo/:uid", async (req, res) => {
+  const s = await getSettings(path.basename(req.params.uid));
+  if (!s.logo) return res.status(404).end();
+  res.sendFile(path.join(config.dataDir, "uploads", path.basename(s.logo)));
+});
+
+// The dashboard preview uses the logged-in user's own logo
+api.get("/logo", requireAuth, async (req, res) => {
+  const s = await getSettings(req.user.uid);
+  if (!s.logo) return res.status(404).end();
+  res.sendFile(path.join(config.dataDir, "uploads", path.basename(s.logo)));
+});
+
 // ---------- recording ----------
 
 function chunkAuth(req, res, next) {

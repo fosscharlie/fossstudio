@@ -118,7 +118,10 @@ export async function processRecording(rec) {
     const titleFile = rec.titleFile && path.join(raw, rec.titleFile);
     if (titleFile && await exists(titleFile)) {
       const ti = addInput(titleFile, 0);
-      overlayFilters += `;${finalLabel}[${ti}:v]overlay=x=(main_w-overlay_w)/2:y=14:eof_action=repeat[vtl]`;
+      const pos = rec.titlePos || { x: 0.5, y: 0 };
+      const px = Number(pos.x).toFixed(3), py = Number(pos.y).toFixed(3);
+      overlayFilters += `;[${ti}:v]scale=210:-2[tls];${finalLabel}[tls]overlay=` +
+        `x=(main_w-overlay_w)*${px}:y=(main_h-overlay_h)*${py}+14*(1-${py}):eof_action=repeat[vtl]`;
       finalLabel = "[vtl]";
     }
     // Bake in any overlays triggered during the recording

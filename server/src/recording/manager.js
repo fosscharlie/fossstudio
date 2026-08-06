@@ -73,6 +73,7 @@ export async function startRecording(room, mode) {
     ownerId: room.ownerId || null,
     mode,
     title: room.title || "",
+    titlePos: room.control?.titlePos || { x: 0.5, y: 0 },
     startedAt: Date.now(),
     peers: new Map(), // peerId -> {name, files:{}, clientStartOffsetMs, done}
     overlays: [],     // {kind, offsetMs, file?} baked into combined.mkv

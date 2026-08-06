@@ -48,9 +48,9 @@ check("host panel is open for the host by default",
   await host.$eval("#hostPanel", (el) => !el.hidden));
 check("guest without login cookie does NOT get the host panel",
   await guest.$eval("#hostPanel", (el) => el.hidden));
-// The top banner shows this session's episode title, not a per-host name
-check("top banner shows the session title",
-  (await host.$eval("#banner", (el) => el.textContent)) === "Automated test");
+// The floating block shows this session's episode title
+check("title block shows the session title",
+  (await host.$eval("#bannerTitle", (el) => el.textContent)) === "Automated test");
 
 // Spotlight the guest from the always-open panel
 await host.$$eval(".hp-guest .spot", (btns) => btns[1].click());

@@ -127,10 +127,10 @@ if (rec?.status === "ready") {
     const n = rgb.length / 3;
     for (let i = 0; i + 2 < rgb.length; i += 3) { r += rgb[i]; g += rgb[i + 1]; b += rgb[i + 2]; }
     r /= n; g /= n; b /= n;
-    // The crop covers chip + white text: expect a neutral grey mix,
-    // nothing like the saturated video behind it
+    // The block (chip, text, maybe a logo) covers this area: anything
+    // but the raw green video behind it proves it was composited
     check(`episode title baked top-centre (rgb ${r.toFixed(0)},${g.toFixed(0)},${b.toFixed(0)})`,
-      Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && r < 180);
+      !(g > 100 && r < 60 && b < 60));
   } catch (e) {
     check(`title pixel probe failed: ${e.message}`, false);
   }

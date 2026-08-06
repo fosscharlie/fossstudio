@@ -1,7 +1,10 @@
 // Per-user settings (validated patches) and the session registry.
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
 import { readJson, writeJson } from "./storage.js";
 import { getUserSettings, updateUserSettings } from "./users.js";
+import { config } from "./config.js";
 
 export async function getSettings(uid) {
   return getUserSettings(uid);
@@ -14,6 +17,9 @@ export async function updateSettings(uid, patch) {
   }
   if (patch.wallpaper === null || typeof patch.wallpaper === "string") {
     clean.wallpaper = patch.wallpaper;
+  }
+  if (patch.logo === null || typeof patch.logo === "string") {
+    clean.logo = patch.logo;
   }
   if (patch.adBanner === null || typeof patch.adBanner === "string") {
     clean.adBanner = patch.adBanner;
@@ -58,6 +64,7 @@ export async function createSession(user, title) {
   await writeJson("sessions.json", sessions);
   return session;
 }
+
 
 export async function deleteSession(user, id) {
   const sessions = await readJson("sessions.json", []);

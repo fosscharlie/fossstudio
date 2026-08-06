@@ -409,10 +409,18 @@
 
   function applyTheme(theme) {
     document.title = theme.title ? `${theme.title} — live` : "FOSSStudio — live";
-    els.banner.textContent = theme.title || "";
-    const top = document.getElementById("sessionTop");
-    top.textContent = theme.title || "";
-    top.hidden = !theme.title;
+    document.getElementById("bannerTitle").textContent = theme.title || "";
+    const logo = document.getElementById("bannerLogo");
+    if (theme.logo) {
+      logo.src = theme.logo;
+      logo.hidden = false;
+      els.banner.classList.add("has-logo");
+      logo.decode().then(() => scheduleBannerSnapshots()).catch(() => {});
+    } else {
+      logo.hidden = true;
+      els.banner.classList.remove("has-logo");
+    }
+    els.banner.classList.toggle("blank", !theme.title && !theme.logo);
     if (theme.wallpaper) {
       els.grid.style.backgroundImage = `url(${theme.wallpaper})`;
       els.session.classList.add("wallpapered");
@@ -523,6 +531,7 @@
       const cols = mobile ? (n > 1 ? 2 : 1) : Math.ceil(Math.sqrt(n));
       els.grid.style.setProperty("--cols", cols);
     }
+    positionTitleBlock();
   }
   matchMedia("(max-width: 700px)").addEventListener("change", applyLayout);
 
@@ -625,7 +634,7 @@
     }
     if (micProducer && selfId) {
       const mine = !!control.muted?.[selfId];
-      if (mine !== micProducer.paused) setMicMuted(mine);
+      if (mine !== micMuted) setMicMuted(mine);
       if (control.noise && selfId in control.noise) {
         setNoiseProcessing(!!control.noise[selfId]);
       }
@@ -643,6 +652,7 @@
         ? "Unmute everyone at once" : "Mute everyone at once, including you";
     }
     applyLayout();
+    positionTitleBlock();
     if (isHost) renderHostGuests();
     scheduleBannerSnapshots();
   }
@@ -672,8 +682,10 @@
       const tagline = third.querySelector(".tagline")?.textContent || "";
       images[peerId] = drawBannerPng(name, tagline, cs.backgroundColor, cs.color);
     }
-    const titleText = els.banner.textContent.trim();
-    const title = titleText ? drawTitlePng(titleText) : null;
+    const titleText = document.getElementById("bannerTitle").textContent.trim();
+    const logoEl = document.getElementById("bannerLogo");
+    const hasBlock = titleText || (!logoEl.hidden && logoEl.complete && logoEl.naturalWidth > 0);
+    const title = hasBlock ? drawTitlePng(titleText) : null;
     // Only send when something actually changed — while live, the server
     // relaunches the stream to pick banners up, which costs a short blip
     const payload = JSON.stringify([images, title]);
@@ -682,18 +694,19 @@
     await request("bannerSnapshots", { images, title });
   }
 
-  // The episode-title chip, drawn for a 1280-wide composite: the same
-  // solid dark chip that floats over the grid on screen
+  // The logo/title block for the composite, drawn at 2x the on-screen
+  // 180px design: logo up to 360x100, title under it; text-only titles
+  // fill the block with wrapped lines
   function drawTitlePng(text) {
+    const logo = document.getElementById("bannerLogo");
+    const hasLogo = !logo.hidden && logo.complete && logo.naturalWidth > 0;
+    const W = 392, r = 16, padX = 16;
+    const logoH = hasLogo ? 100 : 0;
+    const titleH = text ? (hasLogo ? 64 : 150) : 0;
+    const H = 14 + logoH + (logoH && titleH ? 4 : 0) + titleH + 14;
     const c = document.createElement("canvas");
-    const x = c.getContext("2d");
-    const font = "700 40px Manrope, sans-serif";
-    x.font = font;
-    const padX = 44, H = 78, r = 16;
-    const tw = Math.min(x.measureText(text).width, 1000);
-    const W = Math.ceil(tw + 2 * padX);
     c.width = W; c.height = H;
-    x.font = font; // canvas resize resets the context
+    const x = c.getContext("2d");
     x.beginPath();
     x.roundRect(0, 0, W, H, r);
     x.fillStyle = "#1e2127";
@@ -701,10 +714,87 @@
     x.strokeStyle = "rgba(255, 255, 255, 0.18)";
     x.lineWidth = 2;
     x.stroke();
-    x.fillStyle = "#ffffff";
-    x.textBaseline = "middle";
-    x.fillText(ellipsize(x, text, W - 2 * padX), padX, H / 2 + 2);
+    let yPos = 14;
+    if (hasLogo) {
+      const scale = Math.min(360 / logo.naturalWidth, logoH / logo.naturalHeight);
+      const lw = logo.naturalWidth * scale, lh = logo.naturalHeight * scale;
+      x.drawImage(logo, (W - lw) / 2, yPos + (logoH - lh) / 2, lw, lh);
+      yPos += logoH + 4;
+    }
+    if (text) {
+      x.fillStyle = "#ffffff";
+      x.textAlign = "center";
+      x.textBaseline = "middle";
+      if (hasLogo) {
+        x.font = "700 30px Manrope, sans-serif";
+        x.fillText(ellipsize(x, text, W - 2 * padX), W / 2, yPos + titleH / 2);
+      } else {
+        // Text-only: wrap up to three larger lines
+        x.font = "700 40px Manrope, sans-serif";
+        const words = text.split(/\s+/);
+        const lines = [];
+        let line = "";
+        for (const w of words) {
+          const next = line ? `${line} ${w}` : w;
+          if (x.measureText(next).width > W - 2 * padX && line) {
+            lines.push(line);
+            line = w;
+          } else line = next;
+        }
+        if (line) lines.push(line);
+        const shown = lines.slice(0, 3);
+        if (lines.length > 3) shown[2] = ellipsize(x, shown[2] + "…", W - 2 * padX);
+        const lh = 48;
+        const start = yPos + titleH / 2 - ((shown.length - 1) * lh) / 2;
+        shown.forEach((l, i) =>
+          x.fillText(ellipsize(x, l, W - 2 * padX), W / 2, start + i * lh));
+      }
+    }
     return c.toDataURL("image/png");
+  }
+
+  // ---------- Block position: shared via control, dragged by the host ----------
+
+  function positionTitleBlock() {
+    const pos = control.titlePos || { x: 0.5, y: 0 };
+    const gw = els.grid.clientWidth, gh = els.grid.clientHeight;
+    const bw = els.banner.offsetWidth, bh = els.banner.offsetHeight;
+    // Same formula as the ffmpeg overlay, so the video matches the screen
+    els.banner.style.left = `${pos.x * (gw - bw)}px`;
+    els.banner.style.top = `${pos.y * (gh - bh) + 14 * (1 - pos.y)}px`;
+    els.banner.style.transform = "none";
+  }
+  window.addEventListener("resize", () => positionTitleBlock());
+
+  function enableTitleDrag() {
+    els.banner.classList.add("host-drag");
+    els.banner.dataset.tip = "Drag to move the title anywhere";
+    let dragging = null;
+    els.banner.addEventListener("pointerdown", (e) => {
+      dragging = { dx: e.clientX - els.banner.offsetLeft, dy: e.clientY - els.banner.offsetTop };
+      els.banner.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    els.banner.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const gw = els.grid.clientWidth, gh = els.grid.clientHeight;
+      const bw = els.banner.offsetWidth, bh = els.banner.offsetHeight;
+      const left = Math.min(Math.max(0, e.clientX - dragging.dx), gw - bw);
+      const top = Math.min(Math.max(0, e.clientY - dragging.dy), gh - bh);
+      els.banner.style.left = `${left}px`;
+      els.banner.style.top = `${top}px`;
+      dragging.frac = {
+        x: gw - bw > 0 ? left / (gw - bw) : 0.5,
+        y: gh - bh > 0 ? top / (gh - bh) : 0
+      };
+    });
+    els.banner.addEventListener("pointerup", (e) => {
+      if (dragging?.frac) {
+        control.titlePos = dragging.frac; // optimistic; broadcast confirms
+        request("hostControl", { action: "titlePos", ...dragging.frac }).catch(() => {});
+      }
+      dragging = null;
+    });
   }
 
   function ellipsize(ctx, text, maxW) {
@@ -1058,6 +1148,7 @@
       applyControl(info.control);
       applyTheme(info.theme);
       els.hostPanel.hidden = !isHost; // sidebar is always open for the host
+      if (isHost) enableTitleDrag();
       els.hpServerRecRow.hidden = !(isHost && info.canServerRecord);
 
       device = new mediasoupClient.Device();
@@ -1192,9 +1283,13 @@
 
   els.joinBtn.onclick = join;
 
+  let micMuted = false;
   function setMicMuted(muted, { send = false } = {}) {
     if (!micProducer) return;
-    muted ? micProducer.pause() : micProducer.resume();
+    // Muted means SILENCE, not silence-of-packets: a paused producer
+    // sends nothing at all, which stalls the live-stream audio mixer.
+    // Disabling the track keeps RTP flowing but carries pure silence.
+    micMuted = muted;
     micProducer.track.enabled = !muted;
     els.muteBtn.classList.toggle("off", muted);
     els.muteBtn.innerHTML = muted ? ICONS.micOff : ICONS.mic;
@@ -1204,7 +1299,7 @@
 
   els.muteBtn.onclick = () => {
     if (!micProducer) return;
-    setMicMuted(!micProducer.paused, { send: true });
+    setMicMuted(!micMuted, { send: true });
   };
 
   els.camBtn.onclick = () => {

@@ -473,6 +473,7 @@
     renderSwatches();
     applyAccent(currentAccent);
     updateWallpaperPreview(s.wallpaper);
+    updateLogoPreview(!!s.logo);
     updateAdPreview(!!s.adBanner);
   }
 
@@ -512,6 +513,28 @@
   $("adRemove").onclick = async () => {
     await apiFetch("/api/adbanner", { method: "DELETE" });
     updateAdPreview(false);
+  };
+
+  function updateLogoPreview(has) {
+    const el = $("logoPreview");
+    if (has) {
+      el.style.backgroundImage = `url(/api/logo?${Date.now()})`;
+      el.textContent = "";
+    } else {
+      el.style.backgroundImage = "";
+      el.textContent = "No logo uploaded";
+    }
+  }
+  $("logoPick").onclick = () => $("logoFile").click();
+  $("logoFile").onchange = async () => {
+    const file = $("logoFile").files[0];
+    if (!file) return;
+    await fetch("/api/logo", { method: "POST", headers: { "Content-Type": file.type }, body: file });
+    updateLogoPreview(true);
+  };
+  $("logoRemove").onclick = async () => {
+    await apiFetch("/api/logo", { method: "DELETE" });
+    updateLogoPreview(false);
   };
 
   $("wallpaperPick").onclick = () => $("wallpaperFile").click();

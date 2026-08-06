@@ -4,6 +4,20 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Podcast logo block**: upload a logo in Settings → Themes (about
+  180×50) and it appears above the episode title in a compact block
+  floating over the video — text-only when there's no logo — baked
+  into recordings and streams the same way. The host can **drag the
+  block anywhere** on the video with the mouse; everyone's screen and
+  the composited video follow (a live stream applies a new position at
+  its next relaunch)
+- The old page-top title bar is gone; the block replaces it
+- **Mute now transmits silence instead of stopping audio packets** —
+  fixes live streams stalling or failing to start when anyone (e.g. a
+  join-muted guest) was muted
+- Video grid spacing doubled (16px all round) so the wallpaper shows
+  through
+
 - The red muted badge on video tiles is gone — mute state shows in the
   host panel and on your own mic button only
 
