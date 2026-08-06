@@ -622,6 +622,11 @@
   // ---------- Join / leave ----------
 
   async function join() {
+    if (!els.nameInput.value.trim()) {
+      showError("Add a banner title first — that's the big text under your video.");
+      els.nameInput.focus();
+      return;
+    }
     els.joinBtn.disabled = true;
     els.joinBtn.textContent = "Joining…";
     try {

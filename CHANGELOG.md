@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Banner fields renamed on the join screen: **Banner title** (now
+  required to join) and **Banner subtitle** (optional), no placeholder
+  clutter; title and subtitle sit side by side on desktop
 - Tooltips follow the house style everywhere: lozenge-shaped, matching
   the background with an outlined edge — replacing browser-native ones
 

@@ -40,7 +40,6 @@ body {
   }
   .preview-card h1,
   .preview-video-wrap,
-  .preview-card label:has(#nameInput),
   #joinBtn,
   #previewError { grid-column: 1 / -1; }
 }

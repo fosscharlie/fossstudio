@@ -44,11 +44,11 @@
       <input type="checkbox" id="mirrorToggle" checked>
       Mirror my preview
     </label>
-    <label>Your name
-      <input id="nameInput" maxlength="40" autocomplete="name" placeholder="Shown on your banner">
+    <label>Banner title <span class="soft">(required)</span>
+      <input id="nameInput" maxlength="40" autocomplete="name" required>
     </label>
-    <label>Second line <span class="soft">(optional)</span>
-      <input id="taglineInput" maxlength="60" autocomplete="off" placeholder="Your website, job or company">
+    <label>Banner subtitle <span class="soft">(optional)</span>
+      <input id="taglineInput" maxlength="60" autocomplete="off">
     </label>
     <button id="joinBtn" disabled>Join session</button>
     <p id="previewError" class="error" hidden></p>
