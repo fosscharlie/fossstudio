@@ -59,17 +59,17 @@ if (MODE === "server") {
 }
 await host.click("#hpRecordBtn");
 await new Promise((r) => setTimeout(r, 2500));
-check("host sees REC indicator",
-  await host.$eval("#banner", (el) => el.classList.contains("recording")));
-check("guest sees REC indicator",
-  await guest.$eval("#banner", (el) => el.classList.contains("recording")));
+check("host's recording light is on",
+  await host.$eval("#recLight", (el) => el.classList.contains("on")));
+check("guest's recording light is on",
+  await guest.$eval("#recLight", (el) => el.classList.contains("on")));
 
 // Record for a while, then stop
 await new Promise((r) => setTimeout(r, 12000));
 await host.click("#hpRecordBtn");
 await new Promise((r) => setTimeout(r, 2000));
-check("REC indicator cleared on guest",
-  await guest.$eval("#banner", (el) => !el.classList.contains("recording")));
+check("guest's recording light back to grey",
+  await guest.$eval("#recLight", (el) => !el.classList.contains("on")));
 
 // Wait for processing to finish
 let rec = null;

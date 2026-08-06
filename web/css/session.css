@@ -205,7 +205,7 @@ body {
   line-height: 1.25;
   -webkit-line-clamp: 3;
 }
-.banner.blank:not(.recording):not(.live) { display: none; }
+.banner.blank:not(.live) { display: none; }
 .hp-build {
   margin-top: 0.7rem;
   font-size: 0.65rem;
@@ -213,12 +213,12 @@ body {
   text-align: center;
   opacity: 0.6;
 }
-/* Everyone sees when the tape is rolling */
-.banner.recording::before {
-  content: "● REC ";
-  color: #f34236;
-  animation: recblink 1.6s infinite;
-}
+/* The recording light in everyone's control row: grey when idle,
+   red and blinking while the session is recorded */
+.ctl.rec-light { cursor: default; }
+.ctl.rec-light svg { color: #565d6b; }
+.ctl.rec-light.on { border-color: #f34236; animation: recblink 1.6s infinite; }
+.ctl.rec-light.on svg { color: #f34236; }
 .banner.live::after {
   content: " LIVE";
   color: #f34236;
