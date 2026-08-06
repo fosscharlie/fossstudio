@@ -582,21 +582,17 @@ body.dim-ui .banner:hover { opacity: 1; }
 /* Session view uses the host-set wallpaper when there is one */
 .session.wallpapered .grid { background-size: cover; background-position: center; }
 
-/* Mobile: stacked simplified view, self-view shrinks */
+/* Mobile: your own tile sits in the grid with everyone else, so you
+   can always see yourself where you'll appear in the recording. The
+   floating title chip would cover the top row - the slim top bar
+   already shows the title, so the chip shrinks to just REC/LIVE. */
 @media (max-width: 700px) {
   .grid { align-content: start; }
-  .tile:not(.self) { aspect-ratio: 16 / 9; }
-  .tile.self {
-    position: absolute;
-    right: 12px;
-    bottom: 76px;
-    width: 28vw;
-    max-width: 140px;
-    aspect-ratio: 3 / 4;
-    z-index: 5;
-    border: 1px solid var(--line);
-  }
-  .tile.self .lower-third { display: none; }
+  .tile { aspect-ratio: 16 / 9; }
+  .banner { display: none; }
+  .banner.recording, .banner.live { display: block; font-size: 0; padding: 0.5rem 0.9rem; }
+  .banner.recording::before, .banner.live::after { font-size: 0.85rem; }
+  .banner.live::after { margin-left: 0; }
 }
 
 /* ---------- Tooltips: lozenge, background-coloured, outlined ---------- */

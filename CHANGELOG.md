@@ -4,6 +4,13 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Phones and tablets in portrait**: your own video now sits in the
+  grid with everyone else (same size, same place as when held
+  horizontally) instead of a small bottom-corner overlay — so you can
+  see where you are in the video; the floating title chip shrinks to
+  just the REC/LIVE indicator on small screens (the top bar still
+  shows the episode title)
+
 - **Guests join muted by default** — mic button starts muted, the tile
   shows the badge, and the mic only opens when the guest unmutes
   themselves (or the host unmutes them)

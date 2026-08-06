@@ -519,7 +519,7 @@
     }
     if (!spot) {
       const mobile = matchMedia("(max-width: 700px)").matches;
-      const n = mobile ? Math.max(1, tiles.size - 1) : Math.max(1, tiles.size);
+      const n = Math.max(1, tiles.size); // self included everywhere
       const cols = mobile ? (n > 1 ? 2 : 1) : Math.ceil(Math.sqrt(n));
       els.grid.style.setProperty("--cols", cols);
     }
