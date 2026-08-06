@@ -18,7 +18,7 @@ dashboard. Live at https://app.fossstudio.org.
 - **In-session host controls:** spotlight/grid layout, per-guest volume,
   per-session auto level balancing, start/stop recording, go live.
 - **Recording:** browser-side per-person (PCM, best for big sessions) or
-  server-side (a per-host permission, picked per session — locked while
+  server-side (a host-panel switch, picked per session — locked while
   recording or live). Output: one combined MKV + a lossless FLAC per
   participant, named after the episode. The combined video matches the
   screen: everyone's tile, their lower-third name banners, the podcast

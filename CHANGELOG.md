@@ -4,6 +4,11 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **The browser/server recording switch is available to every host**
+  in the host panel (no admin permission needed any more — the
+  per-host "allow server-side recording" setting is gone); it locks
+  while recording or live
+
 - Video spacing: 50px everywhere on desktop (was 80), a small 20px on
   tablets and 12px on phones — the videos themselves get bigger
 

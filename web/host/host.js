@@ -207,31 +207,6 @@
         </div>
         <span class="spacer"></span>`;
       row.querySelector(".title").textContent = u.username;
-      if (u.role !== "admin") {
-        // Each host gets its own settings drawer
-        const drawer = document.createElement("div");
-        drawer.className = "host-settings";
-        drawer.hidden = true;
-        drawer.innerHTML = `
-          <label class="toggle">
-            <input type="checkbox" ${u.allowServerRecording ? "checked" : ""}>
-            <span class="track"></span>
-            <span>Allow server-side recording<br>
-              <span class="hint">Heavier on the server — suits shows with 2–3 guests. The host then switches it on per session in their host panel.</span></span>
-          </label>`;
-        drawer.querySelector("input").onchange = async (e) => {
-          await apiFetch(`/api/users/${u.id}/permissions`, {
-            method: "POST",
-            body: JSON.stringify({ allowServerRecording: e.target.checked })
-          }).catch((err) => showUserMsg(err.message));
-        };
-        const gear = iconBtn("gear", `Settings for ${u.username}`, () => {
-          drawer.hidden = !drawer.hidden;
-          gear.classList.toggle("done", !drawer.hidden);
-        });
-        row.appendChild(gear);
-        row.settingsDrawer = drawer;
-      }
       const reset = iconBtn("key", "Set a new password for this user", async () => {
         const pw = prompt(`New password for ${u.username} (10+ characters):`);
         if (!pw) return;
@@ -254,7 +229,6 @@
         }));
       }
       list.appendChild(row);
-      if (row.settingsDrawer) list.appendChild(row.settingsDrawer);
     }
   }
 
