@@ -44,7 +44,7 @@ export async function processRecording(rec) {
   // Server mode: one file has both. Browser mode: two separate files.
   const parts = []; // {name, offsetMs, videoFile, audioFile}
 
-  for (const [, p] of rec.peers) {
+  for (const [peerId, p] of rec.peers) {
     const name = safeName(p.name, used);
     const audioFile = rec.mode === "server"
       ? (p.files.server && path.join(raw, p.files.server))
@@ -52,11 +52,13 @@ export async function processRecording(rec) {
     const videoFile = rec.mode === "server"
       ? audioFile
       : (p.files.video && path.join(raw, p.files.video));
+    const bannerFile = path.join(raw, p.banner || `banner-${peerId}.png`);
     const part = {
       name,
       offsetMs: p.startOffsetMs || 0,
       audioFile: audioFile && await exists(audioFile) ? audioFile : null,
-      videoFile: videoFile && await exists(videoFile) ? videoFile : null
+      videoFile: videoFile && await exists(videoFile) ? videoFile : null,
+      bannerFile: await exists(bannerFile) ? bannerFile : null
     };
 
     // Lossless FLAC per participant
@@ -92,9 +94,19 @@ export async function processRecording(rec) {
     const cellW = 2 * Math.round(1280 / cols / 2);
     const cellH = 2 * Math.round(720 / rows / 2);
 
-    const scaled = videos.map((p, i) =>
-      `[${p.vIdx}:v]scale=${cellW}:${cellH}:force_original_aspect_ratio=increase,` +
-      `crop=${cellW}:${cellH}:(iw-${cellW})/2:0,setsar=1[v${i}]`).join(";");
+    // The host uploads each on-screen lower-third as a PNG (ffmpeg can't
+    // draw text); overlay it bottom-left of the tile, like the DOM does
+    for (const p of videos) {
+      if (p.bannerFile) p.bnIdx = addInput(p.bannerFile, 0);
+    }
+    const bannerW = 2 * Math.round(0.38 * cellW / 2);
+    const scaled = videos.map((p, i) => {
+      const base = `[${p.vIdx}:v]scale=${cellW}:${cellH}:force_original_aspect_ratio=increase,` +
+        `crop=${cellW}:${cellH}:(iw-${cellW})/2:0,setsar=1`;
+      if (p.bnIdx == null) return `${base}[v${i}]`;
+      return `${base}[t${i}];[${p.bnIdx}:v]scale=${bannerW}:-2[bn${i}];` +
+        `[t${i}][bn${i}]overlay=x=0:y=main_h-overlay_h:eof_action=repeat[v${i}]`;
+    }).join(";");
     const layout = videos.map((p, i) =>
       `${(i % cols) * cellW}_${Math.floor(i / cols) * cellH}`);
     const stack = videos.length === 1

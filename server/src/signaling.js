@@ -3,6 +3,7 @@
 // Server-initiated events are {event, data} with no id.
 import { WebSocketServer } from "ws";
 import path from "node:path";
+import fs from "node:fs/promises";
 import { config } from "./config.js";
 import { createWebRtcTransport } from "./media.js";
 import {
@@ -14,7 +15,7 @@ import { getSettings, updateSettings, findSession } from "./settings.js";
 import { notifyUser } from "./push.js";
 import {
   startRecording, stopRecording, activeRecording,
-  addPeerToRecording, uploadCreds, markPeerDone, logOverlay
+  addPeerToRecording, uploadCreds, markPeerDone, logOverlay, recDir
 } from "./recording/manager.js";
 import { capturePeer } from "./recording/serverRecorder.js";
 import { startStream, stopStream, isStreaming, refreshStream, showOverlay } from "./streaming.js";
@@ -122,6 +123,35 @@ export function attachSignaling(httpServer) {
             room.control.bannerColors[peer.id] = data.color;
             reply({});
             broadcast(room, null, { event: "control", data: room.control });
+            break;
+          }
+
+          case "bannerSnapshots": {
+            // The host's browser renders each on-screen lower-third to a
+            // PNG; the stream/recording compositors overlay these so the
+            // published video matches the screen.
+            if (!peer || peer.role !== "host") return fail("host only");
+            const entries = Object.entries(data.images || {}).slice(0, 30);
+            const dir = path.join(config.dataDir, "banners", room.id);
+            await fs.mkdir(dir, { recursive: true });
+            const rec = activeRecording(room.id);
+            const PREFIX = "data:image/png;base64,";
+            for (const [pid, dataUrl] of entries) {
+              if (!room.peers.has(pid)) continue; // also blocks path tricks
+              if (typeof dataUrl !== "string" || !dataUrl.startsWith(PREFIX)) continue;
+              if (dataUrl.length > 400_000) continue;
+              const buf = Buffer.from(dataUrl.slice(PREFIX.length), "base64");
+              await fs.writeFile(path.join(dir, `${pid}.png`), buf);
+              if (rec) {
+                const name = `banner-${pid}.png`;
+                await fs.writeFile(path.join(recDir(rec.id), "raw", name), buf);
+                const rp = rec.peers.get(pid);
+                if (rp) rp.banner = name;
+              }
+            }
+            // Live graph is fixed at launch: relaunch to show new banners
+            if (isStreaming(room.id)) refreshStream(room.id);
+            reply({});
             break;
           }
 

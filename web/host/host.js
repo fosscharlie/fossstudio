@@ -28,8 +28,8 @@
       { id: "account", label: "Account" },
       { id: "twofactor", label: "Two-factor" },
       { id: "streaming", label: "Streaming", hostOnly: true },
-      { id: "branding", label: "Podcast banner", hostOnly: true },
-      { id: "wallpaper", label: "Wallpaper", hostOnly: true }
+      { id: "themes", label: "Themes", hostOnly: true },
+      { id: "banner", label: "Podcast banner", hostOnly: true }
     ] },
     { id: "system", label: "System", adminOnly: true, subs: [
       { id: "service", label: "Service" },
@@ -432,9 +432,19 @@
       b.style.background = hex;
       b.dataset.tip = hex;
       b.setAttribute("aria-label", `Accent ${hex}`);
-      b.onclick = () => { currentAccent = hex; renderSwatches(); };
+      b.onclick = () => { currentAccent = hex; renderSwatches(); applyAccent(hex); };
       wrap.appendChild(b);
     }
+  }
+
+  // The accent restyles this dashboard too, not just the session view
+  function applyAccent(hex) {
+    const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+    const root = document.documentElement.style;
+    root.setProperty("--accent", hex);
+    root.setProperty("--accent-hover", `rgb(${Math.round(r * 0.85)}, ${Math.round(g * 0.85)}, ${Math.round(b * 0.85)})`);
+    root.setProperty("--on-accent",
+      (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? "#3a3208" : "#ffffff");
   }
 
   async function loadSettings() {
@@ -444,6 +454,7 @@
     $("podcastName").value = s.podcastName;
     currentAccent = s.accent;
     renderSwatches();
+    applyAccent(currentAccent);
     updateWallpaperPreview(s.wallpaper);
     updateAdPreview(!!s.adBanner);
   }
@@ -459,7 +470,8 @@
     }
   }
 
-  $("saveThemeBtn").onclick = async () => {
+  // One settings record behind two panes: either save button stores both
+  async function saveTheme(msgId) {
     await apiFetch("/api/settings", {
       method: "PUT",
       body: JSON.stringify({
@@ -467,9 +479,11 @@
         accent: currentAccent
       })
     });
-    $("themeMsg").hidden = false;
-    setTimeout(() => { $("themeMsg").hidden = true; }, 2000);
-  };
+    $(msgId).hidden = false;
+    setTimeout(() => { $(msgId).hidden = true; }, 2000);
+  }
+  $("saveThemeBtn").onclick = () => saveTheme("themeMsg");
+  $("saveNameBtn").onclick = () => saveTheme("nameMsg");
 
   function updateAdPreview(has) {
     const el = $("adPreview");

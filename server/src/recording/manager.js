@@ -81,6 +81,20 @@ export async function startRecording(room, mode) {
   active.set(room.id, rec);
 
   for (const peer of room.peers.values()) addPeerToRecording(rec, peer);
+
+  // Banners the host uploaded earlier (e.g. already live) apply here too
+  const bdir = path.join(config.dataDir, "banners", room.id);
+  try {
+    for (const f of await fs.readdir(bdir)) {
+      if (!f.endsWith(".png")) continue;
+      const pid = f.slice(0, -4);
+      const name = `banner-${pid}.png`;
+      await fs.copyFile(path.join(bdir, f), path.join(recDir(recId), "raw", name));
+      const rp = rec.peers.get(pid);
+      if (rp) rp.banner = name;
+    }
+  } catch { /* no banners yet */ }
+
   if (mode === "server") await startServerCapture(rec, room);
 
   await saveIndex({

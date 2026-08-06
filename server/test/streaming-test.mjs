@@ -3,16 +3,18 @@
 import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
-import { apiLogin, makeRoom } from "./helpers.mjs";
+import { hostLogin, makeRoom } from "./helpers.mjs";
 
 const B = process.argv[2] || "http://127.0.0.1:3999";
 const PW = process.argv[3] || "testpass123";
 const ROOM = await makeRoom(B, PW);
 const OUT = "/tmp/claude-1000/-home-charlie-GitHub-fossstudio/30aef10b-264b-4404-9752-f5d84c9a6596/scratchpad/live-out";
 fs.mkdirSync(OUT, { recursive: true });
+fs.rmSync(`${OUT}/stream.flv`, { force: true }); // a stale file must not pass
 
-// Point the "stream" at a local file (server runs with ALLOW_FILE_STREAM=1)
-const cookie = await apiLogin(B, PW);
+// Point the "stream" at a local file (server runs with ALLOW_FILE_STREAM=1).
+// Settings are per-host: save them as testhost, the session owner.
+const cookie = await hostLogin(B, PW);
 await fetch(`${B}/api/settings`, {
   method: "PUT",
   headers: { "Content-Type": "application/json", Cookie: cookie },
@@ -50,7 +52,6 @@ const guestCtx = await browser.newContext({ permissions: ["camera", "microphone"
 const guest = await join(guestCtx, "Guest", false);
 await new Promise((r) => setTimeout(r, 2000));
 
-await host.click("#hostPanelBtn");
 await host.click("#hpStreamBtn");
 await new Promise((r) => setTimeout(r, 3000));
 check("host sees LIVE indicator",
@@ -80,6 +81,19 @@ try {
   check("stream has h264 video + aac audio and >8s",
     codecs.includes("video:h264") && codecs.includes("audio:aac") && dur > 8);
   check("composited two tiles side by side (1280 wide)", video?.width === 1280);
+
+  // Lower-third banners are composited bottom-left of each tile; the
+  // session accent here is blue, so probe for a blue block
+  const rgb = execFileSync(`${process.env.HOME}/.local/bin/ffmpeg`, [
+    "-loglevel", "quiet", "-err_detect", "ignore_err", "-i", outFile,
+    "-vf", "crop=30:8:6:710", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"
+  ]);
+  const n = Math.floor(rgb.length / 3);
+  let r = 0, g = 0, b = 0;
+  for (let i = 0; i + 2 < 3 * n; i += 3) { r += rgb[i]; g += rgb[i + 1]; b += rgb[i + 2]; }
+  r /= n; g /= n; b /= n;
+  check(`lower-third banner on the stream (rgb ${r.toFixed(0)},${g.toFixed(0)},${b.toFixed(0)})`,
+    b > 120 && b - r > 40);
 } catch (e) {
   check(`probe failed: ${e.message.slice(0, 80)}`, false);
 }

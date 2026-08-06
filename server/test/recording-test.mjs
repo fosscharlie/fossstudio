@@ -47,6 +47,10 @@ const guestCtx = await browser.newContext({ permissions: ["camera", "microphone"
 const guest = await join(guestCtx, "Guest Greta", false);
 await new Promise((r) => setTimeout(r, 2000));
 
+// Turn the shared banner red so its pixels are easy to probe later
+await host.click('.hp-swatch[aria-label="Banner colour #f34236"]');
+await new Promise((r) => setTimeout(r, 500));
+
 // Start recording (mode picked per session in the host panel)
 if (MODE === "server") {
   const visible = await host.$eval("#hpServerRecRow", (el) => !el.hidden);
@@ -80,6 +84,13 @@ const flacs = (rec?.files || []).filter((f) => f.endsWith(".flac"));
 check(`two FLACs present (${flacs.join(", ")})`, flacs.length === 2);
 check("combined.mkv present", (rec?.files || []).includes("combined.mkv"));
 
+// The host's browser should have uploaded a lower-third PNG per person
+if (rec) {
+  const banners = fs.readdirSync(`../data/recordings/${rec.id}/raw`)
+    .filter((f) => f.startsWith("banner-"));
+  check(`banner PNGs uploaded for both peers (${banners.length})`, banners.length === 2);
+}
+
 // Download and probe the outputs
 if (rec?.status === "ready") {
   for (const f of rec.files) {
@@ -103,6 +114,23 @@ if (rec?.status === "ready") {
     } catch {
       check(`${f}: probe failed`, false);
     }
+  }
+
+  // Lower-thirds are baked in: the bottom-left corner of the first tile
+  // should be the red banner we picked, not video content
+  try {
+    const rgb = execFileSync(`${process.env.HOME}/.local/bin/ffmpeg`, [
+      "-loglevel", "error", "-ss", "5", "-i", `${OUT}/combined.mkv`,
+      "-vf", "crop=30:8:6:710", "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"
+    ]);
+    let r = 0, g = 0, b = 0;
+    for (let i = 0; i + 2 < rgb.length; i += 3) { r += rgb[i]; g += rgb[i + 1]; b += rgb[i + 2]; }
+    const n = rgb.length / 3;
+    r /= n; g /= n; b /= n;
+    check(`banner baked into combined.mkv (rgb ${r.toFixed(0)},${g.toFixed(0)},${b.toFixed(0)})`,
+      r > 140 && r - g > 60 && r - b > 60);
+  } catch (e) {
+    check(`banner pixel probe failed: ${e.message}`, false);
   }
 }
 

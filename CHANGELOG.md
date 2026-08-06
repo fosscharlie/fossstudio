@@ -4,6 +4,16 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **What you see is what you record**: the lower-third name banners are
+  now baked into the combined recording and composited onto the live
+  stream, exactly as they look on screen (colours, names, taglines).
+  The host's browser renders each banner to an image and uploads it;
+  changing colours while live causes a ~2-second stream blip while the
+  compositor relaunches
+- **Settings reorganised**: *Themes* (accent colour + wallpaper) and
+  *Podcast banner* (podcast name + advertising/support banner upload,
+  moved out of Streaming). The accent colour now restyles the host
+  dashboard itself, not just the session view
 - **Compact host panel**: guests sit in boxed cards, two per row, with
   the name centred — ten guests fit without scrolling (verified by an
   automated ten-guest test); Mute all / Subscribe / Ad share one line;

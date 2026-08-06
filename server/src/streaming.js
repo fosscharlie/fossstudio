@@ -10,6 +10,7 @@ import path from "node:path";
 import os from "node:os";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { config } from "./config.js";
 
 const ASSETS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "assets");
 
@@ -69,7 +70,7 @@ async function launch(state) {
       });
       const sdpPath = path.join(workDir, `${crypto.randomUUID()}.sdp`);
       await fs.writeFile(sdpPath, sdpFor(port, consumer));
-      inputs.push({ sdpPath, kind: consumer.kind, name: peer.name });
+      inputs.push({ sdpPath, kind: consumer.kind, name: peer.name, peerId: peer.id });
       cleanup.transports.push(transport);
       cleanup.consumers.push(consumer);
     }
@@ -85,9 +86,28 @@ async function launch(state) {
   const rows = Math.ceil(videos.length / cols);
   const cellW = 2 * Math.round(1280 / cols / 2);
   const cellH = 2 * Math.round(720 / rows / 2);
-  const scaled = videos.map((v, k) =>
-    `[${v.i}:v]scale=${cellW}:${cellH}:force_original_aspect_ratio=increase,` +
-    `crop=${cellW}:${cellH}:(iw-${cellW})/2:0,setsar=1,fps=30[v${k}]`).join(";");
+
+  // Lower-third banners: the host's browser uploads each one as a PNG
+  // (ffmpeg can't draw text) — overlay them onto the tiles like the DOM
+  const bannerArgs = [];
+  let nextIdx = inputs.length;
+  for (const v of videos) {
+    const f = path.join(config.dataDir, "banners", room.id, `${v.peerId}.png`);
+    if (await fs.access(f).then(() => true, () => false)) {
+      v.bnIdx = nextIdx++;
+      // Looped like the ad overlay: an instantly-EOF'd still can stall
+      // the graph when the other inputs are live RTP
+      bannerArgs.push("-loop", "1", "-framerate", "5", "-i", f);
+    }
+  }
+  const bannerW = 2 * Math.round(0.38 * cellW / 2);
+  const scaled = videos.map((v, k) => {
+    const base = `[${v.i}:v]scale=${cellW}:${cellH}:force_original_aspect_ratio=increase,` +
+      `crop=${cellW}:${cellH}:(iw-${cellW})/2:0,setsar=1,fps=30`;
+    if (v.bnIdx == null) return `${base}[v${k}]`;
+    return `${base}[t${k}];[${v.bnIdx}:v]scale=${bannerW}:-2[bn${k}];` +
+      `[t${k}][bn${k}]overlay=x=0:y=main_h-overlay_h:eof_action=repeat[v${k}]`;
+  }).join(";");
   const layout = videos.map((v, k) => `${(k % cols) * cellW}_${Math.floor(k / cols) * cellH}`);
   const stack = videos.length === 1
     ? "[v0]copy[vout]"
@@ -104,7 +124,7 @@ async function launch(state) {
   let finalLabel = "[vout]";
   let overlayFilter = "";
   if (overlay) {
-    const oi = inputs.length;
+    const oi = nextIdx;
     const D = overlay.duration;
     const slide = (margin) =>
       `'main_h-(overlay_h+${margin})*clip(min(t/0.5\,(${D}-t)/0.5)\,0\,1)+${margin}*0'`;
@@ -123,7 +143,7 @@ async function launch(state) {
     ? [state.rtmpUrl.slice(5)]
     : ["-f", "flv", state.rtmpUrl];
 
-  cleanup.ffmpeg = spawn("ffmpeg", [
+  const ffArgs = [
     "-nostdin", "-loglevel", "warning",
     // the whitelist/probing flags are per-input options: precede every -i
     ...inputs.flatMap((x) => [
@@ -131,6 +151,7 @@ async function launch(state) {
       "-analyzeduration", "10M", "-probesize", "10M",
       "-i", x.sdpPath
     ]),
+    ...bannerArgs,
     ...overlayArgs,
     "-filter_complex", `${scaled};${stack};${amix}${overlayFilter}`,
     "-map", finalLabel, "-map", "[aout]",
@@ -138,7 +159,8 @@ async function launch(state) {
     "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k", "-g", "60",
     "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
     "-y", ...dest
-  ]);
+  ];
+  cleanup.ffmpeg = spawn("ffmpeg", ffArgs);
   cleanup.ffmpeg.stderr.on("data", (d) => {
     const line = d.toString().trim();
     if (line) console.error(`stream[${room.id}]: ${line.slice(0, 200)}`);
@@ -162,7 +184,7 @@ async function launch(state) {
       }
     }, delay);
   }
-  console.log(`streaming ${room.id}: ${videos.length} video + ${audios.length} audio inputs`);
+  console.log(`streaming ${room.id}: ${videos.length} video + ${audios.length} audio inputs, ${bannerArgs.length / 6} banners`);
 }
 
 async function teardown(cleanup) {

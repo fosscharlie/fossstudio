@@ -1,7 +1,10 @@
 // In-memory room state. Rooms exist while people are in them;
 // session history that must survive restarts goes to flat files later.
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
 import { createRouter } from "./media.js";
+import { config } from "./config.js";
 
 export const MAX_GUESTS = 10;
 
@@ -72,6 +75,8 @@ export function removePeer(room, peerId) {
   if (room.peers.size === 0) {
     try { room.router.close(); } catch { /* already closed */ }
     rooms.delete(room.id);
+    fs.rm(path.join(config.dataDir, "banners", room.id), { recursive: true, force: true })
+      .catch(() => {});
   }
 }
 

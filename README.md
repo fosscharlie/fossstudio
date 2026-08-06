@@ -17,9 +17,13 @@ dashboard. Live at https://app.fossstudio.org.
 - **In-session host controls:** spotlight/grid layout, per-guest volume,
   per-session auto level balancing, start/stop recording, go live.
 - **Recording:** browser-side per-person (PCM, best for big sessions) or
-  server-side (a per-host permission, picked per session). Output: one
-  combined MKV + a lossless FLAC per participant.
-- **Streaming:** server-composited RTMP out to YouTube.
+  server-side (a per-host permission, picked per session — locked while
+  recording or live). Output: one combined MKV + a lossless FLAC per
+  participant. The combined video matches the screen: everyone's tile,
+  their lower-third name banners, and any subscribe/ad overlays you
+  triggered, at the moment you triggered them.
+- **Streaming:** server-composited RTMP out to YouTube, with the same
+  lower-third banners and overlays as the session view.
 - **Noise suppression:** RNNoise in the guest's browser (WASM worklet).
 - **Email:** SMTP configured in the dashboard; all outgoing mail uses a
   branded HTML template with a plain-text fallback.

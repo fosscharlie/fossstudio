@@ -446,6 +446,7 @@
     tiles.set(peerId, { el, video, stream, name, gain: null });
     applyLayout();
     if (isHost) renderHostGuests();
+    scheduleBannerSnapshots();
     return tiles.get(peerId);
   }
 
@@ -621,6 +622,80 @@
     els.hpAutoGain.checked = !!control.autoGain;
     applyLayout();
     if (isHost) renderHostGuests();
+    scheduleBannerSnapshots();
+  }
+
+  // ---------- Banner snapshots ----------
+  // The recording/stream compositors run ffmpeg, which can't draw text,
+  // so the host's browser renders each lower-third to a PNG (same font,
+  // same colours as on screen) and the server overlays those.
+
+  let bannerSnapTimer = null;
+  function scheduleBannerSnapshots() {
+    if (!isHost || (!recording && !live)) return;
+    clearTimeout(bannerSnapTimer);
+    bannerSnapTimer = setTimeout(() => sendBannerSnapshots().catch(() => {}), 600);
+  }
+
+  let lastBannerPayload = "";
+  async function sendBannerSnapshots(force) {
+    if (!isHost || (!force && !recording && !live)) return;
+    await document.fonts.ready;
+    const images = {};
+    for (const [peerId, tile] of tiles) {
+      const third = tile.el.querySelector(".lower-third");
+      if (!third) continue;
+      const cs = getComputedStyle(third);
+      const name = third.querySelector(".name")?.textContent || tile.name;
+      const tagline = third.querySelector(".tagline")?.textContent || "";
+      images[peerId] = drawBannerPng(name, tagline, cs.backgroundColor, cs.color);
+    }
+    // Only send when something actually changed — while live, the server
+    // relaunches the stream to pick banners up, which costs a short blip
+    const payload = JSON.stringify(images);
+    if (payload === lastBannerPayload || !Object.keys(images).length) return;
+    lastBannerPayload = payload;
+    await request("bannerSnapshots", { images });
+  }
+
+  function ellipsize(ctx, text, maxW) {
+    if (ctx.measureText(text).width <= maxW) return text;
+    let t = text;
+    while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1);
+    return t + "…";
+  }
+
+  // Mirrors .lower-third: sizes are the CSS cqw values × S pixels each,
+  // so the PNG scaled to 38% of a tile lands exactly like the DOM one
+  function drawBannerPng(name, tagline, bg, fg) {
+    const S = 20;
+    const W = 38 * S;
+    const padX = 2.4 * S, padT = 1.2 * S, padB = 1.4 * S, r = 1.5 * S;
+    const nameLh = 4.6 * S * 1.3, tagLh = 3.4 * S * 1.3;
+    const H = Math.round(padT + nameLh + (tagline ? tagLh : 0) + padB);
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    x.beginPath();
+    x.moveTo(0, 0);
+    x.lineTo(W - r, 0);
+    x.arcTo(W, 0, W, r, r);
+    x.lineTo(W, H);
+    x.lineTo(0, H);
+    x.closePath();
+    x.fillStyle = bg;
+    x.fill();
+    x.fillStyle = fg;
+    x.textBaseline = "middle";
+    x.font = `700 ${4.6 * S}px Manrope, sans-serif`;
+    x.fillText(ellipsize(x, name, W - 2 * padX), padX, padT + nameLh / 2);
+    if (tagline) {
+      x.globalAlpha = 0.82;
+      x.font = `400 ${3.4 * S}px Manrope, sans-serif`;
+      x.fillText(ellipsize(x, tagline, W - 2 * padX), padX, padT + nameLh + tagLh / 2);
+      x.globalAlpha = 1;
+    }
+    return c.toDataURL("image/png");
   }
 
   // ---------- Host panel ----------
@@ -714,6 +789,7 @@
       els.hpRecordBtn.textContent = on ? "■ Stop recording" : "● Start recording";
       els.hpRecordBtn.classList.toggle("rec-on", on);
       updateServerRecLock();
+      if (on) scheduleBannerSnapshots();
     }
   }
 
@@ -858,10 +934,16 @@
     els.hpStreamBtn.textContent = on ? "■ End stream" : "📡 Go live";
     els.hpStreamBtn.classList.toggle("rec-on", on);
     updateServerRecLock();
+    if (on) scheduleBannerSnapshots();
   }
-  els.hpStreamBtn.onclick = () =>
-    request("hostControl", { action: "stream", start: !live })
-      .catch((e) => alert(e.message));
+  els.hpStreamBtn.onclick = async () => {
+    try {
+      // Banners must reach the server before launch: the stream graph is
+      // fixed at start, and a late arrival would force a relaunch blip
+      if (!live) await sendBannerSnapshots(true).catch(() => {});
+      await request("hostControl", { action: "stream", start: !live });
+    } catch (e) { alert(e.message); }
+  };
 
   // ---------- Consuming ----------
 
