@@ -1193,6 +1193,7 @@
       applyControl(info.control);
       applyTheme(info.theme);
       els.hostPanel.hidden = !isHost; // sidebar is always open for the host
+      els.dimBtn.hidden = !isHost;    // dimming is a host tool
       if (isHost) enableTitleDrag();
       els.hpServerRecRow.hidden = !(isHost && info.canServerRecord);
 

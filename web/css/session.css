@@ -446,17 +446,16 @@ body {
   .session-body { flex-direction: column; }
   .host-panel { flex: 0 0 auto; width: 100%; max-height: 45dvh; border-left: 0; border-top: 1px solid var(--lm-panel-border); }
 }
-/* Dim mode: controls fade away until hovered */
+/* Dim mode (host only): controls fade away until hovered — the
+   logo/title block stays at full brightness */
 body.dim-ui .controls,
-body.dim-ui .host-panel,
-body.dim-ui .banner {
+body.dim-ui .host-panel {
   opacity: 0.12;
   transition: opacity 250ms ease;
 }
 body.dim-ui .controls:hover,
-body.dim-ui .host-panel:hover,
-body.dim-ui .banner:hover { opacity: 1; }
-.controls, .host-panel, .banner { transition: opacity 250ms ease; }
+body.dim-ui .host-panel:hover { opacity: 1; }
+.controls, .host-panel { transition: opacity 250ms ease; }
 .ctl.dim-on { background: #3a3f2a; border-color: #6b7a3f; }
 .ctl.hand-on { background: #fbc711; color: #14161a; border-color: transparent; }
 .my-colors {

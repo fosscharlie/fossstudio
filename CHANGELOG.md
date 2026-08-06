@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Dim mode no longer fades the logo/title block (it stays at full
+  brightness), and the dim button is host-only — guests don't see it
+
 - **Recording light**: a round indicator in everyone's control row —
   grey normally, red and blinking while the session records, with a
   hover explanation. The "● REC" text on the logo/title block is gone
