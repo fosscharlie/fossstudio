@@ -173,6 +173,11 @@ body {
 .ctl.off { background: #5a3535; }
 .ctl.leave { background: #7a2e2e; border-color: #7a2e2e; }
 
+:is(button, select, input, a):focus-visible {
+  outline: 2px solid var(--accent, #4a7dbd);
+  outline-offset: 2px;
+}
+
 /* ---------- Spotlight layout ----------
    Featured tile fills the top; everyone else shrinks to a bottom strip. */
 .grid.spotlight {

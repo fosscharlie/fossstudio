@@ -12,6 +12,14 @@ import { initPush } from "./push.js";
 const app = express();
 app.disable("x-powered-by");
 
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "same-origin");
+  res.setHeader("Permissions-Policy", "camera=(self), microphone=(self), geolocation=()");
+  next();
+});
+
 app.use("/api", api);
 
 // The dashboard shell requires login; everything inside it is API-gated too
@@ -29,6 +37,10 @@ app.get("/s/:roomId([a-zA-Z0-9_-]{4,32})", (req, res) => {
   res.sendFile(path.join(config.webDir, "session.html"));
 });
 
+// Big unchanging assets get real caching; pages stay fresh
+for (const dir of ["assets", "fonts", "icons"]) {
+  app.use(`/${dir}`, express.static(path.join(config.webDir, dir), { maxAge: "7d" }));
+}
 app.use(express.static(config.webDir, { index: "index.html" }));
 
 app.use((req, res) => {
