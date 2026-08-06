@@ -908,8 +908,9 @@
         <div class="lo-btn">SUBSCRIBE</div>
         <div class="lo-bell"><svg viewBox="0 0 24 24" fill="none" stroke="#5f4c06" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
         <div class="lo-msg">
-          <div class="lo-t">Enjoying The Show?</div>
-          <div class="lo-s">Subscribe And Turn On <b>All Notifications</b></div>
+          <div class="lo-t">Enjoying the show?</div>
+          <div class="lo-s">Subscribe and Turn on</div>
+          <div class="lo-s"><b>All notifications</b></div>
         </div>`;
     } else {
       const img = document.createElement("img");

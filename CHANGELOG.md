@@ -4,6 +4,10 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Subscribe reminder text is now three lines: "Enjoying the show?" /
+  "Subscribe and Turn on" / "All notifications" — in the session
+  overlay and the animation baked into recordings and streams
+
 - **Mute all now includes the host** — it mutes every single person in
   the session, you included, and Unmute all brings everyone back
 
