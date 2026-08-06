@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FOSS Studio session</title>
+<title>FOSSStudio session</title>
 <link rel="stylesheet" href="/css/session.css">
 </head>
 <body>
@@ -22,6 +22,12 @@
     <label>Microphone
       <select id="micSelect"></select>
     </label>
+    <label>Noise suppression
+      <select id="noiseSelect">
+        <option value="rnnoise" selected>On — filters fans, hums, keyboards</option>
+        <option value="off">Off — send my microphone untouched</option>
+      </select>
+    </label>
     <label>Your name
       <input id="nameInput" maxlength="40" autocomplete="name" placeholder="Shown under your video">
     </label>
@@ -32,7 +38,7 @@
 
 <!-- Live session -->
 <div id="session" class="session" hidden>
-  <header id="banner" class="banner">FOSS Studio</header>
+  <header id="banner" class="banner">FOSSStudio</header>
   <main id="grid" class="grid"></main>
   <footer class="controls">
     <button id="muteBtn" class="ctl" title="Mute microphone">🎙️</button>

@@ -54,18 +54,15 @@ export async function createRouter() {
 }
 
 export async function createWebRtcTransport(router) {
+  // Without a public IP (local dev) bind loopback so the advertised
+  // candidate is reachable; 0.0.0.0 would be announced as-is otherwise.
+  const listen = config.publicIp
+    ? { ip: "0.0.0.0", announcedAddress: config.publicIp }
+    : { ip: "127.0.0.1" };
   const transport = await router.createWebRtcTransport({
     listenInfos: [
-      {
-        protocol: "udp",
-        ip: "0.0.0.0",
-        announcedAddress: config.publicIp || undefined
-      },
-      {
-        protocol: "tcp",
-        ip: "0.0.0.0",
-        announcedAddress: config.publicIp || undefined
-      }
+      { protocol: "udp", ...listen },
+      { protocol: "tcp", ...listen }
     ],
     enableUdp: true,
     enableTcp: true,

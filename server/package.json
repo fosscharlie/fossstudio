@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "build:client": "esbuild client/mediasoup-client-entry.js --bundle --minify --format=iife --global-name=mediasoupClient --outfile=../web/assets/mediasoup-client.js"
+    "build:client": "esbuild client/mediasoup-client-entry.js --bundle --minify --format=iife --global-name=mediasoupClient --outfile=../web/assets/mediasoup-client.js",
+    "build:worklet": "esbuild client/noise-worklet-entry.js --bundle --minify --format=iife --define:import.meta.url='\"/assets/noise-worklet.js\"' --outfile=../web/assets/noise-worklet.js"
   },
   "dependencies": {
     "express": "^4.21.2",
@@ -17,6 +18,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@jitsi/rnnoise-wasm": "^0.2.1",
     "esbuild": "^0.28.1",
     "mediasoup-client": "^3.21.0",
     "playwright": "^1.62.1"

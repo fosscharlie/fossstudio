@@ -1,4 +1,4 @@
-# FOSS Studio
+# FOSSStudio
 
 Self-hosted video podcast studio for FOSSNerds & Linux OTC — a StreamYard replacement. Guests join by link with no account; the host runs everything from a web dashboard.
 

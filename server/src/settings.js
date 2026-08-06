@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { readJson, writeJson } from "./storage.js";
 
 const DEFAULTS = {
-  podcastName: "FOSS Studio",
+  podcastName: "FOSSStudio",
   accent: "#fbc711",
   wallpaper: null,          // filename inside data/uploads, or null
   autoGain: false

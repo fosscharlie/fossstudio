@@ -10,7 +10,7 @@
 
   const els = {
     preview: $("preview"), previewVideo: $("previewVideo"),
-    camSelect: $("camSelect"), micSelect: $("micSelect"),
+    camSelect: $("camSelect"), micSelect: $("micSelect"), noiseSelect: $("noiseSelect"),
     nameInput: $("nameInput"), joinBtn: $("joinBtn"),
     previewError: $("previewError"), micMeterFill: $("micMeterFill"),
     session: $("session"), banner: $("banner"), grid: $("grid"),
@@ -50,8 +50,28 @@
     }
   }
 
+  // RNNoise works on 10ms frames at 48kHz, so pin the context rate
+  function ensureAudioCtx() {
+    if (!audioCtx) audioCtx = new AudioContext({ sampleRate: 48000 });
+    return audioCtx;
+  }
+
+  // Route the mic through the RNNoise worklet; returns the cleaned track
+  let noiseNode = null;
+  async function noiseProcessedTrack(rawTrack) {
+    const ctx = ensureAudioCtx();
+    if (!noiseNode) {
+      await ctx.audioWorklet.addModule("/assets/noise-worklet.js");
+    }
+    const src = ctx.createMediaStreamSource(new MediaStream([rawTrack]));
+    noiseNode = new AudioWorkletNode(ctx, "rnnoise");
+    const dest = ctx.createMediaStreamDestination();
+    src.connect(noiseNode).connect(dest);
+    return dest.stream.getAudioTracks()[0];
+  }
+
   function startMicMeter(stream) {
-    if (!audioCtx) audioCtx = new AudioContext();
+    ensureAudioCtx();
     const src = audioCtx.createMediaStreamSource(stream);
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 512;
@@ -383,7 +403,10 @@
 
       const audioTrack = previewStream.getAudioTracks()[0];
       const videoTrack = previewStream.getVideoTracks()[0];
-      micProducer = await sendTransport.produce({ track: audioTrack, appData: { source: "mic" } });
+      const sendAudio = els.noiseSelect.value === "rnnoise"
+        ? await noiseProcessedTrack(audioTrack)
+        : audioTrack;
+      micProducer = await sendTransport.produce({ track: sendAudio, appData: { source: "mic" } });
       camProducer = await sendTransport.produce({
         track: videoTrack,
         encodings: [{ maxBitrate: 1_200_000 }],
