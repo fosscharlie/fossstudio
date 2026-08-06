@@ -237,13 +237,20 @@
     }
   }
 
+  // Audio settings save on their own, independent of the theme button
+  $("autoGainToggle").onchange = async () => {
+    await apiFetch("/api/settings", {
+      method: "PUT",
+      body: JSON.stringify({ autoGain: $("autoGainToggle").checked })
+    });
+  };
+
   $("saveThemeBtn").onclick = async () => {
     await apiFetch("/api/settings", {
       method: "PUT",
       body: JSON.stringify({
         podcastName: $("podcastName").value,
-        accent: currentAccent,
-        autoGain: $("autoGainToggle").checked
+        accent: currentAccent
       })
     });
     $("themeMsg").hidden = false;
