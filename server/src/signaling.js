@@ -259,7 +259,7 @@ export function attachSignaling(httpServer) {
               case "muteAll": {
                 const muted = data.muted !== false; // default: mute
                 for (const p2 of room.peers.values()) {
-                  if (p2.id === peer.id) continue; // not the host themself
+                  // Everyone means everyone — the host included
                   c.muted[p2.id] = muted;
                   if (muted) delete c.hands[p2.id];
                   for (const prod of p2.producers.values()) {

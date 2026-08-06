@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Mute all now includes the host** — it mutes every single person in
+  the session, you included, and Unmute all brings everyone back
+
 - **Episode title, front and centre**: shown in a large chip floating
   over the video (plus a slim bar at the top of the page), and baked
   into the combined recording and the live stream, top-centre — so the

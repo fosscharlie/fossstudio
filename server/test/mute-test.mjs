@@ -59,8 +59,8 @@ await new Promise((r) => setTimeout(r, 1200));
 const hostMuted = await host.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"));
 const g1Muted = await g1.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"));
 const g2Muted = await g2.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"));
-check(`mute-all mutes guests (${g1Muted},${g2Muted}) but not the host (${hostMuted})`,
-  g1Muted && g2Muted && !hostMuted);
+check(`mute-all mutes everyone, host included (${hostMuted},${g1Muted},${g2Muted})`,
+  g1Muted && g2Muted && hostMuted);
 check("Mute all button lights up and flips to Unmute all",
   await host.$eval("#hpMuteAllBtn", (el) =>
     el.classList.contains("active") && el.textContent === "Unmute all"));
@@ -68,7 +68,8 @@ check("Mute all button lights up and flips to Unmute all",
 // Clicking again unmutes everyone
 await host.click("#hpMuteAllBtn");
 await new Promise((r) => setTimeout(r, 1200));
-check("Unmute all unmutes both guests",
+check("Unmute all unmutes everyone",
+  !(await host.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))) &&
   !(await g1.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))) &&
   !(await g2.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))));
 check("Mute all button back to normal",

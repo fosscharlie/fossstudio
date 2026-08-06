@@ -622,13 +622,14 @@
     applyAutoGain(!!control.autoGain);
     els.hpAutoGain.classList.toggle("active", !!control.autoGain);
     if (isHost) {
-      // Light up "Mute all" (and offer the way back) once every guest is muted
-      const others = [...tiles.keys()].filter((id) => id !== selfId);
-      const allMuted = others.length > 0 && others.every((id) => control.muted?.[id]);
+      // Light up "Mute all" (and offer the way back) once everyone —
+      // host included — is muted
+      const everyone = [...tiles.keys()];
+      const allMuted = everyone.length > 0 && everyone.every((id) => control.muted?.[id]);
       els.hpMuteAllBtn.classList.toggle("active", allMuted);
       els.hpMuteAllBtn.textContent = allMuted ? "Unmute all" : "Mute all";
       els.hpMuteAllBtn.dataset.tip = allMuted
-        ? "Unmute every guest at once" : "Mute every guest at once";
+        ? "Unmute everyone at once" : "Mute everyone at once, including you";
     }
     applyLayout();
     if (isHost) renderHostGuests();
