@@ -9,6 +9,8 @@ All notable changes to FOSSStudio are documented here.
   mute state is shared so everyone's view agrees. Guests can still
   unmute themselves.
 - Lower-third text doubled in size; accent stripe removed
+- Banners moved **below** the video as a solid bar; the host picks the
+  banner colour live from a colour chooser in the host panel
 
 - **Fix**: joining with noise suppression crashed some Chromium-based
   browsers (seen in Brave Origin) — session audio is now routed to the

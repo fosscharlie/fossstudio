@@ -22,7 +22,7 @@
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
     hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn"),
     hpServerRec: $("hpServerRec"), hpServerRecRow: $("hpServerRecRow"),
-    hpMuteAllBtn: $("hpMuteAllBtn")
+    hpMuteAllBtn: $("hpMuteAllBtn"), hpBannerColor: $("hpBannerColor")
   };
 
   let previewStream = null;
@@ -469,8 +469,18 @@
   }
   matchMedia("(max-width: 700px)").addEventListener("change", applyLayout);
 
+  function applyBannerColor() {
+    const c = control.bannerColor || "#1e2127";
+    const r = parseInt(c.slice(1, 3), 16), g = parseInt(c.slice(3, 5), 16), b = parseInt(c.slice(5, 7), 16);
+    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    els.grid.style.setProperty("--banner-c", c);
+    els.grid.style.setProperty("--banner-fg", lum > 0.55 ? "#14161a" : "#ffffff");
+    if (isHost && els.hpBannerColor.value !== c) els.hpBannerColor.value = c;
+  }
+
   function applyControl(next) {
     control = next;
+    applyBannerColor();
     for (const [peerId, tile] of tiles) {
       if (tile.gain) tile.gain.gain.value = control.volumes[peerId] ?? 1;
       tile.el.classList.toggle("muted", !!control.muted?.[peerId]);
@@ -612,6 +622,13 @@
   els.hpGridBtn.onclick = () => request("hostControl", { action: "layout", layout: "grid" });
   els.hpSpotSelfBtn.onclick = () =>
     request("hostControl", { action: "layout", layout: "spotlight", peerId: selfId });
+  let bannerTimer = null;
+  els.hpBannerColor.oninput = () => {
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(() => {
+      request("hostControl", { action: "bannerColor", color: els.hpBannerColor.value });
+    }, 150);
+  };
   els.hpMuteAllBtn.onclick = () =>
     request("hostControl", { action: "muteAll" })
       .catch((e) => console.error("mute all failed:", e.message));

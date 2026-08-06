@@ -21,6 +21,7 @@ export async function getOrCreateRoom(roomId) {
         spotlightPeerId: null,
         volumes: {},             // peerId -> 0..1.5
         muted: {},               // peerId -> true when mic is muted
+        bannerColor: null,       // solid colour of the name banners
         autoGain: false          // per-session, host-toggled
       }
     };

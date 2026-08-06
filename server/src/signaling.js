@@ -62,6 +62,7 @@ export function attachSignaling(httpServer) {
             const role = canHost && data.role === "host" ? "host" : "guest";
             peer = addPeer(room, { name, tagline, role, socket });
             const settings = await getSettings(room.ownerId);
+            if (!room.control.bannerColor) room.control.bannerColor = settings.accent;
             const { findById } = await import("./users.js");
             const canServerRecord = role === "host" &&
               !!(await findById(room.ownerId))?.allowServerRecording;
@@ -128,6 +129,11 @@ export function attachSignaling(httpServer) {
               }
               case "autoGain":
                 c.autoGain = !!data.enabled;
+                break;
+              case "bannerColor":
+                if (/^#[0-9a-fA-F]{6}$/.test(String(data.color || ""))) {
+                  c.bannerColor = String(data.color).toLowerCase();
+                }
                 break;
               case "mute": {
                 const target = room.peers.get(data.peerId);
