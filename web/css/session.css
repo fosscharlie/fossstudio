@@ -77,7 +77,13 @@ body {
   color: var(--muted);
   min-width: 0; /* long device names truncate instead of overflowing */
 }
-.preview-card .soft { color: var(--muted); font-weight: 400; }
+.preview-card .lab { display: block; }
+.preview-card .soft {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.78em;
+  opacity: 0.6;
+}
 .preview-card input[type="range"] { accent-color: var(--accent, #4a7dbd); padding: 0; }
 .preview-card .check {
   display: flex;
