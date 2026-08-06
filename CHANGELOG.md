@@ -4,6 +4,12 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Auto level is on by default** for every session
+- The recording light no longer blinks — steady red while recording
+- **While recording, guests' controls dim to half automatically** and
+  brighten when the pointer (or finger) moves over them; no button —
+  it follows the recording state
+
 - Dim mode no longer fades the logo/title block (it stays at full
   brightness), and the dim button is host-only — guests don't see it
 

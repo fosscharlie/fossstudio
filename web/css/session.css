@@ -217,8 +217,12 @@ body {
    red and blinking while the session is recorded */
 .ctl.rec-light { cursor: default; }
 .ctl.rec-light svg { color: #565d6b; }
-.ctl.rec-light.on { border-color: #f34236; animation: recblink 1.6s infinite; }
+.ctl.rec-light.on { border-color: #f34236; }
 .ctl.rec-light.on svg { color: #f34236; }
+/* While recording, guests' controls fade to half automatically and
+   brighten under the pointer - no button involved */
+body.is-guest.rec-dim .controls { opacity: 0.5; }
+body.is-guest.rec-dim .controls:hover { opacity: 1; }
 .banner.live::after {
   content: " LIVE";
   color: #f34236;

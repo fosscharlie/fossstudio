@@ -966,6 +966,7 @@
     recording = on;
     const light = document.getElementById("recLight");
     light.classList.toggle("on", on);
+    document.body.classList.toggle("rec-dim", on);
     light.dataset.tip = on
       ? "Recording light - this session is being recorded"
       : "Recording light - lights up red when recording";
@@ -1194,6 +1195,7 @@
       applyTheme(info.theme);
       els.hostPanel.hidden = !isHost; // sidebar is always open for the host
       els.dimBtn.hidden = !isHost;    // dimming is a host tool
+      document.body.classList.toggle("is-guest", !isHost);
       if (isHost) enableTitleDrag();
       els.hpServerRecRow.hidden = !(isHost && info.canServerRecord);
 

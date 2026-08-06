@@ -30,7 +30,7 @@ export async function getOrCreateRoom(roomId) {
         bannerMulti: false,      // one colour per person instead
         bannerChoice: false,     // guests may pick their own colour
         bannerColors: {},        // peerId -> hex when bannerMulti
-        autoGain: false,         // per-session, host-toggled
+        autoGain: true,          // per-session, host-toggled (on by default)
         titlePos: { x: 0.5, y: 0 } // logo/title block, fraction of free space
       }
     };
