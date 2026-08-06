@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- The red muted badge on video tiles is gone — mute state shows in the
+  host panel and on your own mic button only
+
 - **Phones and tablets in portrait**: your own video now sits in the
   grid with everyone else (same size, same place as when held
   horizontally) instead of a small bottom-corner overlay — so you can
