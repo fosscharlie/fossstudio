@@ -14,7 +14,7 @@ import { getSettings, updateSettings, findSession } from "./settings.js";
 import { notifyUser } from "./push.js";
 import {
   startRecording, stopRecording, activeRecording,
-  addPeerToRecording, uploadCreds, markPeerDone
+  addPeerToRecording, uploadCreds, markPeerDone, logOverlay
 } from "./recording/manager.js";
 import { capturePeer } from "./recording/serverRecorder.js";
 import { startStream, stopStream, isStreaming, refreshStream, showOverlay } from "./streaming.js";
@@ -194,6 +194,10 @@ export function attachSignaling(httpServer) {
                 }
                 break;
               }
+              case "lowerHand": {
+                delete c.hands[data.peerId];
+                break;
+              }
               case "noise": {
                 if (!room.peers.has(data.peerId)) return fail("no such guest");
                 c.noise[data.peerId] = !!data.enabled;
@@ -237,23 +241,26 @@ export function attachSignaling(httpServer) {
                 return reply({});
               }
               case "overlay": {
-                if (!isStreaming(room.id)) {
-                  return fail("Go live first — overlays appear on the stream.");
-                }
-                if (data.kind === "subscribe") {
-                  await showOverlay(room.id, { kind: "subscribe", duration: 7 });
-                } else if (data.kind === "ad") {
+                if (!["subscribe", "ad"].includes(data.kind)) return fail("unknown overlay");
+                let adFile = null;
+                let url = null;
+                if (data.kind === "ad") {
                   const settings2 = await getSettings(room.ownerId);
                   if (!settings2.adBanner) {
                     return fail("Upload an advertising banner in Settings → Streaming first.");
                   }
-                  await showOverlay(room.id, {
-                    kind: "ad",
-                    duration: 18,
-                    file: path.join(config.dataDir, "uploads", path.basename(settings2.adBanner))
-                  });
-                } else {
-                  return fail("unknown overlay");
+                  adFile = path.join(config.dataDir, "uploads", path.basename(settings2.adBanner));
+                  url = `/api/adbanner/${room.ownerId}`;
+                }
+                const duration = data.kind === "subscribe" ? 7 : 18;
+                // Everyone sees it in the session immediately
+                broadcast(room, null, { event: "overlay", data: { kind: data.kind, duration, url } });
+                // Recording? bake it into the final video at this moment
+                const recNow2 = activeRecording(room.id);
+                if (recNow2) await logOverlay(recNow2, data.kind, adFile);
+                // Live? composite it onto the stream too
+                if (isStreaming(room.id)) {
+                  await showOverlay(room.id, { kind: data.kind, duration, file: adFile });
                 }
                 return reply({});
               }

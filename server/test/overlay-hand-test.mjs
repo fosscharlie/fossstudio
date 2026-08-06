@@ -47,6 +47,15 @@ check("guest's hand button lights up",
   await guest.$eval("#handBtn", (el) => el.classList.contains("hand-on")));
 check("host panel row highlights the raised hand",
   await host.$$eval(".hp-guest", (rows) => rows.some((r) => r.classList.contains("hand") && r.textContent.includes("Greta"))));
+// host can lower the hand directly
+check("host sees a Lower hand button",
+  await host.$$eval(".hp-guest .lower", (btns) => btns.length === 1));
+await host.$$eval(".hp-guest .lower", (btns) => btns[0].click());
+await new Promise((r) => setTimeout(r, 1000));
+check("lower-hand clears the highlight",
+  await host.$$eval(".hp-guest", (rows) => !rows.some((r) => r.classList.contains("hand"))));
+await guest.click("#handBtn"); // raise again for the unmute-clears path
+await new Promise((r) => setTimeout(r, 800));
 // unmuting via host clears the hand
 await host.$$eval(".hp-guest .mute", (btns) => btns[1].click()); // mute...
 await new Promise((r) => setTimeout(r, 800));
@@ -57,15 +66,19 @@ await new Promise((r) => setTimeout(r, 1200));
 check("unmuting a guest lowers their hand",
   await host.$$eval(".hp-guest", (rows) => !rows.some((r) => r.classList.contains("hand"))));
 
-// --- overlay: subscribe on the stream ---
-check("overlay before going live is refused politely",
-  await host.evaluate(() => new Promise((res) => {
-    const ws = null; // use the app's own request path via button
-    document.getElementById("hpSubBtn").click();
-    const orig = window.alert;
-    window.alert = (m) => { window.alert = orig; res(/Go live first/.test(m)); };
-    setTimeout(() => res(false), 3000);
-  })));
+// --- overlay without going live: everyone sees it in the session ---
+await host.click("#hpSubBtn");
+await new Promise((r) => setTimeout(r, 1500));
+check("subscribe overlay appears in the guest's session (no stream needed)",
+  await guest.$eval(".live-overlay.subscribe", (el) => el.classList.contains("in")).catch(() => false));
+await new Promise((r) => setTimeout(r, 7000));
+check("subscribe overlay goes away on its own",
+  await guest.evaluate(() => !document.querySelector(".live-overlay")));
+await host.click("#hpAdBtn");
+await new Promise((r) => setTimeout(r, 1500));
+check("ad overlay appears in the session with the uploaded image",
+  await guest.$eval(".live-overlay.ad img", (el) => el.complete && el.naturalWidth > 0).catch(() => false));
+await guest.evaluate(() => document.querySelector(".live-overlay")?.remove());
 await host.click("#hpStreamBtn");
 await new Promise((r) => setTimeout(r, 5000));
 await host.click("#hpSubBtn");

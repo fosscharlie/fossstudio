@@ -36,6 +36,19 @@ export function activeRecording(roomId) {
   return active.get(roomId) || null;
 }
 
+export async function logOverlay(rec, kind, adFile) {
+  const entry = { kind, offsetMs: Date.now() - rec.startedAt };
+  if (adFile) {
+    // Snapshot the ad image now, in case the host replaces it later
+    const fsMod = await import("node:fs/promises");
+    const pathMod = await import("node:path");
+    const name = `ad-ov-${rec.overlays.length}${pathMod.extname(adFile)}`;
+    await fsMod.copyFile(adFile, pathMod.join(recDir(rec.id), "raw", name));
+    entry.file = name;
+  }
+  rec.overlays.push(entry);
+}
+
 export function uploadCreds(rec, peerId) {
   return { recId: rec.id, peerId, token: uploadToken(rec.id, peerId) };
 }
@@ -61,6 +74,7 @@ export async function startRecording(room, mode) {
     mode,
     startedAt: Date.now(),
     peers: new Map(), // peerId -> {name, files:{}, clientStartOffsetMs, done}
+    overlays: [],     // {kind, offsetMs, file?} baked into combined.mkv
     stopping: false
   };
   await fs.mkdir(path.join(recDir(recId), "raw"), { recursive: true });

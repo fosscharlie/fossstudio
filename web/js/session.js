@@ -637,20 +637,25 @@
       const vol = Math.round((control.volumes[peerId] ?? 1) * 100);
       const muted = !!control.muted?.[peerId];
       const nrOn = !!control.noise?.[peerId];
+      const hand = !!control.hands?.[peerId];
       row.dataset.peerId = peerId;
-      row.classList.toggle("hand", !!control.hands?.[peerId]);
+      row.classList.toggle("hand", hand);
       row.innerHTML = `
-        <div class="hp-name">
-          <span></span>
+        <div class="hp-name-line"></div>
+        <div class="hp-btns">
           <button class="hp-btn nr${nrOn ? " active" : ""}" data-tip="${nrOn ? "Noise reduction is on — click to turn off" : "Noise reduction is OFF — click to turn on"}">NR</button>
           <button class="hp-btn mute">${muted ? "Unmute" : "Mute"}</button>
           <button class="hp-btn spot">Spotlight</button>
+          ${hand ? '<button class="hp-btn lower" data-tip="Lower their hand">Lower hand</button>' : ""}
         </div>
         <div class="hp-meter"><div class="hp-meter-fill"></div></div>
         <input type="range" min="0" max="150" value="${vol}" aria-label="Volume">
         <span class="hp-vol">${vol}%</span>`;
-      row.querySelector("span").textContent =
-        (control.hands?.[peerId] ? "✋ " : "") + (isSelf ? `${tile.name} (you)` : tile.name);
+      row.querySelector(".hp-name-line").textContent = isSelf ? `${tile.name} (you)` : tile.name;
+      if (hand) {
+        row.querySelector(".lower").onclick = () =>
+          request("hostControl", { action: "lowerHand", peerId });
+      }
       row.querySelector(".nr").onclick = () => {
         request("hostControl", { action: "noise", peerId, enabled: !nrOn });
       };
@@ -751,6 +756,29 @@
       recUpload = null;
     }
     setRecIndicator(false);
+  }
+
+  // ---------- In-session overlay playback (subscribe / ad) ----------
+
+  function playDomOverlay({ kind, duration, url }) {
+    document.querySelectorAll(".live-overlay").forEach((el) => el.remove());
+    const el = document.createElement("div");
+    el.className = `live-overlay ${kind}`;
+    if (kind === "subscribe") {
+      el.innerHTML = `
+        <div class="lo-btn">SUBSCRIBE</div>
+        <div class="lo-bell"><span>🔔</span></div>
+        <div class="lo-msg">Enjoying the show? Subscribe and hit the bell —<br>choose <b>ALL notifications</b></div>`;
+    } else {
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "Sponsor banner";
+      el.appendChild(img);
+    }
+    els.grid.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("in"));
+    setTimeout(() => el.classList.remove("in"), (duration - 0.6) * 1000);
+    setTimeout(() => el.remove(), duration * 1000);
   }
 
   // Panel sound meters: read each analyser ~8x a second
@@ -946,6 +974,7 @@
         recorders.length ? stopSelfRecording() : setRecIndicator(false);
       };
       eventHandlers.streaming = ({ live: isLive }) => setLiveIndicator(isLive);
+      eventHandlers.overlay = playDomOverlay;
       if (info.streaming) setLiveIndicator(true);
 
       joined = true;

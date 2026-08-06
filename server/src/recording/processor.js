@@ -5,6 +5,9 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { recDir } from "./manager.js";
+import { fileURLToPath } from "node:url";
+
+const ASSETS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "assets");
 
 function ffmpeg(args, label) {
   return new Promise((resolve, reject) => {
@@ -97,6 +100,28 @@ export async function processRecording(rec) {
     const stack = videos.length === 1
       ? `[v0]copy[vout]`
       : `${videos.map((p, i) => `[v${i}]`).join("")}xstack=inputs=${videos.length}:layout=${layout.join("|")}:fill=black[vout]`;
+    // Bake in any overlays triggered during the recording
+    let finalLabel = "[vout]";
+    let overlayFilters = "";
+    (rec.overlays || []).forEach((ov, i) => {
+      const t0 = (ov.offsetMs / 1000).toFixed(2);
+      const dur = ov.kind === "subscribe" ? 6 : 18;
+      const t1 = (Number(t0) + dur).toFixed(2);
+      const oi = inputIdx.size;
+      const slide = (m) =>
+        `'main_h-(overlay_h+${m})*clip(min((t-${t0})/0.5\,(${t1}-t)/0.5)\,0\,1)'`;
+      if (ov.kind === "subscribe") {
+        args.push("-itsoffset", t0, "-i", path.join(ASSETS, "subscribe.mp4"));
+        inputIdx.set(`__ov${i}`, oi);
+        overlayFilters += `;[${oi}:v]scale=${cols * cellW}:-2[ovs${i}];${finalLabel}[ovs${i}]overlay=x=0:y=${slide(0)}:eof_action=pass:enable='between(t\,${t0}\,${t1})'[vo${i}]`;
+      } else if (ov.file) {
+        args.push("-loop", "1", "-i", path.join(raw, ov.file));
+        inputIdx.set(`__ov${i}`, oi);
+        overlayFilters += `;[${oi}:v]scale=-2:150[ovs${i}];${finalLabel}[ovs${i}]overlay=x=main_w-overlay_w-24:y=${slide(24)}:eof_action=pass:enable='between(t\,${t0}\,${t1})'[vo${i}]`;
+      } else { return; }
+      finalLabel = `[vo${i}]`;
+    });
+
     const amix = audios.length === 0
       ? null
       : audios.length === 1
@@ -105,8 +130,8 @@ export async function processRecording(rec) {
 
     await ffmpeg([
       ...args,
-      "-filter_complex", [scaled, stack, amix].filter(Boolean).join(";"),
-      "-map", "[vout]", ...(amix ? ["-map", "[aout]"] : []),
+      "-filter_complex", [scaled, stack, amix].filter(Boolean).join(";") + overlayFilters,
+      "-map", finalLabel, ...(amix ? ["-map", "[aout]"] : []),
       "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
       "-c:a", "aac", "-b:a", "192k",
       "-y", path.join(out, "combined.mkv")

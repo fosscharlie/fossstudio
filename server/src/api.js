@@ -300,6 +300,12 @@ api.delete("/adbanner", requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+api.get("/adbanner/:uid", async (req, res) => {
+  const s = await getSettings(path.basename(req.params.uid));
+  if (!s.adBanner) return res.status(404).end();
+  res.sendFile(path.join(config.dataDir, "uploads", path.basename(s.adBanner)));
+});
+
 api.get("/adbanner", requireAuth, async (req, res) => {
   const s = await getSettings(req.user.uid);
   if (!s.adBanner) return res.status(404).end();
