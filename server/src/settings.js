@@ -18,6 +18,9 @@ export async function updateSettings(uid, patch) {
   if (patch.wallpaper === null || typeof patch.wallpaper === "string") {
     clean.wallpaper = patch.wallpaper;
   }
+  if (patch.bg === null || (typeof patch.bg === "string" && /^#[0-9a-fA-F]{6}$/.test(patch.bg))) {
+    clean.bg = patch.bg ? patch.bg.toLowerCase() : null;
+  }
   if (patch.logo === null || typeof patch.logo === "string") {
     clean.logo = patch.logo;
   }

@@ -421,6 +421,9 @@
       els.banner.classList.remove("has-logo");
     }
     els.banner.classList.toggle("blank", !theme.title && !theme.logo);
+    // Background colour shows when there is no wallpaper; a wallpaper
+    // paints over it
+    if (theme.bg) els.grid.style.backgroundColor = theme.bg;
     if (theme.wallpaper) {
       els.grid.style.backgroundImage = `url(${theme.wallpaper})`;
       els.session.classList.add("wallpapered");

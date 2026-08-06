@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio — Host</title>
-<link rel="stylesheet" href="/host/host.css?v=20260806u">
+<link rel="stylesheet" href="/host/host.css?v=20260806v">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -70,6 +70,15 @@
           <p class="hint" style="margin-bottom:0.5rem">The highlight colour of this dashboard. Click a colour and it's applied and saved straight away.</p>
           <div class="swatches" id="swatches"></div>
           <span class="msg ok" id="themeMsg" style="display:inline-block; margin-top:0.6rem" hidden>✓ Saved</span>
+        </div>
+        <div class="panel">
+          <h2>Background colour</h2>
+          <p class="hint" style="margin-bottom:0.5rem">Shown behind the video grid in sessions. A wallpaper overrides it — with no wallpaper set, this colour shows. Click a colour (or type a hex code) and it's saved straight away.</p>
+          <div class="swatches" id="bgSwatches"></div>
+          <div style="display:flex; gap:0.6rem; align-items:center; margin-top:0.8rem">
+            <input type="text" id="bgHex" placeholder="#14161a" maxlength="7" spellcheck="false" style="max-width:8rem" aria-label="Background colour hex code">
+            <span class="msg ok" id="bgMsg" hidden>✓ Saved</span>
+          </div>
         </div>
         <div class="panel">
           <h2>Podcast logo</h2>
@@ -233,6 +242,6 @@
   </div>
 </div>
 
-<script src="/host/host.js?v=20260806u"></script>
+<script src="/host/host.js?v=20260806v"></script>
 </body>
 </html>

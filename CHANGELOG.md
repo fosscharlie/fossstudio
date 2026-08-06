@@ -4,6 +4,11 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Background colour** in Settings → Themes: same palette as the
+  accent plus a hex field for any custom colour, shown behind the
+  video grid in sessions — a wallpaper overrides it; with no wallpaper
+  the colour shows
+
 - **New grid layout**: the host is always top-left; everyone is the
   same size; rows balance and centre themselves (2 side by side; 3 =
   two up, one centred below; 5 = 3+2; 7 = 3+2+2; 8 = 3+3+2; 9 = 3×3) —

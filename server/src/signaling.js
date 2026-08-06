@@ -89,6 +89,7 @@ export function attachSignaling(httpServer) {
                 // one system can run several different podcasts
                 title: session.title === "Untitled session" ? "" : session.title,
                 logo: settings.logo ? `/api/logo/${room.ownerId}` : null,
+                bg: settings.bg || null,
                 wallpaper: settings.wallpaper ? `/api/wallpaper/${room.ownerId}` : null
               },
               peers: [...room.peers.values()]

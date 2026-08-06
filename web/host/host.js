@@ -465,6 +465,35 @@
     root.setProperty("--on-accent-container", "#ffffff");
   }
 
+  let currentBg = null;
+  function renderBgSwatches() {
+    const wrap = $("bgSwatches");
+    wrap.innerHTML = "";
+    for (const hex of PALETTE) {
+      const b = document.createElement("button");
+      b.className = "swatch" + (hex === currentBg ? " active" : "");
+      b.style.background = hex;
+      b.dataset.tip = hex;
+      b.setAttribute("aria-label", `Background ${hex}`);
+      b.onclick = () => saveBg(hex);
+      wrap.appendChild(b);
+    }
+  }
+  async function saveBg(hex) {
+    currentBg = hex;
+    renderBgSwatches();
+    if (document.activeElement !== $("bgHex")) $("bgHex").value = hex || "";
+    await apiFetch("/api/settings", { method: "PUT", body: JSON.stringify({ bg: hex }) });
+    $("bgMsg").hidden = false;
+    clearTimeout(saveBg.timer);
+    saveBg.timer = setTimeout(() => { $("bgMsg").hidden = true; }, 2000);
+  }
+  $("bgHex").onchange = () => {
+    let v = $("bgHex").value.trim();
+    if (/^[0-9a-fA-F]{6}$/.test(v)) v = `#${v}`;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) saveBg(v.toLowerCase());
+  };
+
   async function loadSettings() {
     const s = await apiFetch("/api/settings");
     $("streamUrl").value = s.streamUrl || "";
@@ -472,6 +501,9 @@
     currentAccent = s.accent;
     renderSwatches();
     applyAccent(currentAccent);
+    currentBg = s.bg || null;
+    renderBgSwatches();
+    $("bgHex").value = currentBg || "";
     updateWallpaperPreview(s.wallpaper);
     updateLogoPreview(!!s.logo);
     updateAdPreview(!!s.adBanner);
