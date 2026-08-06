@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Video spacing: 50px everywhere on desktop (was 80), a small 20px on
+  tablets and 12px on phones — the videos themselves get bigger
+
 - **Auto level is on by default** for every session
 - The recording light no longer blinks — steady red while recording
 - **While recording, guests' controls dim to half automatically** and

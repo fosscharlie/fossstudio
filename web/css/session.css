@@ -244,10 +244,10 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   flex-wrap: wrap;
   justify-content: center;
   align-content: center;
-  /* Wide, even spacing all round so the wallpaper shows through -
-     80px on desktop, scaling down with the viewport */
-  gap: clamp(16px, 5.5vw, 80px);
-  padding: clamp(16px, 5.5vw, 80px);
+  /* Even spacing all round so the wallpaper shows through: 50px on
+     desktop, smaller on tablet and phone so the videos stay big */
+  gap: 50px;
+  padding: 50px;
   overflow: hidden;
 }
 .tile {
@@ -607,8 +607,11 @@ body.dim-ui .host-panel:hover { opacity: 1; }
 /* Mobile: your own tile sits in the grid with everyone else, so you
    can always see yourself where you'll appear in the recording. Tiles
    start below the default logo/title block position. */
+@media (max-width: 1024px) {
+  .grid { gap: 20px; padding: 20px; }
+}
 @media (max-width: 700px) {
-  .grid { align-content: flex-start; padding-top: 84px; }
+  .grid { align-content: flex-start; gap: 12px; padding: 12px; padding-top: 84px; }
 }
 
 /* ---------- Tooltips: lozenge, background-coloured, outlined ---------- */
