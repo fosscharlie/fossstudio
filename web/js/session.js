@@ -350,8 +350,6 @@
       els.grid.style.backgroundImage = "";
       els.session.classList.remove("wallpapered");
     }
-    els.hpAutoGain.checked = !!theme.autoGain;
-    applyAutoGain(!!theme.autoGain);
   }
 
   function applyAutoGain(enabled) {
@@ -435,6 +433,8 @@
     for (const [peerId, tile] of tiles) {
       if (tile.gain) tile.gain.gain.value = control.volumes[peerId] ?? 1;
     }
+    applyAutoGain(!!control.autoGain);
+    els.hpAutoGain.checked = !!control.autoGain;
     applyLayout();
     if (isHost) renderHostGuests();
   }
@@ -618,7 +618,7 @@
       });
       selfId = info.peerId;
       isHost = info.role === "host";
-      control = info.control;
+      applyControl(info.control);
       applyTheme(info.theme);
       els.hostPanelBtn.hidden = !isHost;
 
@@ -685,10 +685,6 @@
       };
       eventHandlers.consumerClosed = ({ consumerId }) => dropConsumer(consumerId);
       eventHandlers.control = (c) => applyControl(c);
-      eventHandlers.autoGain = ({ enabled }) => {
-        applyAutoGain(enabled);
-        els.hpAutoGain.checked = enabled;
-      };
       eventHandlers.recordingStarted = ({ mode, upload }) => {
         if (mode === "browser" && upload) startSelfRecording(upload);
         else setRecIndicator(true);

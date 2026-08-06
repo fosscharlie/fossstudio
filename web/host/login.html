@@ -11,7 +11,11 @@
   <form class="panel" id="loginForm">
     <h1 style="font-size:1.4rem; margin-bottom:1rem"><span class="foss">FOSS</span>Studio</h1>
     <div class="field">
-      <label for="password">Host password</label>
+      <label for="username">Username</label>
+      <input type="text" id="username" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
       <input type="password" id="password" autocomplete="current-password" required>
     </div>
     <div class="field" id="totpField" hidden>
@@ -32,6 +36,7 @@ form.onsubmit = async (e) => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      username: document.getElementById("username").value,
       password: document.getElementById("password").value,
       totp: document.getElementById("totp").value
     })

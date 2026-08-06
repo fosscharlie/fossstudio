@@ -1,5 +1,5 @@
-// Web push for the host: "guest joined" and "recording ready" nudges.
-// VAPID keys are generated on first boot and kept in the data dir.
+// Web push, per user: "guest joined" and "recording ready" nudges go
+// to whoever owns the session. VAPID keys live in the data dir.
 import webpush from "web-push";
 import { readJson, writeJson } from "./storage.js";
 import { config } from "./config.js";
@@ -19,18 +19,19 @@ export function publicKey() {
   return keys?.publicKey;
 }
 
-export async function addSubscription(sub) {
+export async function addSubscription(uid, sub) {
   const subs = await readJson("push-subs.json", []);
   if (!subs.some((s) => s.endpoint === sub.endpoint)) {
-    subs.push(sub);
+    subs.push({ uid, ...sub });
     await writeJson("push-subs.json", subs);
   }
 }
 
-export async function notifyHost(title, body) {
+export async function notifyUser(uid, title, body) {
   const subs = await readJson("push-subs.json", []);
   const alive = [];
   for (const sub of subs) {
+    if (uid && sub.uid && sub.uid !== uid) { alive.push(sub); continue; }
     try {
       await webpush.sendNotification(sub, JSON.stringify({ title, body }));
       alive.push(sub);

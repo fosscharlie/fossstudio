@@ -1,4 +1,4 @@
-/* FOSS Studio host dashboard. */
+/* FOSSStudio host dashboard: main menu -> sub-menu -> content. */
 (() => {
   "use strict";
   const $ = (id) => document.getElementById(id);
@@ -17,14 +17,56 @@
 
   // ---------- navigation ----------
 
-  document.querySelectorAll(".nav button").forEach((btn) => {
-    btn.onclick = () => {
-      document.querySelectorAll(".nav button").forEach((b) => b.classList.toggle("active", b === btn));
-      document.querySelectorAll("section[id^=sec-]").forEach((s) => {
-        s.hidden = s.id !== `sec-${btn.dataset.section}`;
-      });
-    };
-  });
+  const MENUS = [
+    { id: "sessions", label: "Sessions", subs: [{ id: "sessions", label: "Your sessions" }] },
+    { id: "recordings", label: "Recordings", subs: [
+      { id: "library", label: "Library" }
+    ] },
+    { id: "settings", label: "Settings", subs: [
+      { id: "account", label: "Account" },
+      { id: "twofactor", label: "Two-factor" },
+      { id: "streaming", label: "Streaming" },
+      { id: "branding", label: "Podcast banner" },
+      { id: "wallpaper", label: "Wallpaper" }
+    ] },
+    { id: "users", label: "Users", adminOnly: true, subs: [{ id: "users", label: "Manage users" }] },
+    { id: "system", label: "System", adminOnly: true, subs: [
+      { id: "service", label: "Service" },
+      { id: "backups", label: "Backups" },
+      { id: "logs", label: "Logs" }
+    ] }
+  ];
+
+  let me = { role: "subadmin", username: "" };
+  let currentMenu = MENUS[0];
+
+  function renderMainMenu() {
+    const nav = $("mainMenu");
+    nav.innerHTML = "";
+    for (const menu of MENUS) {
+      if (menu.adminOnly && me.role !== "admin") continue;
+      const b = document.createElement("button");
+      b.textContent = menu.label;
+      b.classList.toggle("active", menu === currentMenu);
+      b.onclick = () => { currentMenu = menu; renderMainMenu(); showSub(menu.subs[0].id); };
+      nav.appendChild(b);
+    }
+  }
+
+  function showSub(subId) {
+    const nav = $("subMenu");
+    nav.innerHTML = "";
+    for (const sub of currentMenu.subs) {
+      const b = document.createElement("button");
+      b.textContent = sub.label;
+      b.classList.toggle("active", sub.id === subId);
+      b.onclick = () => showSub(sub.id);
+      nav.appendChild(b);
+    }
+    document.querySelectorAll("section[id^=pane-]").forEach((s) => {
+      s.hidden = s.id !== `pane-${subId}`;
+    });
+  }
 
   $("logoutBtn").onclick = async () => {
     await apiFetch("/api/logout", { method: "POST" });
@@ -37,6 +79,7 @@
     copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
     open: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M21 3l-9 9M9 21H5a2 2 0 0 1-2-2V7"/></svg>',
     del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>',
+    key: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="M11 12L21 2M16 7l3 3"/></svg>',
     tick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5L20 7"/></svg>'
   };
 
@@ -50,17 +93,17 @@
     return b;
   }
 
-  // Delete confirms inline: first click turns the icon into a tick,
-  // second click (within 4s) actually deletes. No popups.
-  function deleteBtn(label, onConfirm) {
-    const b = iconBtn("del", label, () => {
+  // Destructive actions confirm inline: first click shows a tick,
+  // second click (within 4s) does it. No popups.
+  function confirmBtn(icon, label, onConfirm) {
+    const b = iconBtn(icon, label, () => {
       if (b.classList.contains("confirm")) { onConfirm(); return; }
       b.classList.add("confirm");
       b.innerHTML = ICONS.tick;
       b.title = "Click again to confirm";
       setTimeout(() => {
         b.classList.remove("confirm");
-        b.innerHTML = ICONS.del;
+        b.innerHTML = ICONS[icon];
         b.title = label;
       }, 4000);
     });
@@ -101,7 +144,7 @@
       const open = iconBtn("open", "Open studio as host", () => {
         window.open(`/s/${s.id}?as=host`, "_blank");
       });
-      const del = deleteBtn("Delete session", async () => {
+      const del = confirmBtn("del", "Delete session", async () => {
         await apiFetch(`/api/sessions/${s.id}`, { method: "DELETE" });
         loadSessions();
       });
@@ -118,6 +161,71 @@
     });
     $("newSessionTitle").value = "";
     loadSessions();
+  };
+
+  // ---------- users (admin) ----------
+
+  async function loadUsers() {
+    if (me.role !== "admin") return;
+    const list = $("userList");
+    const users = await apiFetch("/api/users");
+    list.innerHTML = "";
+    for (const u of users) {
+      const row = document.createElement("div");
+      row.className = "session-row";
+      row.innerHTML = `
+        <div>
+          <div class="title"></div>
+          <div class="meta">${u.role}${u.totpEnabled ? " · 2FA on" : ""}</div>
+        </div>
+        <span class="spacer"></span>`;
+      row.querySelector(".title").textContent = u.username;
+      const reset = iconBtn("key", "Set a new password for this user", async () => {
+        const pw = prompt(`New password for ${u.username} (10+ characters):`);
+        if (!pw) return;
+        try {
+          await apiFetch(`/api/users/${u.id}/password`, {
+            method: "POST", body: JSON.stringify({ password: pw })
+          });
+          reset.classList.add("done");
+          reset.innerHTML = ICONS.tick;
+          setTimeout(() => { reset.classList.remove("done"); reset.innerHTML = ICONS.key; }, 1500);
+        } catch (err) { showUserMsg(err.message); }
+      });
+      row.appendChild(reset);
+      if (u.username !== me.username) {
+        row.appendChild(confirmBtn("del", "Delete user", async () => {
+          try {
+            await apiFetch(`/api/users/${u.id}`, { method: "DELETE" });
+            loadUsers();
+          } catch (err) { showUserMsg(err.message); }
+        }));
+      }
+      list.appendChild(row);
+    }
+  }
+
+  function showUserMsg(text) {
+    const m = $("userMsg");
+    m.textContent = text;
+    m.hidden = false;
+    setTimeout(() => { m.hidden = true; }, 4000);
+  }
+
+  $("newUserForm").onsubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await apiFetch("/api/users", {
+        method: "POST",
+        body: JSON.stringify({
+          username: $("newUserName").value,
+          password: $("newUserPass").value
+        })
+      });
+      $("newUserName").value = "";
+      $("newUserPass").value = "";
+      loadUsers();
+    } catch (err) { showUserMsg(err.message); }
   };
 
   // ---------- recordings ----------
@@ -153,8 +261,7 @@
       row.querySelector(".title").textContent = `Session ${r.roomId}`;
       row.querySelector(".meta").textContent =
         `${when}${mins ? ` · ${mins} min` : ""} · ${r.mode === "server" ? "server-side" : "browser-side"}`;
-      const badge = row.querySelector(".badge");
-      badge.textContent = STATUS_LABELS[r.status] || r.status;
+      row.querySelector(".badge").textContent = STATUS_LABELS[r.status] || r.status;
       const filesEl = row.querySelector(".files");
       for (const f of r.files || []) {
         const a = document.createElement("a");
@@ -163,7 +270,7 @@
         a.style.marginRight = "0.8rem";
         filesEl.appendChild(a);
       }
-      row.appendChild(deleteBtn("Delete recording and its files", async () => {
+      row.appendChild(confirmBtn("del", "Delete recording and its files", async () => {
         await apiFetch(`/api/recordings/${encodeURIComponent(r.id)}`, { method: "DELETE" });
         loadRecordings();
       }));
@@ -214,14 +321,13 @@
     }
   }
 
-  async function loadTheme() {
+  async function loadSettings() {
     const s = await apiFetch("/api/settings");
     $("recModeToggle").checked = s.recordingMode === "server";
     $("streamUrl").value = s.streamUrl || "";
     $("streamKey").value = s.streamKey || "";
     $("podcastName").value = s.podcastName;
     currentAccent = s.accent;
-    $("autoGainToggle").checked = s.autoGain;
     renderSwatches();
     updateWallpaperPreview(s.wallpaper);
   }
@@ -236,14 +342,6 @@
       el.textContent = "No wallpaper set";
     }
   }
-
-  // Audio settings save on their own, independent of the theme button
-  $("autoGainToggle").onchange = async () => {
-    await apiFetch("/api/settings", {
-      method: "PUT",
-      body: JSON.stringify({ autoGain: $("autoGainToggle").checked })
-    });
-  };
 
   $("saveThemeBtn").onclick = async () => {
     await apiFetch("/api/settings", {
@@ -329,7 +427,7 @@
     } catch (err) { msg.textContent = err.message; msg.hidden = false; }
   };
 
-  // ---------- system ----------
+  // ---------- system (admin) ----------
 
   const sysMsg = (text, ok = true) => {
     const m = $("systemMsg");
@@ -347,11 +445,11 @@
 
   $("backupNowBtn").onclick = async () => {
     const { name } = await apiFetch("/api/ops/backup", { method: "POST" });
-    sysMsg(`✓ Backup made: ${name}`);
     loadBackups();
   };
 
   async function loadBackups() {
+    if (me.role !== "admin") return;
     const list = $("backupList");
     const backups = await apiFetch("/api/ops/backups");
     list.innerHTML = backups.length ? "" : '<p class="hint">No backups yet.</p>';
@@ -364,22 +462,8 @@
       const dl = iconBtn("open", "Download backup", () => {
         location.href = `/api/ops/backups/${encodeURIComponent(b.name)}`;
       });
-      // Restore uses the same two-step inline confirm as delete
-      const restore = iconBtn("copy", "Restore this backup", () => {
-        if (restore.classList.contains("confirm")) {
-          apiFetch("/api/ops/restore", { method: "POST", body: JSON.stringify({ name: b.name }) })
-            .then(() => sysMsg("✓ Backup restored. Restart to apply everywhere."))
-            .catch((e) => sysMsg(e.message, false));
-          return;
-        }
-        restore.classList.add("confirm");
-        restore.innerHTML = ICONS.tick;
-        restore.title = "Click again to confirm restore";
-        setTimeout(() => {
-          restore.classList.remove("confirm");
-          restore.innerHTML = ICONS.copy;
-          restore.title = "Restore this backup";
-        }, 4000);
+      const restore = confirmBtn("copy", "Restore this backup", async () => {
+        await apiFetch("/api/ops/restore", { method: "POST", body: JSON.stringify({ name: b.name }) });
       });
       row.append(dl, restore);
       list.appendChild(row);
@@ -388,6 +472,7 @@
 
   $("refreshLogsBtn").onclick = loadLogs;
   async function loadLogs() {
+    if (me.role !== "admin") return;
     const { lines } = await apiFetch("/api/ops/logs");
     $("logBox").textContent = lines.slice(-200).join("\n") || "No log lines yet.";
     $("logBox").scrollTop = $("logBox").scrollHeight;
@@ -416,12 +501,24 @@
 
   // ---------- boot ----------
 
-  loadSessions();
-  loadRecordings();
-  loadTheme();
-  load2fa();
-  loadBackups();
-  loadLogs();
-  setInterval(loadSessions, 10000);   // keep the live badges fresh
-  setInterval(loadRecordings, 15000); // pick up processing -> ready
+  (async () => {
+    me = await apiFetch("/api/me");
+    if (!me.authed) { location.href = "/host/login.html"; return; }
+    $("whoami").textContent = `${me.username} (${me.role === "admin" ? "admin" : "sub-admin"})`;
+    $("accountName").textContent = me.username;
+    $("accountRole").textContent = me.role === "admin"
+      ? "Admin — full access, including user management and System."
+      : "Sub-admin — your own sessions, recordings and settings.";
+    renderMainMenu();
+    showSub(currentMenu.subs[0].id);
+    loadSessions();
+    loadRecordings();
+    loadSettings();
+    load2fa();
+    loadUsers();
+    loadBackups();
+    loadLogs();
+    setInterval(loadSessions, 10000);   // keep the live badges fresh
+    setInterval(loadRecordings, 15000); // pick up processing -> ready
+  })();
 })();

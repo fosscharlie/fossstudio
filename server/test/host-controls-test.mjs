@@ -1,10 +1,11 @@
 // Host + guest join a room; verify role gating, spotlight, and volume
 // control propagate from host to guest.
 import { chromium } from "playwright";
+import { makeRoom } from "./helpers.mjs";
 
 const B = process.argv[2] || "http://127.0.0.1:3999";
 const PW = process.argv[3] || "testpass123";
-const ROOM = `hosttest-${Date.now().toString(36)}`;
+const ROOM = await makeRoom(B, PW);
 
 const browser = await chromium.launch({
   args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", "--autoplay-policy=no-user-gesture-required"]
@@ -30,6 +31,7 @@ const check = (label, ok) => {
 const hostCtx = await browser.newContext({ permissions: ["camera", "microphone"] });
 const login = await hostCtx.newPage();
 await login.goto(`${B}/host/login.html`);
+await login.fill("#username", "charlie");
 await login.fill("#password", PW);
 await login.click("button[type=submit]");
 await login.waitForURL("**/host/");
@@ -47,7 +49,8 @@ check("host sees the host-controls button",
 check("guest without login cookie does NOT get host powers",
   await guest.$eval("#hostPanelBtn", (el) => el.hidden));
 const themeName = await host.evaluate(() =>
-  fetch("/api/theme").then((r) => r.json()).then((t) => t.podcastName));
+  fetch(`/api/theme?room=${location.pathname.split("/")[2]}`)
+    .then((r) => r.json()).then((t) => t.podcastName));
 check("theme banner applied from settings",
   (await host.$eval("#banner", (el) => el.textContent)) === themeName);
 

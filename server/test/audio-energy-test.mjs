@@ -1,8 +1,10 @@
 // Verify audio actually arrives: sender joins with noise suppression
 // on and off; receiver measures RMS energy of the incoming track.
 import { chromium } from "playwright";
+import { makeRoom } from "./helpers.mjs";
 
 const B = process.argv[2] || "http://127.0.0.1:3999";
+const PW = process.argv[3] || "testpass123";
 
 const browser = await chromium.launch({
   args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", "--autoplay-policy=no-user-gesture-required"]
@@ -21,7 +23,7 @@ async function join(room, name, noise) {
 }
 
 async function measure(noise) {
-  const room = `nrg${noise ? "on" : "off"}-${Date.now().toString(36)}`;
+  const room = await makeRoom(B, PW);
   const sender = await join(room, "Sender", noise);
   const receiver = await join(room, "Receiver", false);
   await new Promise((r) => setTimeout(r, 2000));

@@ -57,6 +57,7 @@ export async function startRecording(room, mode) {
   const rec = {
     id: recId,
     roomId: room.id,
+    ownerId: room.ownerId || null,
     mode,
     startedAt: Date.now(),
     peers: new Map(), // peerId -> {name, files:{}, clientStartOffsetMs, done}
@@ -69,7 +70,7 @@ export async function startRecording(room, mode) {
   if (mode === "server") await startServerCapture(rec, room);
 
   await saveIndex({
-    id: recId, roomId: room.id, mode, startedAt: rec.startedAt,
+    id: recId, roomId: room.id, ownerId: rec.ownerId, mode, startedAt: rec.startedAt,
     status: "recording", title: room.id, files: []
   });
   return rec;
@@ -135,7 +136,7 @@ function maybeFinalize(rec) {
   finalize(rec).catch(async (err) => {
     console.error("recording processing failed:", err);
     await saveIndex({
-      id: rec.id, roomId: rec.roomId, mode: rec.mode, startedAt: rec.startedAt,
+      id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, startedAt: rec.startedAt,
       status: "failed", error: "Processing failed — the raw files are kept.", files: []
     });
   });
@@ -143,16 +144,16 @@ function maybeFinalize(rec) {
 
 async function finalize(rec) {
   await saveIndex({
-    id: rec.id, roomId: rec.roomId, mode: rec.mode, startedAt: rec.startedAt,
+    id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, startedAt: rec.startedAt,
     endedAt: Date.now(), status: "processing", files: []
   });
   const files = await processRecording(rec);
   await saveIndex({
-    id: rec.id, roomId: rec.roomId, mode: rec.mode, startedAt: rec.startedAt,
+    id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, startedAt: rec.startedAt,
     endedAt: Date.now(), status: "ready", files
   });
-  const { notifyHost } = await import("../push.js");
-  notifyHost("Recording ready", `Session ${rec.roomId} is processed — ${files.length} files to download.`)
+  const { notifyUser } = await import("../push.js");
+  notifyUser(rec.ownerId, "Recording ready", `Session ${rec.roomId} is processed — ${files.length} files to download.`)
     .catch(() => {});
 }
 

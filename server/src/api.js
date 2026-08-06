@@ -1,4 +1,5 @@
-// Host + public HTTP API.
+// Host + public HTTP API. Admins see everything; sub-admins see only
+// what they own (sessions, recordings, their own settings).
 import express from "express";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -7,7 +8,11 @@ import {
   tryLogin, setAuthCookie, clearAuthCookie, isAuthedRequest,
   changePassword, get2faState, setup2fa, confirm2fa, disable2fa
 } from "./auth.js";
-import { getSettings, updateSettings, listSessions, createSession, deleteSession } from "./settings.js";
+import {
+  getSettings, updateSettings, listSessions, createSession, deleteSession, findSession
+} from "./settings.js";
+import { listUsers, createUser, deleteUser, findById, updateUser } from "./users.js";
+import { hashPassword } from "./auth.js";
 import { getRoom } from "./rooms.js";
 import {
   verifyUploadToken, appendChunk, markPeerDone,
@@ -23,17 +28,26 @@ export const api = express.Router();
 api.use(express.json({ limit: "64kb" }));
 
 function requireAuth(req, res, next) {
-  if (!isAuthedRequest(req)) return res.status(401).json({ error: "not logged in" });
+  const user = isAuthedRequest(req);
+  if (!user) return res.status(401).json({ error: "not logged in" });
+  req.user = user;
   next();
+}
+
+function requireAdmin(req, res, next) {
+  requireAuth(req, res, () => {
+    if (req.user.role !== "admin") return res.status(403).json({ error: "admin only" });
+    next();
+  });
 }
 
 // ---------- auth ----------
 
 api.post("/login", async (req, res) => {
   const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress;
-  const result = await tryLogin(ip, req.body.password, req.body.totp);
+  const result = await tryLogin(ip, req.body.username, req.body.password, req.body.totp);
   if (!result.ok) return res.status(401).json({ error: result.error });
-  setAuthCookie(res);
+  setAuthCookie(res, result.user);
   res.json({ ok: true });
 });
 
@@ -42,8 +56,11 @@ api.post("/logout", (req, res) => {
   res.json({ ok: true });
 });
 
-api.get("/me", (req, res) => {
-  res.json({ authed: isAuthedRequest(req) });
+api.get("/me", async (req, res) => {
+  const payload = isAuthedRequest(req);
+  if (!payload) return res.json({ authed: false });
+  const user = await findById(payload.uid);
+  res.json({ authed: !!user, role: user?.role, username: user?.username });
 });
 
 api.post("/password", requireAuth, async (req, res) => {
@@ -51,38 +68,72 @@ api.post("/password", requireAuth, async (req, res) => {
   if (pw.length < 10) {
     return res.status(400).json({ error: "Password needs at least 10 characters." });
   }
-  await changePassword(pw);
+  await changePassword(req.user.uid, pw);
   res.json({ ok: true });
 });
 
-api.get("/2fa", requireAuth, async (req, res) => res.json(await get2faState()));
-api.post("/2fa/setup", requireAuth, async (req, res) => res.json(await setup2fa()));
+api.get("/2fa", requireAuth, async (req, res) => res.json(await get2faState(req.user.uid)));
+api.post("/2fa/setup", requireAuth, async (req, res) => res.json(await setup2fa(req.user.uid)));
 api.post("/2fa/enable", requireAuth, async (req, res) => {
-  const ok = await confirm2fa(req.body.code);
+  const ok = await confirm2fa(req.user.uid, req.body.code);
   ok ? res.json({ ok: true }) : res.status(400).json({ error: "That code isn't right — check your authenticator app." });
 });
 api.post("/2fa/disable", requireAuth, async (req, res) => {
-  const ok = await disable2fa(req.body.code);
+  const ok = await disable2fa(req.user.uid, req.body.code);
   ok ? res.json({ ok: true }) : res.status(400).json({ error: "That code isn't right — check your authenticator app." });
+});
+
+// ---------- users (admin only) ----------
+
+api.get("/users", requireAdmin, async (req, res) => res.json(await listUsers()));
+
+api.post("/users", requireAdmin, async (req, res) => {
+  try {
+    res.json(await createUser(req.body.username, req.body.password, req.body.role));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+api.delete("/users/:id", requireAdmin, async (req, res) => {
+  try {
+    await deleteUser(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+api.post("/users/:id/password", requireAdmin, async (req, res) => {
+  const pw = String(req.body.password || "");
+  if (pw.length < 10) {
+    return res.status(400).json({ error: "Password needs at least 10 characters." });
+  }
+  try {
+    await updateUser(req.params.id, { passwordHash: hashPassword(pw) });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // ---------- settings & theme ----------
 
-api.get("/settings", requireAuth, async (req, res) => res.json(await getSettings()));
-api.put("/settings", requireAuth, async (req, res) => res.json(await updateSettings(req.body)));
+api.get("/settings", requireAuth, async (req, res) => res.json(await getSettings(req.user.uid)));
+api.put("/settings", requireAuth, async (req, res) => res.json(await updateSettings(req.user.uid, req.body)));
 
-// Public: what the guest session page needs to draw itself
+// Public: what a guest's session page needs, resolved via the room owner
 api.get("/theme", async (req, res) => {
-  const s = await getSettings();
+  const session = req.query.room ? await findSession(String(req.query.room)) : null;
+  const s = await getSettings(session?.ownerId);
   res.json({
     podcastName: s.podcastName,
     accent: s.accent,
-    wallpaper: s.wallpaper ? "/api/wallpaper" : null,
-    autoGain: s.autoGain
+    wallpaper: s.wallpaper && session ? `/api/wallpaper/${session.ownerId}` : null
   });
 });
 
-// Wallpaper upload: raw image body, capped size
+// Wallpaper: per-user file, capped size
 api.post("/wallpaper", requireAuth,
   express.raw({ type: ["image/jpeg", "image/png", "image/webp"], limit: "8mb" }),
   async (req, res) => {
@@ -90,15 +141,14 @@ api.post("/wallpaper", requireAuth,
       return res.status(400).json({ error: "Send a JPEG, PNG, or WebP image." });
     }
     const ext = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }[req.headers["content-type"]];
-    const name = `wallpaper.${ext}`;
+    const name = `wallpaper-${req.user.uid}.${ext}`;
     const dir = path.join(config.dataDir, "uploads");
     await fs.mkdir(dir, { recursive: true });
-    // Remove any previous wallpaper so only one exists
     for (const f of await fs.readdir(dir)) {
-      if (f.startsWith("wallpaper.")) await fs.unlink(path.join(dir, f));
+      if (f.startsWith(`wallpaper-${req.user.uid}.`)) await fs.unlink(path.join(dir, f));
     }
     await fs.writeFile(path.join(dir, name), req.body);
-    await updateSettings({ wallpaper: name });
+    await updateSettings(req.user.uid, { wallpaper: name });
     res.json({ ok: true });
   });
 
@@ -106,15 +156,22 @@ api.delete("/wallpaper", requireAuth, async (req, res) => {
   const dir = path.join(config.dataDir, "uploads");
   try {
     for (const f of await fs.readdir(dir)) {
-      if (f.startsWith("wallpaper.")) await fs.unlink(path.join(dir, f));
+      if (f.startsWith(`wallpaper-${req.user.uid}.`)) await fs.unlink(path.join(dir, f));
     }
   } catch { /* nothing uploaded yet */ }
-  await updateSettings({ wallpaper: null });
+  await updateSettings(req.user.uid, { wallpaper: null });
   res.json({ ok: true });
 });
 
-api.get("/wallpaper", async (req, res) => {
-  const s = await getSettings();
+api.get("/wallpaper/:uid", async (req, res) => {
+  const s = await getSettings(path.basename(req.params.uid));
+  if (!s.wallpaper) return res.status(404).end();
+  res.sendFile(path.join(config.dataDir, "uploads", path.basename(s.wallpaper)));
+});
+
+// The dashboard preview uses the logged-in user's own wallpaper
+api.get("/wallpaper", requireAuth, async (req, res) => {
+  const s = await getSettings(req.user.uid);
   if (!s.wallpaper) return res.status(404).end();
   res.sendFile(path.join(config.dataDir, "uploads", path.basename(s.wallpaper)));
 });
@@ -122,7 +179,7 @@ api.get("/wallpaper", async (req, res) => {
 // ---------- sessions ----------
 
 api.get("/sessions", requireAuth, async (req, res) => {
-  const sessions = await listSessions();
+  const sessions = await listSessions(req.user);
   res.json(sessions.map((s) => ({
     ...s,
     live: !!getRoom(s.id),
@@ -131,18 +188,16 @@ api.get("/sessions", requireAuth, async (req, res) => {
 });
 
 api.post("/sessions", requireAuth, async (req, res) => {
-  res.json(await createSession(req.body.title));
+  res.json(await createSession(req.user, req.body.title));
 });
 
 api.delete("/sessions/:id", requireAuth, async (req, res) => {
-  await deleteSession(req.params.id);
+  await deleteSession(req.user, req.params.id);
   res.json({ ok: true });
 });
 
 // ---------- recording ----------
 
-// Chunk upload from recording browsers. Not cookie-authed (guests have
-// no login); a per-peer HMAC token issued at recording start gates it.
 function chunkAuth(req, res, next) {
   const { rec, peer, token } = req.query;
   if (!rec || !peer || !verifyUploadToken(String(rec), String(peer), String(token))) {
@@ -170,12 +225,24 @@ api.post("/rec/done", chunkAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+async function recAccess(req, id) {
+  const recs = await listRecordings();
+  const rec = recs.find((r) => r.id === id);
+  if (!rec) return null;
+  if (req.user.role !== "admin" && rec.ownerId !== req.user.uid) return null;
+  return rec;
+}
+
 api.get("/recordings", requireAuth, async (req, res) => {
-  res.json(await listRecordings());
+  const recs = await listRecordings();
+  res.json(req.user.role === "admin"
+    ? recs
+    : recs.filter((r) => r.ownerId === req.user.uid));
 });
 
-api.get("/recordings/:id/files/:file", requireAuth, (req, res) => {
+api.get("/recordings/:id/files/:file", requireAuth, async (req, res) => {
   const id = path.basename(req.params.id);
+  if (!await recAccess(req, id)) return res.status(404).json({ error: "not found" });
   const file = path.basename(req.params.file);
   res.download(path.join(recDir(id), "out", file), file, (err) => {
     if (err && !res.headersSent) res.status(404).json({ error: "file not found" });
@@ -183,32 +250,34 @@ api.get("/recordings/:id/files/:file", requireAuth, (req, res) => {
 });
 
 api.delete("/recordings/:id", requireAuth, async (req, res) => {
-  await deleteRecording(path.basename(req.params.id));
+  const id = path.basename(req.params.id);
+  if (!await recAccess(req, id)) return res.status(404).json({ error: "not found" });
+  await deleteRecording(id);
   res.json({ ok: true });
 });
 
-// ---------- ops: logs, backups, restart, export ----------
+// ---------- ops: admin only ----------
 
-api.get("/ops/logs", requireAuth, (req, res) => {
+api.get("/ops/logs", requireAdmin, (req, res) => {
   res.json({ lines: recentLogs() });
 });
 
-api.post("/ops/backup", requireAuth, async (req, res) => {
+api.post("/ops/backup", requireAdmin, async (req, res) => {
   res.json({ name: await makeBackup() });
 });
 
-api.get("/ops/backups", requireAuth, async (req, res) => {
+api.get("/ops/backups", requireAdmin, async (req, res) => {
   res.json(await listBackups());
 });
 
-api.get("/ops/backups/:name", requireAuth, (req, res) => {
+api.get("/ops/backups/:name", requireAdmin, (req, res) => {
   const name = path.basename(req.params.name);
   res.download(backupPath(name), name, (err) => {
     if (err && !res.headersSent) res.status(404).json({ error: "backup not found" });
   });
 });
 
-api.post("/ops/restore", requireAuth, async (req, res) => {
+api.post("/ops/restore", requireAdmin, async (req, res) => {
   try {
     await restoreBackup(String(req.body.name || ""));
     res.json({ ok: true });
@@ -217,16 +286,16 @@ api.post("/ops/restore", requireAuth, async (req, res) => {
   }
 });
 
-api.post("/ops/restart", requireAuth, (req, res) => {
+api.post("/ops/restart", requireAdmin, (req, res) => {
   res.json({ ok: true });
   restartApp();
 });
 
-api.get("/ops/export", requireAuth, (req, res) => {
+api.get("/ops/export", requireAdmin, (req, res) => {
   streamFullExport(res);
 });
 
-// ---------- push notifications ----------
+// ---------- push notifications (per user) ----------
 
 api.get("/push/key", requireAuth, (req, res) => {
   res.json({ key: publicKey() });
@@ -235,6 +304,6 @@ api.get("/push/key", requireAuth, (req, res) => {
 api.post("/push/subscribe", requireAuth, async (req, res) => {
   const sub = req.body;
   if (!sub?.endpoint || !sub?.keys) return res.status(400).json({ error: "bad subscription" });
-  await addSubscription(sub);
+  await addSubscription(req.user.uid, sub);
   res.json({ ok: true });
 });

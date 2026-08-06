@@ -8,7 +8,8 @@ import {
 } from "./rooms.js";
 import { iceServers } from "./turn.js";
 import { isAuthedRequest } from "./auth.js";
-import { getSettings, updateSettings } from "./settings.js";
+import { getSettings, updateSettings, findSession } from "./settings.js";
+import { notifyUser } from "./push.js";
 import {
   startRecording, stopRecording, activeRecording,
   addPeerToRecording, uploadCreds, markPeerDone
@@ -46,13 +47,19 @@ export function attachSignaling(httpServer) {
         switch (method) {
           case "join": {
             if (peer) return fail("already joined");
+            // Only sessions created in a dashboard exist
+            const session = await findSession(roomId);
+            if (!session) return fail("This session link doesn't exist.");
             room = await getOrCreateRoom(roomId);
+            room.ownerId = session.ownerId;
             const name = String(data.name || "").trim().slice(0, NAME_MAX) || "Guest";
-            // Host role is granted by the dashboard login cookie, never by
-            // anything the client claims about itself.
-            const role = isAuthedRequest(req) && data.role === "host" ? "host" : "guest";
+            // Host role needs a dashboard login AND rights over this
+            // session (its owner, or any admin) — never client-claimed.
+            const auth = isAuthedRequest(req);
+            const canHost = auth && (auth.role === "admin" || auth.uid === session.ownerId);
+            const role = canHost && data.role === "host" ? "host" : "guest";
             peer = addPeer(room, { name, role, socket });
-            const settings = await getSettings();
+            const settings = await getSettings(room.ownerId);
             reply({
               peerId: peer.id,
               role,
@@ -63,8 +70,7 @@ export function attachSignaling(httpServer) {
               theme: {
                 podcastName: settings.podcastName,
                 accent: settings.accent,
-                wallpaper: settings.wallpaper ? "/api/wallpaper" : null,
-                autoGain: settings.autoGain
+                wallpaper: settings.wallpaper ? `/api/wallpaper/${room.ownerId}` : null
               },
               peers: [...room.peers.values()]
                 .filter((p) => p.id !== peer.id)
@@ -72,8 +78,7 @@ export function attachSignaling(httpServer) {
             });
             broadcast(room, peer.id, { event: "peerJoined", data: peerSummary(peer) });
             if (role === "guest" && room.peers.size === 1) {
-              const { notifyHost } = await import("./push.js");
-              notifyHost("Guest waiting", `${name} just joined session ${room.id}.`).catch(() => {});
+              notifyUser(room.ownerId, "Guest waiting", `${name} just joined session ${room.id}.`).catch(() => {});
             }
             // Someone joining mid-recording starts recording too
             const rec = activeRecording(room.id);
@@ -102,14 +107,12 @@ export function attachSignaling(httpServer) {
                 if (room.peers.has(data.peerId) && Number.isFinite(v)) c.volumes[data.peerId] = v;
                 break;
               }
-              case "autoGain": {
-                await updateSettings({ autoGain: !!data.enabled });
-                broadcast(room, null, { event: "autoGain", data: { enabled: !!data.enabled } });
-                return reply({});
-              }
+              case "autoGain":
+                c.autoGain = !!data.enabled;
+                break;
               case "stream": {
                 if (data.start) {
-                  const settings = await getSettings();
+                  const settings = await getSettings(room.ownerId);
                   if (!settings.streamKey) {
                     return fail("Add your YouTube stream key in the dashboard first.");
                   }
@@ -124,7 +127,7 @@ export function attachSignaling(httpServer) {
               }
               case "record": {
                 if (data.start) {
-                  const settings = await getSettings();
+                  const settings = await getSettings(room.ownerId);
                   const rec = await startRecording(room, settings.recordingMode);
                   for (const p of room.peers.values()) {
                     if (p.socket.readyState === 1) {

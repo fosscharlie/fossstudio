@@ -13,149 +13,167 @@
 <div class="shell">
   <div class="topbar">
     <h1><span class="foss">FOSS</span>Studio</h1>
-    <nav class="nav" aria-label="Sections">
-      <button data-section="sessions" class="active">Sessions</button>
-      <button data-section="recordings">Recordings</button>
-      <button data-section="theme">Theme</button>
-      <button data-section="security">Security</button>
-      <button data-section="system">System</button>
-    </nav>
+    <span class="whoami" id="whoami"></span>
     <button class="btn" id="logoutBtn">Log out</button>
   </div>
 
-  <!-- Sessions -->
-  <section id="sec-sessions" class="stack">
-    <div class="panel">
-      <h2>New session</h2>
-      <form id="newSessionForm" style="display:flex; gap:0.75rem; flex-wrap:wrap">
-        <input type="text" id="newSessionTitle" placeholder="Episode title (optional)" style="flex:1; min-width:12rem">
-        <button class="btn primary" type="submit">Create session link</button>
-      </form>
-    </div>
-    <div class="panel">
-      <h2>Your sessions</h2>
-      <div id="sessionList"><p class="hint">Loading…</p></div>
-    </div>
-  </section>
+  <div class="layout">
+    <nav class="mainmenu" id="mainMenu" aria-label="Main menu"></nav>
+    <nav class="submenu" id="subMenu" aria-label="Section menu"></nav>
+    <main class="content">
 
-  <!-- Recordings -->
-  <section id="sec-recordings" class="stack" hidden>
-    <div class="panel">
-      <h2>Recording mode</h2>
-      <label class="toggle">
-        <input type="checkbox" id="recModeToggle">
-        <span class="track"></span>
-        <span>Server-side recording<br><span class="hint">Best for 2–3 guests. Off = each guest's browser records itself and uploads at the end — better for bigger sessions.</span></span>
-      </label>
-    </div>
-    <div class="panel">
-      <h2>Recordings</h2>
-      <div id="recordingList"><p class="hint">Loading…</p></div>
-    </div>
-    <div class="panel">
-      <h2>YouTube streaming</h2>
-      <p class="hint" style="margin-bottom:0.8rem">Paste the stream key from YouTube Studio → Go live. Then use the "Go live" button in the session's host controls. Best for smaller sessions — the server does heavy lifting while live.</p>
-      <div class="field">
-        <label for="streamUrl">Stream server</label>
-        <input type="text" id="streamUrl" placeholder="rtmp://a.rtmp.youtube.com/live2">
-      </div>
-      <div class="field">
-        <label for="streamKey">Stream key</label>
-        <input type="password" id="streamKey" autocomplete="off" placeholder="xxxx-xxxx-xxxx-xxxx">
-      </div>
-      <button class="btn primary" id="saveStreamBtn">Save streaming settings</button>
-      <span class="msg ok" id="streamMsg" hidden>✓ Saved</span>
-    </div>
-  </section>
+      <!-- Sessions -->
+      <section id="pane-sessions" class="stack" hidden>
+        <div class="panel">
+          <h2>New session</h2>
+          <form id="newSessionForm" style="display:flex; gap:0.75rem; flex-wrap:wrap">
+            <input type="text" id="newSessionTitle" placeholder="Episode title (optional)" style="flex:1; min-width:12rem">
+            <button class="btn primary" type="submit">Create session link</button>
+          </form>
+        </div>
+        <div class="panel">
+          <h2>Your sessions</h2>
+          <div id="sessionList"><p class="hint">Loading…</p></div>
+        </div>
+      </section>
 
-  <!-- Theme -->
-  <section id="sec-theme" class="stack" hidden>
-    <div class="grid-2">
-      <div class="panel stack">
-        <div>
-          <h2>Podcast banner</h2>
+      <!-- Recordings: library -->
+      <section id="pane-library" class="stack" hidden>
+        <div class="panel">
+          <h2>Recording mode</h2>
+          <label class="toggle">
+            <input type="checkbox" id="recModeToggle">
+            <span class="track"></span>
+            <span>Server-side recording<br><span class="hint">Best for 2–3 guests. Off = each guest's browser records itself and uploads at the end — better for bigger sessions.</span></span>
+          </label>
+        </div>
+        <div class="panel">
+          <h2>Recordings</h2>
+          <div id="recordingList"><p class="hint">Loading…</p></div>
+        </div>
+      </section>
+
+      <!-- Recordings: streaming -->
+      <section id="pane-streaming" class="stack" hidden>
+        <div class="panel">
+          <h2>YouTube streaming</h2>
+          <p class="hint" style="margin-bottom:0.8rem">Paste the stream key from YouTube Studio → Go live. Then use the "Go live" button in the session's host controls. Best for smaller sessions — the server does heavy lifting while live.</p>
           <div class="field">
-            <label for="podcastName">Name shown at the top of every session</label>
-            <input type="text" id="podcastName" maxlength="80">
+            <label for="streamUrl">Stream server</label>
+            <input type="text" id="streamUrl" placeholder="rtmp://a.rtmp.youtube.com/live2">
+          </div>
+          <div class="field">
+            <label for="streamKey">Stream key</label>
+            <input type="password" id="streamKey" autocomplete="off" placeholder="xxxx-xxxx-xxxx-xxxx">
+          </div>
+          <button class="btn primary" id="saveStreamBtn">Save streaming settings</button>
+          <span class="msg ok" id="streamMsg" hidden>✓ Saved</span>
+        </div>
+      </section>
+
+      <!-- Theme: branding -->
+      <section id="pane-branding" class="stack" hidden>
+        <div class="panel stack">
+          <div>
+            <h2>Podcast banner</h2>
+            <div class="field">
+              <label for="podcastName">Name shown at the top of every session</label>
+              <input type="text" id="podcastName" maxlength="80">
+            </div>
+          </div>
+          <div>
+            <h2>Accent colour</h2>
+            <p class="hint" style="margin-bottom:0.5rem">Used for highlights in the session view.</p>
+            <div class="swatches" id="swatches"></div>
+          </div>
+          <div>
+            <button class="btn primary" id="saveThemeBtn">Save theme</button>
+            <span class="msg ok" id="themeMsg" hidden>✓ Saved</span>
           </div>
         </div>
-        <div>
-          <h2>Accent colour</h2>
-          <p class="hint" style="margin-bottom:0.5rem">Used for highlights in the session view.</p>
-          <div class="swatches" id="swatches"></div>
-        </div>
-        <div>
-          <button class="btn primary" id="saveThemeBtn">Save theme</button>
-          <span class="msg ok" id="themeMsg" hidden>✓ Saved</span>
-        </div>
-      </div>
-      <div class="stack">
-      <div class="panel">
-        <h2>Audio settings</h2>
-        <label class="toggle">
-          <input type="checkbox" id="autoGainToggle">
-          <span class="track"></span>
-          <span>Automatic level balancing<br><span class="hint">Evens out quiet and loud voices for everyone. Saves straight away.</span></span>
-        </label>
-      </div>
-      <div class="panel">
-        <h2>Wallpaper</h2>
-        <div class="wallpaper-preview" id="wallpaperPreview">No wallpaper set</div>
-        <div style="display:flex; gap:0.6rem; margin-top:0.8rem">
-          <button class="btn" id="wallpaperPick">Upload image</button>
-          <button class="btn" id="wallpaperRemove">Remove</button>
-          <input type="file" id="wallpaperFile" accept="image/jpeg,image/png,image/webp" hidden>
-        </div>
-        <p class="hint" style="margin-top:0.5rem">Shown behind the video grid. JPEG, PNG or WebP, up to 8 MB.</p>
-      </div>
-      </div>
-    </div>
-  </section>
+      </section>
 
-  <!-- Security -->
-  <section id="sec-security" class="stack" hidden>
-    <div class="grid-2">
-      <div class="panel">
-        <h2>Change host password</h2>
-        <div class="field">
-          <label for="newPassword">New password</label>
-          <input type="password" id="newPassword" autocomplete="new-password">
-          <p class="hint">At least 10 characters.</p>
-        </div>
-        <button class="btn primary" id="savePasswordBtn">Change password</button>
-        <p class="msg" id="passwordMsg" hidden></p>
-      </div>
-      <div class="panel">
-        <h2>Two-factor login</h2>
-        <div id="tfaOff">
-          <p class="hint" style="margin-bottom:0.75rem">Adds a 6-digit code from an authenticator app on top of your password.</p>
-          <button class="btn" id="tfaSetupBtn">Set up 2FA</button>
-        </div>
-        <div id="tfaSetup" hidden>
-          <p class="hint">Add this secret to your authenticator app, then enter the code it shows:</p>
-          <p style="font-family:monospace; word-break:break-all; margin:0.5rem 0" id="tfaSecret"></p>
-          <div class="field">
-            <input type="text" id="tfaCode" inputmode="numeric" placeholder="6-digit code">
+      <!-- Theme: wallpaper -->
+      <section id="pane-wallpaper" class="stack" hidden>
+        <div class="panel">
+          <h2>Wallpaper</h2>
+          <div class="wallpaper-preview" id="wallpaperPreview">No wallpaper set</div>
+          <div style="display:flex; gap:0.6rem; margin-top:0.8rem">
+            <button class="btn" id="wallpaperPick">Upload image</button>
+            <button class="btn" id="wallpaperRemove">Remove</button>
+            <input type="file" id="wallpaperFile" accept="image/jpeg,image/png,image/webp" hidden>
           </div>
-          <button class="btn primary" id="tfaEnableBtn">Turn on 2FA</button>
+          <p class="hint" style="margin-top:0.5rem">Shown behind the video grid. JPEG, PNG or WebP, up to 8 MB.</p>
         </div>
-        <div id="tfaOn" hidden>
-          <p class="msg ok" style="margin:0 0 0.75rem">✓ 2FA is on</p>
-          <div class="field">
-            <input type="text" id="tfaDisableCode" inputmode="numeric" placeholder="6-digit code">
-          </div>
-          <button class="btn danger" id="tfaDisableBtn">Turn off 2FA</button>
-        </div>
-        <p class="msg err" id="tfaMsg" hidden></p>
-      </div>
-    </div>
-  </section>
+      </section>
 
-  <!-- System -->
-  <section id="sec-system" class="stack" hidden>
-    <div class="grid-2">
-      <div class="panel stack">
-        <div>
+      <!-- Settings: account -->
+      <section id="pane-account" class="stack" hidden>
+        <div class="panel">
+          <h2>Your account</h2>
+          <p style="margin-bottom:0.3rem"><strong id="accountName"></strong></p>
+          <p class="hint" id="accountRole"></p>
+        </div>
+        <div class="panel">
+          <h2>Change your password</h2>
+          <div class="field">
+            <label for="newPassword">New password</label>
+            <input type="password" id="newPassword" autocomplete="new-password">
+            <p class="hint">At least 10 characters.</p>
+          </div>
+          <button class="btn primary" id="savePasswordBtn">Change password</button>
+          <p class="msg" id="passwordMsg" hidden></p>
+        </div>
+      </section>
+
+      <!-- Security: 2FA -->
+      <section id="pane-twofactor" class="stack" hidden>
+        <div class="panel">
+          <h2>Two-factor login</h2>
+          <div id="tfaOff">
+            <p class="hint" style="margin-bottom:0.75rem">Adds a 6-digit code from an authenticator app on top of your password.</p>
+            <button class="btn" id="tfaSetupBtn">Set up 2FA</button>
+          </div>
+          <div id="tfaSetup" hidden>
+            <p class="hint">Add this secret to your authenticator app, then enter the code it shows:</p>
+            <p style="font-family:monospace; word-break:break-all; margin:0.5rem 0" id="tfaSecret"></p>
+            <div class="field">
+              <input type="text" id="tfaCode" inputmode="numeric" placeholder="6-digit code">
+            </div>
+            <button class="btn primary" id="tfaEnableBtn">Turn on 2FA</button>
+          </div>
+          <div id="tfaOn" hidden>
+            <p class="msg ok" style="margin:0 0 0.75rem">✓ 2FA is on</p>
+            <div class="field">
+              <input type="text" id="tfaDisableCode" inputmode="numeric" placeholder="6-digit code">
+            </div>
+            <button class="btn danger" id="tfaDisableBtn">Turn off 2FA</button>
+          </div>
+          <p class="msg err" id="tfaMsg" hidden></p>
+        </div>
+      </section>
+
+      <!-- Users (admin) -->
+      <section id="pane-users" class="stack" hidden>
+        <div class="panel">
+          <h2>Add a user</h2>
+          <p class="hint" style="margin-bottom:0.8rem">Sub-admins get their own sessions, recordings, theme and stream key — they can't touch System or other people's shows.</p>
+          <form id="newUserForm" style="display:flex; gap:0.75rem; flex-wrap:wrap">
+            <input type="text" id="newUserName" placeholder="username" autocomplete="off" style="flex:1; min-width:8rem">
+            <input type="password" id="newUserPass" placeholder="password (10+ chars)" autocomplete="new-password" style="flex:1; min-width:10rem">
+            <button class="btn primary" type="submit">Add sub-admin</button>
+          </form>
+          <p class="msg err" id="userMsg" hidden></p>
+        </div>
+        <div class="panel">
+          <h2>Users</h2>
+          <div id="userList"><p class="hint">Loading…</p></div>
+        </div>
+      </section>
+
+      <!-- System (admin) -->
+      <section id="pane-service" class="stack" hidden>
+        <div class="panel">
           <h2>Service</h2>
           <div style="display:flex; gap:0.6rem; flex-wrap:wrap">
             <button class="btn" id="restartBtn">Restart studio</button>
@@ -164,20 +182,27 @@
           </div>
           <p class="msg" id="systemMsg" hidden></p>
         </div>
-        <div>
+      </section>
+
+      <section id="pane-backups" class="stack" hidden>
+        <div class="panel">
           <h2>Backups</h2>
           <p class="hint" style="margin-bottom:0.6rem">Settings and session history are backed up automatically every day. Recordings aren't included — download those from the Recordings tab.</p>
           <button class="btn primary" id="backupNowBtn">Back up now</button>
           <div id="backupList" style="margin-top:0.8rem"></div>
         </div>
-      </div>
-      <div class="panel">
-        <h2>Recent log</h2>
-        <button class="btn" id="refreshLogsBtn" style="margin-bottom:0.6rem">Refresh</button>
-        <pre id="logBox" style="font-size:0.72rem; line-height:1.5; overflow:auto; max-height:26rem; white-space:pre-wrap; word-break:break-all"></pre>
-      </div>
-    </div>
-  </section>
+      </section>
+
+      <section id="pane-logs" class="stack" hidden>
+        <div class="panel">
+          <h2>Recent log</h2>
+          <button class="btn" id="refreshLogsBtn" style="margin-bottom:0.6rem">Refresh</button>
+          <pre id="logBox" style="font-size:0.72rem; line-height:1.5; overflow:auto; max-height:26rem; white-space:pre-wrap; word-break:break-all"></pre>
+        </div>
+      </section>
+
+    </main>
+  </div>
 </div>
 
 <script src="/host/host.js"></script>

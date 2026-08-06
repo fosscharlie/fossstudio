@@ -19,7 +19,8 @@ export async function getOrCreateRoom(roomId) {
       control: {
         layout: "grid",          // "grid" | "spotlight"
         spotlightPeerId: null,
-        volumes: {}              // peerId -> 0..1.5
+        volumes: {},             // peerId -> 0..1.5
+        autoGain: false          // per-session, host-toggled
       }
     };
     rooms.set(roomId, room);

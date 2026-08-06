@@ -1,8 +1,10 @@
 // Join a room at phone/tablet sizes and screenshot both stages.
 import { chromium } from "playwright";
+import { makeRoom } from "./helpers.mjs";
 
-const BASE = "https://fossstudio.fosscharlie.uk";
-const ROOM = `viewtest-${Date.now().toString(36)}`;
+const BASE = process.argv[2] || "http://127.0.0.1:3999";
+const PW = process.argv[3] || "testpass123";
+const ROOM = await makeRoom(BASE, PW);
 const OUT = "/tmp/claude-1000/-home-charlie-GitHub-fossstudio/30aef10b-264b-4404-9752-f5d84c9a6596/scratchpad";
 
 const browser = await chromium.launch({

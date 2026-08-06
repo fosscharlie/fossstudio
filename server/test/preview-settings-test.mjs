@@ -1,9 +1,11 @@
 // Preview settings: zoom (digital path with fake cam), speaker test
 // button, mirror toggle, and remembered preferences across reloads.
 import { chromium } from "playwright";
+import { makeRoom } from "./helpers.mjs";
 
 const B = process.argv[2] || "http://127.0.0.1:3999";
-const ROOM = `prevtest-${Date.now().toString(36)}`;
+const PW = process.argv[3] || "testpass123";
+const ROOM = await makeRoom(B, PW);
 
 const browser = await chromium.launch({
   args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", "--autoplay-policy=no-user-gesture-required"]

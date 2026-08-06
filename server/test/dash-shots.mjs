@@ -11,12 +11,14 @@ for (const scheme of ["light", "dark"]) {
   const page = await ctx.newPage();
   await page.goto(`${B}/host/login.html`);
   if (scheme === "light") await page.screenshot({ path: `${OUT}/dash-login-${scheme}.png` });
-  await page.fill("#password", PW);
+  await page.fill("#username", "charlie");
+await page.fill("#password", PW);
   await page.click("button[type=submit]");
   await page.waitForURL("**/host/");
   await page.waitForTimeout(600);
   await page.screenshot({ path: `${OUT}/dash-sessions-${scheme}.png` });
-  await page.click('[data-section="theme"]');
+  await page.click('#mainMenu button:has-text("Settings")');
+  await page.click('#subMenu button:has-text("Podcast banner")');
   await page.screenshot({ path: `${OUT}/dash-theme-${scheme}.png` });
   await ctx.close();
 }

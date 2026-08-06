@@ -2,10 +2,12 @@
 // each must end up seeing video flowing from every other participant.
 // Usage: node test/call-test.mjs [url] [guests]
 import { chromium } from "playwright";
+import { makeRoom } from "./helpers.mjs";
 
 const BASE = process.argv[2] || "https://fossstudio.fosscharlie.uk";
 const GUESTS = Number(process.argv[3] || 3);
-const ROOM = `autotest-${Date.now().toString(36)}`;
+const PW = process.argv[4] || "testpass123";
+const ROOM = await makeRoom(BASE, PW);
 
 const browser = await chromium.launch({
   args: [

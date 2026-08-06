@@ -4,11 +4,12 @@
 import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { makeRoom } from "./helpers.mjs";
 
 const B = process.argv[2] || "http://127.0.0.1:3999";
 const PW = process.argv[3] || "testpass123";
 const MODE = process.argv[4] || "browser";
-const ROOM = `rectest-${Date.now().toString(36)}`;
+const ROOM = await makeRoom(B, PW);
 const OUT = "/tmp/claude-1000/-home-charlie-GitHub-fossstudio/30aef10b-264b-4404-9752-f5d84c9a6596/scratchpad/rec-out";
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -23,6 +24,7 @@ const check = (label, ok) => { console.log(`${ok ? "OK  " : "FAIL"} ${label}`); 
 const hostCtx = await browser.newContext({ permissions: ["camera", "microphone"] });
 const dash = await hostCtx.newPage();
 await dash.goto(`${B}/host/login.html`);
+await dash.fill("#username", "charlie");
 await dash.fill("#password", PW);
 await dash.click("button[type=submit]");
 await dash.waitForURL("**/host/");
