@@ -80,8 +80,10 @@
         <div class="hp-swatches" id="hpBannerSwatches"></div>
         <input type="text" id="hpBannerHex" maxlength="7" spellcheck="false" aria-label="Banner colour hex code">
       </div>
-      <button id="hpBannerMulti" class="hp-btn" style="margin-top:0.5rem; width:100%">A different colour for each person</button>
-      <button id="hpBannerChoice" class="hp-btn" style="margin-top:0.5rem; width:100%">Let people pick their own colour</button>
+      <div class="hp-row" style="margin-top:0.5rem; margin-bottom:0">
+        <button id="hpBannerMulti" class="hp-btn" data-tip="Give every person a different colour">Random colours</button>
+        <button id="hpBannerChoice" class="hp-btn" data-tip="Let guests pick their own colour from the palette">Guests choose</button>
+      </div>
     </div>
     <div id="hpGuests"></div>
   </aside>

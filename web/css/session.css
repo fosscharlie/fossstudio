@@ -103,7 +103,7 @@ body {
   font-size: 0.85rem;
   padding: 0.55rem 0.8rem;
   border-radius: 8px;
-  border: 1px solid var(--line);
+  border: 1px solid #4a5160;
   background: var(--bg);
   color: var(--text);
   cursor: pointer;
@@ -246,7 +246,7 @@ body {
   width: 2.9rem;
   height: 2.9rem;
   border-radius: 50%;
-  border: 1px solid var(--line);
+  border: 1px solid #4a5160;
   background: var(--bg);
   color: var(--text);
   cursor: pointer;
@@ -290,6 +290,7 @@ body {
   --lm-accent: #fbc711;
   --lm-on-accent: #645007;
   --lm-danger: #f34236;
+  --lm-btn-border: #4a5160;
   flex: 0 0 330px;
   width: 330px;
   font-family: "Manrope", system-ui, sans-serif;
@@ -341,7 +342,7 @@ body.dim-ui .banner:hover { opacity: 1; }
   font-weight: 600;
   padding: 0.5rem 0.55rem;
   border-radius: 0.875rem;
-  border: 1px solid var(--lm-line);
+  border: 1px solid var(--lm-btn-border);
   background: var(--lm-muted);
   color: var(--lm-fg);
   cursor: pointer;
@@ -365,7 +366,7 @@ body.dim-ui .banner:hover { opacity: 1; }
   height: 1.45rem;
   border-radius: 999px;
   background: var(--lm-muted);
-  border: 1px solid var(--lm-line);
+  border: 1px solid var(--lm-btn-border);
   position: relative;
   transition: background 150ms;
   flex-shrink: 0;
@@ -389,7 +390,7 @@ body.dim-ui .banner:hover { opacity: 1; }
   flex-shrink: 0;
   width: 1.55rem; height: 1.55rem;
   border-radius: 50%;
-  border: 2px solid var(--lm-line);
+  border: 2px solid var(--lm-btn-border);
   padding: 0;
   cursor: pointer;
 }
@@ -404,7 +405,7 @@ body.dim-ui .banner:hover { opacity: 1; }
   min-width: 0;
   width: 4.5rem;
   padding: 0.35rem 0.6rem;
-  border: 1px solid var(--lm-line);
+  border: 1px solid var(--lm-btn-border);
   border-radius: 0.6rem;
   background: var(--lm-muted);
   color: var(--lm-fg);
