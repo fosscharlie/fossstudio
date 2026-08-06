@@ -61,9 +61,13 @@ export function attachSignaling(httpServer) {
             const role = canHost && data.role === "host" ? "host" : "guest";
             peer = addPeer(room, { name, role, socket });
             const settings = await getSettings(room.ownerId);
+            const { findById } = await import("./users.js");
+            const canServerRecord = role === "host" &&
+              !!(await findById(room.ownerId))?.allowServerRecording;
             reply({
               peerId: peer.id,
               role,
+              canServerRecord,
               routerRtpCapabilities: room.router.rtpCapabilities,
               iceServers: iceServers(),
               control: room.control,
@@ -128,8 +132,12 @@ export function attachSignaling(httpServer) {
               }
               case "record": {
                 if (data.start) {
-                  const settings = await getSettings(room.ownerId);
-                  const rec = await startRecording(room, settings.recordingMode);
+                  // Server-side mode is a per-host permission; the host
+                  // picks it per session when starting the recording.
+                  const { findById } = await import("./users.js");
+                  const allowed = !!(await findById(room.ownerId))?.allowServerRecording;
+                  const mode = data.mode === "server" && allowed ? "server" : "browser";
+                  const rec = await startRecording(room, mode);
                   for (const p of room.peers.values()) {
                     if (p.socket.readyState === 1) {
                       p.socket.send(JSON.stringify({

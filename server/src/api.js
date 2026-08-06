@@ -89,7 +89,19 @@ api.get("/users", requireAdmin, async (req, res) => res.json(await listUsers()))
 
 api.post("/users", requireAdmin, async (req, res) => {
   try {
-    res.json(await createUser(req.body.username, req.body.password, req.body.role));
+    res.json(await createUser(
+      req.body.username, req.body.password, req.body.role,
+      !!req.body.allowServerRecording
+    ));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+api.post("/users/:id/permissions", requireAdmin, async (req, res) => {
+  try {
+    await updateUser(req.params.id, { allowServerRecording: !!req.body.allowServerRecording });
+    res.json({ ok: true });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

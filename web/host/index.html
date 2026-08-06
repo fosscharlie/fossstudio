@@ -40,14 +40,6 @@
       <!-- Recordings: library -->
       <section id="pane-library" class="stack" hidden>
         <div class="panel">
-          <h2>Recording mode</h2>
-          <label class="toggle">
-            <input type="checkbox" id="recModeToggle">
-            <span class="track"></span>
-            <span>Server-side recording<br><span class="hint">Best for 2–3 guests. Off = each guest's browser records itself and uploads at the end — better for bigger sessions.</span></span>
-          </label>
-        </div>
-        <div class="panel">
           <h2>Recordings</h2>
           <div id="recordingList"><p class="hint">Loading…</p></div>
         </div>
@@ -158,9 +150,14 @@
         <div class="panel">
           <h2>Add a host</h2>
           <p class="hint" style="margin-bottom:0.8rem">Hosts run shows: they get their own sessions, recordings, theme and stream key. They can't touch System or anyone else's show.</p>
-          <form id="newUserForm" style="display:flex; gap:0.75rem; flex-wrap:wrap">
+          <form id="newUserForm" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center">
             <input type="text" id="newUserName" placeholder="username" autocomplete="off" style="flex:1; min-width:8rem">
             <input type="password" id="newUserPass" placeholder="password (10+ chars)" autocomplete="new-password" style="flex:1; min-width:10rem">
+            <label class="toggle" style="flex-basis:100%">
+              <input type="checkbox" id="newUserServerRec">
+              <span class="track"></span>
+              <span>Allow server-side recording<br><span class="hint">Heavier on the server — best granted sparingly, for shows with 2–3 guests.</span></span>
+            </label>
             <button class="btn primary" type="submit">Add host</button>
           </form>
           <p class="msg err" id="userMsg" hidden></p>

@@ -34,3 +34,14 @@ export async function makeRoom(base, adminPassword, title = "Automated test") {
   if (!session.id) throw new Error(`session create failed: ${JSON.stringify(session)}`);
   return session.id;
 }
+
+export async function setServerRecPermission(base, adminPassword, allowed) {
+  const admin = await apiLogin(base, adminPassword);
+  const users = await fetch(`${base}/api/users`, { headers: { Cookie: admin } }).then((r) => r.json());
+  const th = users.find((u) => u.username === TEST_HOST.username);
+  await fetch(`${base}/api/users/${th.id}/permissions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: admin },
+    body: JSON.stringify({ allowServerRecording: allowed })
+  });
+}

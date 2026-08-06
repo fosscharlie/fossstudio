@@ -10,7 +10,6 @@ export const USER_SETTINGS_DEFAULTS = {
   podcastName: "FOSSStudio",
   accent: "#fbc711",
   wallpaper: null,
-  recordingMode: "browser",
   streamUrl: "rtmp://a.rtmp.youtube.com/live2",
   streamKey: ""
 };
@@ -62,10 +61,14 @@ export async function findById(id) {
 
 export async function listUsers() {
   const users = await load();
-  return users.map((u) => ({ id: u.id, username: u.username, role: u.role, totpEnabled: u.totpEnabled }));
+  return users.map((u) => ({
+    id: u.id, username: u.username, role: u.role,
+    totpEnabled: u.totpEnabled,
+    allowServerRecording: !!u.allowServerRecording
+  }));
 }
 
-export async function createUser(username, password, role = "subadmin") {
+export async function createUser(username, password, role = "subadmin", allowServerRecording = false) {
   const users = await load();
   const name = String(username).trim().toLowerCase();
   if (!/^[a-z0-9_-]{2,24}$/.test(name)) {
@@ -81,6 +84,7 @@ export async function createUser(username, password, role = "subadmin") {
     id: crypto.randomUUID(),
     username: name,
     role: role === "admin" ? "admin" : "subadmin",
+    allowServerRecording: !!allowServerRecording,
     passwordHash: hashPassword(password),
     totpEnabled: false,
     totpSecret: null,

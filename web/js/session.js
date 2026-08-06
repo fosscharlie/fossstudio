@@ -20,7 +20,8 @@
     hostPanelBtn: $("hostPanelBtn"), hostPanel: $("hostPanel"),
     hpGridBtn: $("hpGridBtn"), hpSpotSelfBtn: $("hpSpotSelfBtn"),
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
-    hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn")
+    hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn"),
+    hpServerRec: $("hpServerRec"), hpServerRecRow: $("hpServerRecRow")
   };
 
   let previewStream = null;
@@ -560,8 +561,11 @@
   els.hpAutoGain.onchange = () =>
     request("hostControl", { action: "autoGain", enabled: els.hpAutoGain.checked });
   els.hpRecordBtn.onclick = () =>
-    request("hostControl", { action: "record", start: !recording })
-      .catch((e) => console.error("record toggle failed:", e.message));
+    request("hostControl", {
+      action: "record",
+      start: !recording,
+      mode: els.hpServerRec.checked ? "server" : "browser"
+    }).catch((e) => console.error("record toggle failed:", e.message));
 
   let live = false;
   function setLiveIndicator(on) {
@@ -621,6 +625,7 @@
       applyControl(info.control);
       applyTheme(info.theme);
       els.hostPanelBtn.hidden = !isHost;
+      els.hpServerRecRow.hidden = !(isHost && info.canServerRecord);
 
       device = new mediasoupClient.Device();
       await device.load({ routerRtpCapabilities: info.routerRtpCapabilities });

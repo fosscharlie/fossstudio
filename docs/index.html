@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOSSStudio — self-hosted video podcast studio</title>
+<meta name="description" content="FOSSStudio is a free, open-source, self-hosted video podcast studio. Guests join by link with no account. Lossless recordings, noise suppression, YouTube streaming — all on your own server.">
+<link rel="icon" href="icon.png">
+<meta property="og:title" content="FOSSStudio — self-hosted video podcast studio">
+<meta property="og:description" content="Guests click a link and they're in. Lossless recordings, noise suppression, YouTube streaming — on your own server.">
+<meta property="og:image" content="https://fossstudio.org/shots/session.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "FOSSStudio",
+  "operatingSystem": "Linux",
+  "applicationCategory": "MultimediaApplication",
+  "description": "Self-hosted video podcast studio: no-account guest links, up to 10 participants, lossless FLAC recordings, combined MKV, RNNoise noise suppression, YouTube RTMP streaming, multi-host support.",
+  "url": "https://fossstudio.org",
+  "downloadUrl": "https://github.com/fosscharlie/fossstudio",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" },
+  "sponsor": { "@type": "Organization", "name": "Lightmorphic", "url": "https://lightmorphic.co.uk" }
+}
+</script>
+<style>
+  @font-face {
+    font-family: "Manrope";
+    src: url("Manrope.woff2") format("woff2");
+    font-weight: 200 800;
+    font-display: swap;
+  }
+  :root {
+    --bg: #101216;
+    --panel: #1a1d23;
+    --text: #e8eaed;
+    --muted: #9aa0a8;
+    --line: #2c3038;
+    --yellow: #fbc711;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Manrope", system-ui, sans-serif;
+    line-height: 1.65;
+  }
+  a { color: var(--yellow); }
+  img { max-width: 100%; display: block; }
+  .wrap { max-width: 68rem; margin: 0 auto; padding: 0 1.25rem; }
+
+  /* ---------- hero ---------- */
+  .hero { text-align: center; padding: 4.5rem 0 0; overflow: hidden; }
+  .hero h1 { font-size: clamp(2.6rem, 7vw, 4.5rem); font-weight: 800; letter-spacing: -0.035em; }
+  .hero h1 .foss { color: var(--yellow); }
+  .hero p.tag {
+    font-size: clamp(1.05rem, 2.6vw, 1.4rem);
+    color: var(--muted);
+    margin: 1.2rem auto 0;
+    max-width: 40rem;
+  }
+  .cta {
+    display: inline-block;
+    margin: 2.2rem 0.4rem 0;
+    padding: 0.85rem 1.7rem;
+    border-radius: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 1.05rem;
+  }
+  .cta.primary { background: var(--yellow); color: #4a3b02; }
+  .cta.primary:hover { background: #e3b30e; }
+  .cta.ghost { border: 1px solid var(--line); color: var(--text); }
+  .cta.ghost:hover { border-color: var(--muted); }
+
+  .hero .frame {
+    margin: 3.5rem auto -6rem;
+    max-width: 58rem;
+    border: 1px solid var(--line);
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+    box-shadow: 0 -2px 80px rgba(251, 199, 17, 0.07), 0 30px 90px rgba(0,0,0,0.55);
+  }
+  .frame .bar {
+    display: flex;
+    gap: 6px;
+    padding: 10px 14px;
+    background: #22252c;
+    border-bottom: 1px solid var(--line);
+  }
+  .frame .bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a3e47; }
+  .heroend {
+    height: 8rem;
+    background: linear-gradient(180deg, transparent, var(--bg));
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ---------- sections ---------- */
+  section { padding: 4.5rem 0; }
+  section + section { border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(1.5rem, 3.5vw, 2rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.6rem; }
+  .lead { color: var(--muted); max-width: 42rem; margin-bottom: 2rem; }
+
+  .duo {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .duo.flip { grid-template-columns: 1.25fr 1fr; }
+  .duo .shot {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+  }
+  .duo h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .duo p { color: var(--muted); }
+  .duo ul { color: var(--muted); padding-left: 1.1rem; margin-top: 0.6rem; }
+  .duo li { margin: 0.25rem 0; }
+  @media (max-width: 780px) {
+    .duo, .duo.flip { grid-template-columns: 1fr; }
+    .duo.flip .shot { order: -1; }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.25rem;
+  }
+  .card h3 { font-size: 1rem; margin-bottom: 0.3rem; }
+  .card h3 .em { color: var(--yellow); margin-right: 0.35rem; }
+  .card p { font-size: 0.9rem; color: var(--muted); }
+
+  /* ---------- sponsor ---------- */
+  .sponsor {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1.6rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .sponsor:hover { border-color: var(--yellow); }
+  .sponsor img { height: 34px; width: auto; }
+  .sponsor .linkicon { width: 1rem; height: 1rem; color: var(--muted); }
+  .sponsor span { color: var(--muted); font-weight: 500; }
+
+  ol.steps { padding-left: 1.2rem; max-width: 44rem; font-size: 1.05rem; }
+  ol.steps li { margin-bottom: 0.9rem; }
+  ol.steps b { color: var(--yellow); }
+
+  pre {
+    background: #0b0c0f;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.1rem 1.3rem;
+    overflow-x: auto;
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+  code .c { color: #6a7382; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 2.5rem 0 3rem;
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+  footer .wrap { display: grid; gap: 1.4rem; justify-items: center; text-align: center; }
+  footer .sponsor { padding: 1rem 1.4rem; }
+  :is(a, button):focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1><span class="foss">FOSS</span>Studio</h1>
+    <p class="tag">The video podcast studio you run on your own server. Guests click a link and they're in — no accounts, no cloud, no subscription.</p>
+    <a class="cta primary" href="https://github.com/fosscharlie/fossstudio">Get the code</a>
+    <a class="cta ghost" href="#self-host">Self-host it</a>
+    <div class="frame">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <img src="shots/session.png" alt="A live FOSSStudio session: three guests in a grid under the show's banner" width="1560" height="975">
+    </div>
+  </div>
+</header>
+<div class="heroend"></div>
+
+<section class="wrap" id="guests">
+  <div class="duo">
+    <div>
+      <h3>Guests just… join</h3>
+      <p>Send one link. Your guest picks their camera, microphone and speaker, hears a test sound, watches their mic level bounce, zooms their camera if they like — then clicks join.</p>
+      <ul>
+        <li>No account, no app install, phone-friendly</li>
+        <li>RNNoise noise suppression on by default</li>
+        <li>Their choices are remembered for next time</li>
+      </ul>
+    </div>
+    <div class="shot"><img src="shots/preview.png" alt="The guest preview screen with camera, zoom, microphone, speaker test and noise suppression controls" loading="lazy"></div>
+  </div>
+</section>
+
+<section class="wrap" id="hostcontrols">
+  <div class="duo flip">
+    <div class="shot"><img src="shots/host-panel.png" alt="The in-session host panel: recording, going live, layouts, per-guest volume" loading="lazy"></div>
+    <div>
+      <h3>The host runs the show</h3>
+      <p>A slide-in panel only the host sees: start the recording, go live to YouTube, spotlight a speaker, balance quiet and loud voices, and set each guest's volume for everyone at once.</p>
+      <ul>
+        <li>Grid or spotlight layouts, applied to every screen</li>
+        <li>Per-session server-side recording (if the admin allows it)</li>
+        <li>A visible ● REC and LIVE badge for everyone</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <a class="sponsor" href="https://lightmorphic.co.uk" target="_blank" rel="noopener">
+    <span>Sponsored by</span>
+    <img src="lightmorphic.webp" alt="Lightmorphic" width="250" height="50">
+    <svg class="linkicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h6v6M21 3l-9 9M9 21H5a2 2 0 0 1-2-2V7"/></svg>
+  </a>
+</section>
+
+<section class="wrap" id="dashboard">
+  <div class="duo">
+    <div>
+      <h3>A dashboard, not a config file</h3>
+      <p>Sessions, recordings, branding, stream keys, backups — everything is a button. The server looks after HTTPS certificates, daily backups and health checks itself.</p>
+      <ul>
+        <li>Recordings appear processed and ready to download</li>
+        <li>One combined MKV + a lossless FLAC per person</li>
+        <li>Restart, back up, restore and export with one click</li>
+      </ul>
+    </div>
+    <div class="shot"><img src="shots/dashboard.png" alt="The FOSSStudio dashboard listing sessions with copy-link and open-studio buttons" loading="lazy"></div>
+  </div>
+</section>
+
+<section class="wrap" id="multihost">
+  <div class="duo flip">
+    <div class="shot"><img src="shots/hosts.png" alt="The admin view for managing host accounts and their permissions" loading="lazy"></div>
+    <div>
+      <h3>One server, many shows</h3>
+      <p>An admin account creates hosts; every host gets their own sessions, recordings, banner, wallpaper and YouTube stream key. Two shows can record at the same time without ever seeing each other.</p>
+      <ul>
+        <li>Per-host permissions, like server-side recording</li>
+        <li>Optional two-factor login for every account</li>
+        <li>Hosts never see System or other people's shows</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="features">
+  <h2>And the rest</h2>
+  <div class="grid">
+    <div class="card"><h3><span class="em">●</span>Lossless recording</h3><p>Browser-side per-person capture in raw PCM, converted to FLAC on the server. Big sessions don't strain the box.</p></div>
+    <div class="card"><h3><span class="em">●</span>YouTube live</h3><p>Server-composited 720p grid over RTMP. The grid rebuilds itself when someone joins or leaves.</p></div>
+    <div class="card"><h3><span class="em">●</span>Up to 10 people</h3><p>A forwarding media engine (mediasoup) means a 2-core VPS handles a full grid comfortably.</p></div>
+    <div class="card"><h3><span class="em">●</span>No database</h3><p>Flat JSON files in one folder. Back it up, export it as a zip, restore it with a click.</p></div>
+    <div class="card"><h3><span class="em">●</span>Privacy by default</h3><p>No CDNs, no trackers, no cookies for guests, no external calls. Even the font is self-hosted.</p></div>
+    <div class="card"><h3><span class="em">●</span>Strict-network friendly</h3><p>A built-in TURN relay gets guests through corporate and mobile networks.</p></div>
+    <div class="card"><h3><span class="em">●</span>Installable</h3><p>The dashboard is a PWA with push notifications — know when a guest arrives or a recording is ready.</p></div>
+    <div class="card"><h3><span class="em">●</span>Operable by humans</h3><p>Daily backups with tested restore, uptime alerts by email, rollback deploys, and a plain-language runbook.</p></div>
+  </div>
+</section>
+
+<section class="wrap" id="how">
+  <h2>How a session works</h2>
+  <ol class="steps">
+    <li><b>Create.</b> The host makes a session in the dashboard and copies the link.</li>
+    <li><b>Join.</b> Guests open it, check camera, mic and speaker on the preview screen, and join.</li>
+    <li><b>Record or stream.</b> The host hits record (or "Go live"). When it stops, the server processes everything into downloadable files.</li>
+  </ol>
+</section>
+
+<section class="wrap" id="self-host">
+  <h2>Self-host it</h2>
+  <p class="lead">You need a small Linux server (2 cores, 4 GB RAM is plenty) and a domain pointed at it. Then:</p>
+  <pre><code>git clone https://github.com/fosscharlie/fossstudio
+cd fossstudio
+cp .env.example .env   <span class="c"># fill in your domain and secrets</span>
+docker compose up -d --build</code></pre>
+  <p style="max-width:44rem; margin-top:1rem">HTTPS certificates, the TURN relay and the media engine all come up together. Full detail in the <a href="https://github.com/fosscharlie/fossstudio#readme">README</a>.</p>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="sponsor" href="https://lightmorphic.co.uk" target="_blank" rel="noopener">
+      <span>Sponsored by</span>
+      <img src="lightmorphic.webp" alt="Lightmorphic" width="250" height="50">
+      <svg class="linkicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h6v6M21 3l-9 9M9 21H5a2 2 0 0 1-2-2V7"/></svg>
+    </a>
+    <div>FOSSStudio · <a href="https://github.com/fosscharlie/fossstudio">GitHub</a> · built for podcasters who want to own their stack</div>
+  </div>
+</footer>
+
+</body>
+</html>

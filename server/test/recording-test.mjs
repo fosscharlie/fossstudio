@@ -4,11 +4,12 @@
 import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
-import { makeRoom } from "./helpers.mjs";
+import { makeRoom, setServerRecPermission } from "./helpers.mjs";
 
 const B = process.argv[2] || "http://127.0.0.1:3999";
 const PW = process.argv[3] || "testpass123";
 const MODE = process.argv[4] || "browser";
+await setServerRecPermission(B, PW, MODE === "server");
 const ROOM = await makeRoom(B, PW);
 const OUT = "/tmp/claude-1000/-home-charlie-GitHub-fossstudio/30aef10b-264b-4404-9752-f5d84c9a6596/scratchpad/rec-out";
 fs.mkdirSync(OUT, { recursive: true });
@@ -28,13 +29,7 @@ await dash.fill("#username", "testhost");
 await dash.fill("#password", "testhostpass123");
 await dash.click("button[type=submit]");
 await dash.waitForURL("**/host/");
-await dash.evaluate(async (mode) => {
-  await fetch("/api/settings", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recordingMode: mode })
-  });
-}, MODE);
+
 
 async function join(ctx, name, asHost) {
   const page = await ctx.newPage();
@@ -52,8 +47,13 @@ const guestCtx = await browser.newContext({ permissions: ["camera", "microphone"
 const guest = await join(guestCtx, "Guest Greta", false);
 await new Promise((r) => setTimeout(r, 2000));
 
-// Start recording
+// Start recording (mode picked per session in the host panel)
 await host.click("#hostPanelBtn");
+if (MODE === "server") {
+  const visible = await host.$eval("#hpServerRecRow", (el) => !el.hidden);
+  console.log(`${visible ? "OK  " : "FAIL"} server-rec toggle visible for permitted host`);
+  await host.check("#hpServerRec");
+}
 await host.click("#hpRecordBtn");
 await new Promise((r) => setTimeout(r, 2500));
 check("host sees REC indicator",

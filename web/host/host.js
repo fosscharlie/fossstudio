@@ -190,6 +190,21 @@
         </div>
         <span class="spacer"></span>`;
       row.querySelector(".title").textContent = u.username;
+      if (u.role !== "admin") {
+        const perm = document.createElement("label");
+        perm.className = "toggle";
+        perm.style.marginRight = "0.5rem";
+        perm.title = "Allow server-side recording";
+        perm.innerHTML = `<input type="checkbox" ${u.allowServerRecording ? "checked" : ""}>
+          <span class="track"></span><span class="hint">server rec</span>`;
+        perm.querySelector("input").onchange = async (e) => {
+          await apiFetch(`/api/users/${u.id}/permissions`, {
+            method: "POST",
+            body: JSON.stringify({ allowServerRecording: e.target.checked })
+          }).catch((err) => showUserMsg(err.message));
+        };
+        row.appendChild(perm);
+      }
       const reset = iconBtn("key", "Set a new password for this user", async () => {
         const pw = prompt(`New password for ${u.username} (10+ characters):`);
         if (!pw) return;
@@ -229,11 +244,13 @@
         method: "POST",
         body: JSON.stringify({
           username: $("newUserName").value,
-          password: $("newUserPass").value
+          password: $("newUserPass").value,
+          allowServerRecording: $("newUserServerRec").checked
         })
       });
       $("newUserName").value = "";
       $("newUserPass").value = "";
+      $("newUserServerRec").checked = false;
       loadUsers();
     } catch (err) { showUserMsg(err.message); }
   };
@@ -288,13 +305,6 @@
     }
   }
 
-  $("recModeToggle").onchange = async () => {
-    await apiFetch("/api/settings", {
-      method: "PUT",
-      body: JSON.stringify({ recordingMode: $("recModeToggle").checked ? "server" : "browser" })
-    });
-  };
-
   $("saveStreamBtn").onclick = async () => {
     await apiFetch("/api/settings", {
       method: "PUT",
@@ -333,7 +343,6 @@
 
   async function loadSettings() {
     const s = await apiFetch("/api/settings");
-    $("recModeToggle").checked = s.recordingMode === "server";
     $("streamUrl").value = s.streamUrl || "";
     $("streamKey").value = s.streamKey || "";
     $("podcastName").value = s.podcastName;
