@@ -2,6 +2,15 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased
+
+- README rewritten for the public: no personal server links, and a
+  truthful "Running it" section (prerequisites, ports, no prebuilt
+  image, setup script, env file, compose)
+- `.env.example` and the runbook use placeholder domains; the legacy
+  redirect in the Caddyfile is now driven by an optional
+  `LEGACY_DOMAIN` env var instead of a hard-coded personal domain
+
 ## 1.2.0 — 2026-08-06
 
 A day of host-driven refinement: the session view, host panel and

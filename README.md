@@ -54,14 +54,25 @@ no external calls from any page.
 
 ## Running it
 
-Copy `.env.example` to `.env`, fill it in, then:
+You need a Linux server with a public IP, a domain pointed at it, and
+ports 80/443 (TCP) plus the media ranges 40000-40100 and 49160-49200
+(UDP) open. There is no prebuilt image; the app container is built
+from this repo.
+
+1. On a fresh server, `bash scripts/server-setup.sh` installs Docker,
+   sets the firewall and creates the folder layout.
+2. Copy `.env.example` to `.env` and fill it in (domain, public IP,
+   secrets; each value is explained in the file).
+3. Start the stack:
 
 ```bash
 docker compose up -d --build
 ```
 
-Deploys from a dev machine: `FOSSSTUDIO_HOST=root@<ip> scripts/deploy.sh`
-(release folders with instant rollback via `scripts/rollback.sh`).
+Caddy fetches HTTPS certificates for your domain automatically. To
+deploy updates from a dev machine instead of building on the server:
+`FOSSSTUDIO_HOST=root@<ip> scripts/deploy.sh` (release folders with
+instant rollback via `scripts/rollback.sh`).
 
 ## Tests
 
