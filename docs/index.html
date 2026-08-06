@@ -47,10 +47,10 @@
     --purple: #9b26ae;
     --cyan: #00bcd3;
     --red: #f34236;
-    --gap: 1.5rem;
+    --gap: 2rem;
   }
   * { margin: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; scrollbar-gutter: stable both-edges; }
   body {
     background: var(--bg);
     color: var(--text);
@@ -151,7 +151,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: calc(var(--gap) * 2);
-    align-items: center;
+    align-items: start;
   }
   .duo.flip { grid-template-columns: 1fr 1fr; }
   .duo .shot {
