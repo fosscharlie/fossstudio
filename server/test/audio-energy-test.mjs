@@ -15,7 +15,6 @@ async function join(room, name, noise) {
   const page = await ctx.newPage();
   await page.goto(`${B}/s/${room}`);
   await page.waitForSelector("#joinBtn:not([disabled])");
-  await page.selectOption("#noiseSelect", noise ? "rnnoise" : "off");
   await page.fill("#nameInput", name);
   await page.click("#joinBtn");
   await page.waitForSelector("#session:not([hidden])");
@@ -50,11 +49,9 @@ async function measure(noise) {
   return rms;
 }
 
-const rmsOff = await measure(false);
-const rmsOn = await measure(true);
-console.log(`peak RMS with suppression off: ${rmsOff.toFixed(4)}`);
-console.log(`peak RMS with suppression on:  ${rmsOn.toFixed(4)}`);
-const ok = rmsOff > 0.001 && rmsOn > 0.0001;
-console.log(ok ? "AUDIO FLOWS IN BOTH MODES" : "AUDIO MISSING");
+const rms = await measure(true);
+console.log(`peak RMS with default noise suppression: ${rms.toFixed(4)}`);
+const ok = rms > 0.0001;
+console.log(ok ? "AUDIO FLOWS" : "AUDIO MISSING");
 await browser.close();
 process.exit(ok ? 0 : 1);

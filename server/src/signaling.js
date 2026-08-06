@@ -65,6 +65,7 @@ export function attachSignaling(httpServer) {
             const canHost = auth && auth.uid === session.ownerId;
             const role = canHost && data.role === "host" ? "host" : "guest";
             peer = addPeer(room, { name, tagline, role, socket });
+            room.control.noise[peer.id] = !!data.noiseOn;
             const settings = await getSettings(room.ownerId);
             if (!room.control.bannerColor) room.control.bannerColor = settings.accent;
             const { findById } = await import("./users.js");
@@ -92,8 +93,9 @@ export function attachSignaling(httpServer) {
             if (room.control.bannerMulti) {
               const used = Object.keys(room.control.bannerColors).length;
               room.control.bannerColors[peer.id] = BANNER_PALETTE[used % BANNER_PALETTE.length];
-              broadcast(room, null, { event: "control", data: room.control });
             }
+            // Everyone refreshes control state (noise/colour for the newcomer)
+            broadcast(room, peer.id, { event: "control", data: room.control });
             if (role === "guest" && room.peers.size === 1) {
               notifyUser(room.ownerId, "Guest waiting", `${name} just joined session ${room.id}.`).catch(() => {});
             }
@@ -178,6 +180,11 @@ export function attachSignaling(httpServer) {
                 for (const p2 of room.peers.values()) {
                   c.bannerColors[p2.id] = BANNER_PALETTE[ci++ % BANNER_PALETTE.length];
                 }
+                break;
+              }
+              case "noise": {
+                if (!room.peers.has(data.peerId)) return fail("no such guest");
+                c.noise[data.peerId] = !!data.enabled;
                 break;
               }
               case "mute": {

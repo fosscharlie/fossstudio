@@ -10,7 +10,7 @@
 
   const els = {
     preview: $("preview"), previewVideo: $("previewVideo"),
-    camSelect: $("camSelect"), micSelect: $("micSelect"), noiseSelect: $("noiseSelect"),
+    camSelect: $("camSelect"), micSelect: $("micSelect"),
     spkSelect: $("spkSelect"), spkRow: $("spkRow"), spkTestBtn: $("spkTestBtn"),
     zoomSlider: $("zoomSlider"), zoomValue: $("zoomValue"), mirrorToggle: $("mirrorToggle"),
     nameInput: $("nameInput"), taglineInput: $("taglineInput"), joinBtn: $("joinBtn"),
@@ -43,6 +43,9 @@
 
   let previewStream = null;
   let audioCtx = null;
+  // Noise suppression defaults on; only the host can flip it per guest.
+  // The crash-loop breaker can force it off for one retry.
+  let noisePref = "rnnoise";
 
   // ---------- Remembered choices ----------
 
@@ -57,7 +60,6 @@
         cam: els.camSelect.value,
         mic: els.micSelect.value,
         spk: els.spkSelect.value,
-        noise: els.noiseSelect.value,
         mirror: els.mirrorToggle.checked,
         name: els.nameInput.value.trim(),
         tagline: els.taglineInput.value.trim()
@@ -169,6 +171,28 @@
     zoom.canvasTrack = null;
     zoom.rawVideo = null;
     if (previewStream) els.previewVideo.srcObject = previewStream;
+  }
+
+  // Applied noise-suppression state; the host can flip it remotely
+  let appliedNoise = false;
+  async function setNoiseProcessing(enabled) {
+    if (!micProducer || enabled === appliedNoise) return;
+    try {
+      if (enabled) {
+        if (noiseNode) {
+          noiseNode.port.postMessage({ enabled: true });
+        } else {
+          const processed = await noiseProcessedTrack(previewStream.getAudioTracks()[0]);
+          await micProducer.replaceTrack({ track: processed });
+        }
+      } else if (noiseNode) {
+        noiseNode.port.postMessage({ enabled: false });
+      }
+      appliedNoise = enabled;
+      window.__noiseApplied = enabled;
+    } catch (err) {
+      console.error("noise toggle failed:", err.message);
+    }
   }
 
   // The track we actually send: canvas track when digitally zoomed
@@ -293,7 +317,6 @@
       const prefs = loadPrefs();
       if (prefs.name && !els.nameInput.value) els.nameInput.value = prefs.name;
       if (prefs.tagline && !els.taglineInput.value) els.taglineInput.value = prefs.tagline;
-      if (prefs.noise) els.noiseSelect.value = prefs.noise;
       if (typeof prefs.mirror === "boolean") els.mirrorToggle.checked = prefs.mirror;
       applyMirror();
       if (prefs.spk && [...els.spkSelect.options].some((o) => o.value === prefs.spk)) {
@@ -451,6 +474,10 @@
     gain.gain.value = control.volumes[peerId] ?? 1;
     src.connect(gain).connect(audioSink());
     tile.gain = gain;
+    const an = audioCtx.createAnalyser();
+    an.fftSize = 256;
+    src.connect(an);
+    tile.analyser = an;
   }
 
   function removeTile(peerId) {
@@ -578,6 +605,9 @@
     if (micProducer && selfId) {
       const mine = !!control.muted?.[selfId];
       if (mine !== micProducer.paused) setMicMuted(mine);
+      if (control.noise && selfId in control.noise) {
+        setNoiseProcessing(!!control.noise[selfId]);
+      }
     }
     applyAutoGain(!!control.autoGain);
     els.hpAutoGain.checked = !!control.autoGain;
@@ -598,15 +628,22 @@
       row.className = "hp-guest";
       const vol = Math.round((control.volumes[peerId] ?? 1) * 100);
       const muted = !!control.muted?.[peerId];
+      const nrOn = !!control.noise?.[peerId];
+      row.dataset.peerId = peerId;
       row.innerHTML = `
         <div class="hp-name">
           <span></span>
+          <button class="hp-btn nr${nrOn ? " active" : ""}" data-tip="${nrOn ? "Noise reduction is on — click to turn off" : "Noise reduction is OFF — click to turn on"}">NR</button>
           <button class="hp-btn mute">${muted ? "Unmute" : "Mute"}</button>
           <button class="hp-btn spot">Spotlight</button>
         </div>
+        <div class="hp-meter"><div class="hp-meter-fill"></div></div>
         <input type="range" min="0" max="150" value="${vol}" aria-label="Volume">
         <span class="hp-vol">${vol}%</span>`;
       row.querySelector("span").textContent = isSelf ? `${tile.name} (you)` : tile.name;
+      row.querySelector(".nr").onclick = () => {
+        request("hostControl", { action: "noise", peerId, enabled: !nrOn });
+      };
       const muteBtn = row.querySelector(".mute");
       muteBtn.classList.toggle("active", muted);
       muteBtn.onclick = () => {
@@ -706,6 +743,20 @@
     setRecIndicator(false);
   }
 
+  // Panel sound meters: read each analyser ~8x a second
+  const meterBuf = new Uint8Array(128);
+  setInterval(() => {
+    if (!isHost || els.hostPanel.hidden) return;
+    for (const [peerId, tile] of tiles) {
+      if (!tile.analyser) continue;
+      tile.analyser.getByteTimeDomainData(meterBuf);
+      let peak = 0;
+      for (const v of meterBuf) peak = Math.max(peak, Math.abs(v - 128));
+      const fill = els.hpGuests.querySelector(`[data-peer-id="${peerId}"] .hp-meter-fill`);
+      if (fill) fill.style.width = `${Math.min(100, (peak / 128) * 260)}%`;
+    }
+  }, 120);
+
   els.dimBtn.onclick = () => {
     const on = document.body.classList.toggle("dim-ui");
     els.dimBtn.classList.toggle("dim-on", on);
@@ -776,13 +827,14 @@
     }
     els.joinBtn.disabled = true;
     els.joinBtn.textContent = "Joining…";
-    try { localStorage.setItem(JOINING_KEY, els.noiseSelect.value); } catch { /* ignore */ }
+    try { localStorage.setItem(JOINING_KEY, noisePref); } catch { /* ignore */ }
     try {
       await connectWs();
       selfName = els.nameInput.value.trim() || "Guest";
       const info = await request("join", {
         name: selfName,
         tagline: els.taglineInput.value.trim(),
+        noiseOn: noisePref === "rnnoise",
         role: wantHost ? "host" : "guest"
       });
       selfId = info.peerId;
@@ -822,13 +874,16 @@
       const audioTrack = previewStream.getAudioTracks()[0];
       const videoTrack = outgoingVideoTrack();
       let sendAudio = audioTrack;
-      if (els.noiseSelect.value === "rnnoise") {
+      appliedNoise = false;
+      if (noisePref === "rnnoise") {
         try {
           sendAudio = await noiseProcessedTrack(audioTrack);
+          appliedNoise = true;
         } catch (err) {
           console.error("noise suppression unavailable:", err.message);
         }
       }
+      window.__noiseApplied = appliedNoise;
       micProducer = await sendTransport.produce({ track: sendAudio, appData: { source: "mic" } });
       camProducer = await sendTransport.produce({
         track: videoTrack,
@@ -838,6 +893,13 @@
 
       const selfTile = makeTile(selfId, selfName, true, els.taglineInput.value.trim());
       selfTile.stream.addTrack(videoTrack);
+      if (isHost) {
+        const ctx = ensureAudioCtx();
+        const selfAn = ctx.createAnalyser();
+        selfAn.fftSize = 256;
+        ctx.createMediaStreamSource(new MediaStream([sendAudio])).connect(selfAn);
+        selfTile.analyser = selfAn;
+      }
       applyMirror();
       for (const p of info.peers) {
         makeTile(p.id, p.name, false, p.tagline);
@@ -951,8 +1013,8 @@
   try {
     if (localStorage.getItem(JOINING_KEY) === "rnnoise") {
       localStorage.removeItem(JOINING_KEY);
-      els.noiseSelect.value = "off";
-      showError("Your last join didn't finish, so noise suppression is switched off for this try. You can turn it back on above.");
+      noisePref = "off";
+      showError("Your last join didn't finish, so noise suppression is switched off for this try.");
     }
   } catch { /* ignore */ }
 

@@ -405,7 +405,21 @@ body.dim-ui .banner:hover { opacity: 1; }
 .hp-guest .hp-name { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; }
 .hp-guest .hp-name button { margin-left: auto; flex: 0 0 auto; }
 .hp-guest .hp-name button + button { margin-left: 0; }
-.hp-guest input[type="range"] { width: 100%; margin-top: 0.5rem; accent-color: var(--lm-accent); }
+.hp-guest input[type="range"] { width: 100%; margin-top: 0.35rem; accent-color: var(--lm-accent); }
+.hp-meter {
+  height: 4px;
+  margin-top: 0.5rem;
+  background: var(--lm-muted);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.hp-meter-fill {
+  height: 100%;
+  width: 0%;
+  background: #4bae4f;
+  transition: width 100ms linear;
+}
+.hp-btn.nr { flex: 0 0 auto; padding: 0.5rem 0.6rem; }
 .hp-vol { font-size: 0.75rem; font-weight: 400; color: var(--lm-muted-fg); }
 
 /* Session view uses the host-set wallpaper when there is one */

@@ -4,6 +4,12 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Noise reduction is now controlled **per guest from the host panel**
+  (small NR button beside Mute/Spotlight, state visible at a glance);
+  the guest-facing option is gone and it defaults to on
+- **Live sound meters** for every participant in the host panel, so the
+  host can see who's making noise
+
 - The host panel is a fixed sidebar, always open for the host — the
   video grid sizes itself around it; a **dim** button fades all controls
   (and brightens them on hover) instead of open/close
