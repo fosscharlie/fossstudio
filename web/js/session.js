@@ -678,7 +678,7 @@
     const S = 20;
     const W = 38 * S;
     const padX = 2.4 * S, padT = 1.2 * S, padB = 1.4 * S, r = 1.5 * S;
-    const nameLh = 4.6 * S * 1.3, tagLh = 3.4 * S * 1.3;
+    const nameLh = 4.6 * S * 1.3, tagLh = 2.9 * S * 1.3;
     const H = Math.round(padT + nameLh + (tagline ? tagLh : 0) + padB);
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
@@ -698,7 +698,7 @@
     x.fillText(ellipsize(x, name, W - 2 * padX), padX, padT + nameLh / 2);
     if (tagline) {
       x.globalAlpha = 0.82;
-      x.font = `400 ${3.4 * S}px Manrope, sans-serif`;
+      x.font = `400 ${2.9 * S}px Manrope, sans-serif`;
       x.fillText(ellipsize(x, tagline, W - 2 * padX), padX, padT + nameLh + tagLh / 2);
       x.globalAlpha = 1;
     }

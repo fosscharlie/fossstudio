@@ -60,9 +60,9 @@ async function joinAll(list) {
 }
 
 // --- Session A: the hero shot (three unique people) ---
-const a1 = await studio("vcam1.y4m", "Anna", "Host — awesomepodcast.org", sessionA.id, true);
+const a1 = await studio("vcam1.y4m", "Anna", "awesomepodcast.org", sessionA.id, true);
 const a2 = await studio("vcam2.y4m", "Dev", "Kernel maintainer", sessionA.id, false);
-const a3 = await studio("vcam3.y4m", "Margot", "Author, Terminal Tales", sessionA.id, false);
+const a3 = await studio("vcam3.y4m", "Margot", "Tech author", sessionA.id, false);
 await joinAll([a1, a2, a3]);
 await new Promise((r) => setTimeout(r, 4000));
 await a2.page.screenshot({ path: `${OUT}/session.png` });
@@ -70,8 +70,8 @@ for (const s of [a1, a2, a3]) await s.browser.close();
 
 // --- Session B: host panel open (three different people) ---
 const b1 = await studio("vcam4.y4m", "Ken", "ken.codes", sessionB.id, true);
-const b2 = await studio("vcam5.y4m", "Amara", "Editor, Homelab Weekly", sessionB.id, false);
-const b3 = await studio("vcam6.y4m", "Rob", "SRE, selfhosted.town", sessionB.id, false);
+const b2 = await studio("vcam5.y4m", "Amara", "Homelab editor", sessionB.id, false);
+const b3 = await studio("vcam6.y4m", "Rob", "selfhosted.town", sessionB.id, false);
 await joinAll([b1, b2, b3]);
 await new Promise((r) => setTimeout(r, 4000));
 await new Promise((r) => setTimeout(r, 500));

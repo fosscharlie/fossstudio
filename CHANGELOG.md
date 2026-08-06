@@ -4,6 +4,11 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Website: even spacing between the feature blocks (no double-height
+  gaps); screenshot taglines shortened so nothing is cut off
+- Session tagline text slightly smaller so realistic taglines fit the
+  fixed-width banner without truncating (recordings/streams match)
+
 - **Session banner shows the episode title** you typed when creating the
   session — the per-host "podcast name" setting is gone, so one system
   can run several different podcasts side by side
