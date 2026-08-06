@@ -22,14 +22,27 @@
     <label>Camera
       <select id="camSelect"></select>
     </label>
+    <label>Zoom <span id="zoomValue" class="soft">1.0×</span>
+      <input type="range" id="zoomSlider" min="1" max="3" step="0.1" value="1" aria-label="Camera zoom">
+    </label>
     <label>Microphone
       <select id="micSelect"></select>
     </label>
+    <div id="spkRow">
+      <label>Speaker
+        <select id="spkSelect"></select>
+      </label>
+      <button type="button" id="spkTestBtn" class="small-btn">Play test sound</button>
+    </div>
     <label>Noise suppression
       <select id="noiseSelect">
         <option value="rnnoise" selected>On — filters fans, hums, keyboards</option>
         <option value="off">Off — send my microphone untouched</option>
       </select>
+    </label>
+    <label class="check">
+      <input type="checkbox" id="mirrorToggle" checked>
+      Mirror my preview
     </label>
     <label>Your name
       <input id="nameInput" maxlength="40" autocomplete="name" placeholder="Shown under your video">

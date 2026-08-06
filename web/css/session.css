@@ -60,6 +60,28 @@ body {
   font-size: 0.85rem;
   color: var(--muted);
 }
+.preview-card .soft { color: var(--muted); font-weight: 400; }
+.preview-card input[type="range"] { accent-color: var(--accent, #4a7dbd); padding: 0; }
+.preview-card .check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+.preview-card .check input { width: auto; }
+#spkRow { display: flex; gap: 0.6rem; align-items: end; }
+#spkRow label { flex: 1; }
+.small-btn {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
 .preview-card select, .preview-card input {
   font: inherit;
   color: var(--text);

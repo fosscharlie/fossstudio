@@ -11,6 +11,8 @@
   const els = {
     preview: $("preview"), previewVideo: $("previewVideo"),
     camSelect: $("camSelect"), micSelect: $("micSelect"), noiseSelect: $("noiseSelect"),
+    spkSelect: $("spkSelect"), spkRow: $("spkRow"), spkTestBtn: $("spkTestBtn"),
+    zoomSlider: $("zoomSlider"), zoomValue: $("zoomValue"), mirrorToggle: $("mirrorToggle"),
     nameInput: $("nameInput"), joinBtn: $("joinBtn"),
     previewError: $("previewError"), micMeterFill: $("micMeterFill"),
     session: $("session"), banner: $("banner"), grid: $("grid"),
@@ -23,6 +25,26 @@
 
   let previewStream = null;
   let audioCtx = null;
+
+  // ---------- Remembered choices ----------
+
+  const PREFS_KEY = "fossstudio-prefs";
+  function loadPrefs() {
+    try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; }
+    catch { return {}; }
+  }
+  function savePrefs() {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify({
+        cam: els.camSelect.value,
+        mic: els.micSelect.value,
+        spk: els.spkSelect.value,
+        noise: els.noiseSelect.value,
+        mirror: els.mirrorToggle.checked,
+        name: els.nameInput.value.trim()
+      }));
+    } catch { /* private browsing */ }
+  }
 
   // ---------- Preview ----------
 
@@ -42,7 +64,135 @@
     previewStream = await navigator.mediaDevices.getUserMedia(constraints);
     els.previewVideo.srcObject = previewStream;
     startMicMeter(previewStream);
+    setupZoom();
   }
+
+  // ---------- Camera zoom ----------
+  // Real lens zoom when the camera supports it; otherwise a digital
+  // crop-and-scale through a canvas, which everyone else sees too.
+
+  const zoom = { hw: false, level: 1, canvas: null, canvasTrack: null, rawVideo: null, raf: 0 };
+
+  function setupZoom() {
+    stopDigitalZoom();
+    zoom.level = 1;
+    els.zoomSlider.value = 1;
+    els.zoomValue.textContent = "1.0×";
+    const track = previewStream?.getVideoTracks()[0];
+    const caps = track?.getCapabilities?.() || {};
+    zoom.hw = !!caps.zoom;
+    if (zoom.hw) {
+      els.zoomSlider.min = caps.zoom.min || 1;
+      els.zoomSlider.max = caps.zoom.max || 3;
+      els.zoomSlider.step = caps.zoom.step || 0.1;
+      els.zoomSlider.value = track.getSettings().zoom || caps.zoom.min || 1;
+    } else {
+      els.zoomSlider.min = 1;
+      els.zoomSlider.max = 3;
+      els.zoomSlider.step = 0.1;
+    }
+  }
+
+  function applyZoom() {
+    const level = Number(els.zoomSlider.value);
+    zoom.level = level;
+    els.zoomValue.textContent = `${level.toFixed(1)}×`;
+    const track = previewStream?.getVideoTracks()[0];
+    if (!track) return;
+    if (zoom.hw) {
+      track.applyConstraints({ advanced: [{ zoom: level }] }).catch(() => {});
+    } else if (level > 1.01) {
+      startDigitalZoom();
+    } else {
+      stopDigitalZoom();
+    }
+  }
+  els.zoomSlider.oninput = applyZoom;
+
+  function startDigitalZoom() {
+    if (zoom.canvas) return; // draw loop already running
+    const raw = previewStream.getVideoTracks()[0];
+    const { width = 1280, height = 720 } = raw.getSettings();
+    const video = document.createElement("video");
+    video.muted = true;
+    video.playsInline = true;
+    video.srcObject = new MediaStream([raw]);
+    video.play().catch(() => {});
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx2d = canvas.getContext("2d");
+    const draw = () => {
+      if (!zoom.canvas) return;
+      if (video.readyState >= 2) {
+        const z = Math.max(1, zoom.level);
+        const sw = video.videoWidth / z;
+        const sh = video.videoHeight / z;
+        ctx2d.drawImage(video,
+          (video.videoWidth - sw) / 2, (video.videoHeight - sh) / 2, sw, sh,
+          0, 0, canvas.width, canvas.height);
+      }
+      zoom.raf = requestAnimationFrame(draw);
+    };
+    zoom.canvas = canvas;
+    zoom.rawVideo = video;
+    zoom.canvasTrack = canvas.captureStream(30).getVideoTracks()[0];
+    els.previewVideo.srcObject = new MediaStream([zoom.canvasTrack]);
+    draw();
+  }
+
+  function stopDigitalZoom() {
+    if (!zoom.canvas) return;
+    cancelAnimationFrame(zoom.raf);
+    zoom.canvasTrack?.stop();
+    zoom.rawVideo?.remove();
+    zoom.canvas = null;
+    zoom.canvasTrack = null;
+    zoom.rawVideo = null;
+    if (previewStream) els.previewVideo.srcObject = previewStream;
+  }
+
+  // The track we actually send: canvas track when digitally zoomed
+  function outgoingVideoTrack() {
+    return zoom.canvasTrack || previewStream.getVideoTracks()[0];
+  }
+
+  // ---------- Speaker pick + test sound ----------
+
+  const sinkSupported = "setSinkId" in HTMLMediaElement.prototype;
+  if (!sinkSupported) els.spkRow.style.display = "none";
+
+  els.spkTestBtn.onclick = async () => {
+    const ctx = ensureAudioCtx();
+    if (ctx.state === "suspended") await ctx.resume();
+    const dest = ctx.createMediaStreamDestination();
+    // A friendly two-note chime
+    for (const [freq, at] of [[523.25, 0], [783.99, 0.35]]) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + at);
+      gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + at + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + at + 0.6);
+      osc.connect(gain).connect(dest);
+      osc.start(ctx.currentTime + at);
+      osc.stop(ctx.currentTime + at + 0.7);
+    }
+    const audio = new Audio();
+    audio.srcObject = dest.stream;
+    try { if (els.spkSelect.value) await audio.setSinkId(els.spkSelect.value); } catch { /* default */ }
+    audio.play().catch(() => {});
+    setTimeout(() => { audio.srcObject = null; }, 1500);
+  };
+
+  // ---------- Mirror ----------
+
+  function applyMirror() {
+    els.previewVideo.style.transform = els.mirrorToggle.checked ? "scaleX(-1)" : "none";
+    const self = tiles.get(selfId);
+    if (self) self.video.style.transform = els.mirrorToggle.checked ? "scaleX(-1)" : "none";
+  }
+  els.mirrorToggle.onchange = applyMirror;
 
   function stopPreview() {
     if (previewStream) {
@@ -103,12 +253,27 @@
     };
     fill(els.camSelect, "videoinput", "Camera");
     fill(els.micSelect, "audioinput", "Microphone");
+    fill(els.spkSelect, "audiooutput", "Speaker");
   }
 
   async function initPreview() {
     try {
       await startPreview();          // ask permission first so labels appear
       await populateDevices();
+      // Bring back last time's choices where the devices still exist
+      const prefs = loadPrefs();
+      if (prefs.name && !els.nameInput.value) els.nameInput.value = prefs.name;
+      if (prefs.noise) els.noiseSelect.value = prefs.noise;
+      if (typeof prefs.mirror === "boolean") els.mirrorToggle.checked = prefs.mirror;
+      applyMirror();
+      if (prefs.spk && [...els.spkSelect.options].some((o) => o.value === prefs.spk)) {
+        els.spkSelect.value = prefs.spk;
+      }
+      const camBack = prefs.cam && [...els.camSelect.options].some((o) => o.value === prefs.cam);
+      const micBack = prefs.mic && [...els.micSelect.options].some((o) => o.value === prefs.mic);
+      if (camBack) els.camSelect.value = prefs.cam;
+      if (micBack) els.micSelect.value = prefs.mic;
+      if (camBack || micBack) await startPreview();
       els.joinBtn.disabled = false;
     } catch (err) {
       showError(
@@ -483,8 +648,9 @@
       sendTransport = await makeTransport("send");
       recvTransport = await makeTransport("recv");
 
+      savePrefs();
       const audioTrack = previewStream.getAudioTracks()[0];
-      const videoTrack = previewStream.getVideoTracks()[0];
+      const videoTrack = outgoingVideoTrack();
       const sendAudio = els.noiseSelect.value === "rnnoise"
         ? await noiseProcessedTrack(audioTrack)
         : audioTrack;
@@ -495,8 +661,14 @@
         appData: { source: "camera" }
       });
 
+      // Route everyone's audio to the chosen speaker where supported
+      if (sinkSupported && els.spkSelect.value && audioCtx?.setSinkId) {
+        audioCtx.setSinkId(els.spkSelect.value).catch(() => {});
+      }
+
       const selfTile = makeTile(selfId, selfName, true);
       selfTile.stream.addTrack(videoTrack);
+      applyMirror();
       for (const p of info.peers) {
         makeTile(p.id, p.name, false);
         for (const prod of p.producers) await consumeProducer(p.id, prod.id);
