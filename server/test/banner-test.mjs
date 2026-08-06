@@ -32,12 +32,15 @@ const host = await join("vcam1.y4m", "Anna", "Host — awesomepodcast.org", true
 const guest = await join("vcam2.y4m", "Dev", "Kernel maintainer", false);
 await new Promise((r) => setTimeout(r, 3000));
 
-check("banner sits below video (not overlapping)",
+check("banner overlays the bottom-left of the video, compact width",
   await guest.page.evaluate(() => {
     const t = document.querySelector(".tile:not(.self)");
     const v = t.querySelector("video").getBoundingClientRect();
     const b = t.querySelector(".lower-third").getBoundingClientRect();
-    return b.top >= v.bottom - 1;
+    const inside = b.bottom <= v.bottom + 1 && b.top > v.top;
+    const compact = b.width >= v.width * 0.2 && b.width <= v.width * 0.9;
+    const flushLeft = Math.abs(b.left - v.left) < 2;
+    return inside && compact && flushLeft;
   }));
 
 // Host changes banner colour to pink; guest should follow

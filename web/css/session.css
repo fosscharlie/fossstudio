@@ -185,26 +185,32 @@ body {
   border-radius: 10px;
   overflow: hidden;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  container-type: inline-size;
 }
 .tile video {
   width: 100%;
-  flex: 1;
-  min-height: 0;
+  height: 100%;
   object-fit: cover;
 }
 .tile.self video { transform: scaleX(-1); }
 /* Full-width lower third: name plus a smaller info line */
+/* Compact overlay lower-third: bottom-left, about a quarter of the
+   tile wide (growing to fit the text), scaling with the tile itself */
 .tile .lower-third {
-  flex-shrink: 0;
-  padding: 0.4rem 1rem 0.45rem;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: fit-content;
+  min-width: 28cqw;
+  max-width: 85cqw;
+  padding: 1.2cqw 2.4cqw 1.4cqw;
+  border-top-right-radius: 1.5cqw;
   background: var(--banner-c, #1e2127);
   color: var(--banner-fg, #ffffff);
 }
 .tile.muted .name::before { content: "🔇 "; font-size: 0.8em; }
 .tile .name {
-  font-size: 1.8rem;
+  font-size: clamp(0.7rem, 4.6cqw, 2.2rem);
   font-weight: 700;
   line-height: 1.3;
   overflow: hidden;
@@ -212,7 +218,7 @@ body {
   white-space: nowrap;
 }
 .tile .tagline {
-  font-size: 1.44rem;
+  font-size: clamp(0.55rem, 3.4cqw, 1.7rem);
   opacity: 0.82;
   line-height: 1.3;
   overflow: hidden;
@@ -260,8 +266,6 @@ body {
   grid-row: 1;
 }
 .grid.spotlight .tile:not(.featured) { grid-row: 2; }
-.grid.spotlight .tile:not(.featured) .lower-third { padding: 0.2rem 0.5rem 0.25rem; }
-.grid.spotlight .tile:not(.featured) .name { font-size: 0.7rem; }
 .grid.spotlight .tile:not(.featured) .tagline { display: none; }
 
 /* ---------- Host panel (host-facing: Lightmorphic house style) ---------- */
