@@ -353,9 +353,10 @@ body {
 .host-panel .toggle input:checked + .track::after { transform: translateX(1.15rem); background: var(--lm-on-accent); }
 .hp-color { margin: 0.9rem 0; }
 .hp-color-label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; }
-.hp-swatches { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.hp-swatches { display: flex; gap: 0.4rem; flex-wrap: nowrap; margin-bottom: 0.5rem; }
 .hp-swatch {
-  width: 1.7rem; height: 1.7rem;
+  flex-shrink: 0;
+  width: 1.55rem; height: 1.55rem;
   border-radius: 50%;
   border: 2px solid var(--lm-line);
   padding: 0;

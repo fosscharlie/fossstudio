@@ -18,6 +18,10 @@ import { capturePeer } from "./recording/serverRecorder.js";
 import { startStream, stopStream, isStreaming, refreshStream } from "./streaming.js";
 
 const ROOM_ID_RE = /^[a-zA-Z0-9_-]{4,32}$/;
+const BANNER_PALETTE = [
+  "#fbc711", "#f34236", "#e8207e", "#9b26ae", "#3d51b4",
+  "#2295f1", "#019587", "#4bae4f", "#fe9700"
+];
 const NAME_MAX = 40;
 
 export function attachSignaling(httpServer) {
@@ -84,6 +88,12 @@ export function attachSignaling(httpServer) {
                 .map(peerSummary)
             });
             broadcast(room, peer.id, { event: "peerJoined", data: peerSummary(peer) });
+            // Multi-colour banners: latecomers get the next palette colour
+            if (room.control.bannerMulti) {
+              const used = Object.keys(room.control.bannerColors).length;
+              room.control.bannerColors[peer.id] = BANNER_PALETTE[used % BANNER_PALETTE.length];
+              broadcast(room, null, { event: "control", data: room.control });
+            }
             if (role === "guest" && room.peers.size === 1) {
               notifyUser(room.ownerId, "Guest waiting", `${name} just joined session ${room.id}.`).catch(() => {});
             }
@@ -133,8 +143,18 @@ export function attachSignaling(httpServer) {
               case "bannerColor":
                 if (/^#[0-9a-fA-F]{6}$/.test(String(data.color || ""))) {
                   c.bannerColor = String(data.color).toLowerCase();
+                  c.bannerMulti = false;
                 }
                 break;
+              case "bannerMulti": {
+                c.bannerMulti = true;
+                c.bannerColors = {};
+                let ci = 0;
+                for (const p2 of room.peers.values()) {
+                  c.bannerColors[p2.id] = BANNER_PALETTE[ci++ % BANNER_PALETTE.length];
+                }
+                break;
+              }
               case "mute": {
                 const target = room.peers.get(data.peerId);
                 if (!target) return fail("no such guest");

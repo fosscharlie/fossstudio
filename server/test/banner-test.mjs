@@ -52,6 +52,22 @@ const guestColor = await guest.page.evaluate(() =>
   getComputedStyle(document.querySelector(".tile .lower-third")).backgroundColor);
 check(`guest banner turned pink (${guestColor})`, guestColor === "rgb(232, 32, 126)");
 
+// Multi-colour mode: each person gets their own banner colour
+await host.page.click("#hpBannerMulti");
+await new Promise((r) => setTimeout(r, 1500));
+const colours = await guest.page.evaluate(() =>
+  [...document.querySelectorAll(".tile .lower-third")].map((el) => getComputedStyle(el).backgroundColor));
+check(`per-person colours differ (${colours.join(" vs ")})`,
+  colours.length === 2 && colours[0] !== colours[1]);
+
+// Back to a single colour via a swatch
+await host.page.$$eval(".hp-swatch", (btns) => btns[5].click());
+await new Promise((r) => setTimeout(r, 1500));
+const uniform = await guest.page.evaluate(() =>
+  [...document.querySelectorAll(".tile .lower-third")].map((el) => getComputedStyle(el).backgroundColor));
+check(`swatch returns everyone to one colour (${uniform[0]})`,
+  uniform[0] === uniform[1]);
+
 await host.page.screenshot({ path: `${CAMS}/banner-under.png` });
 console.log(pass ? "ALL PASS" : "SOME CHECKS FAILED");
 await host.browser.close(); await guest.browser.close();

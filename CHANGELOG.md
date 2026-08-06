@@ -10,7 +10,9 @@ All notable changes to FOSSStudio are documented here.
   unmute themselves.
 - Lower-third text doubled in size; accent stripe removed
 - Banners moved **below** the video as a solid bar; the host picks the
-  banner colour live from nine swatches or a hex code in the host panel
+  banner colour live from nine swatches (one line) or a hex code, or
+  gives **every person their own colour** with one button — latecomers
+  are coloured automatically
 - Host panel restyled to the Lightmorphic house look, with a close
   button; session controls swapped emoji for modern line icons
 - Host panel simplified: every row (including your own) has Spotlight

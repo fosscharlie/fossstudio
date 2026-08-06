@@ -22,7 +22,8 @@
     hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn"),
     hpServerRec: $("hpServerRec"), hpServerRecRow: $("hpServerRecRow"),
     hpMuteAllBtn: $("hpMuteAllBtn"),
-    hpBannerSwatches: $("hpBannerSwatches"), hpBannerHex: $("hpBannerHex")
+    hpBannerSwatches: $("hpBannerSwatches"), hpBannerHex: $("hpBannerHex"),
+    hpBannerMulti: $("hpBannerMulti")
   };
 
   // Inline SVG control icons (house rule: no icon fonts, no emoji)
@@ -492,7 +493,7 @@
     els.hpBannerSwatches.innerHTML = "";
     for (const hex of BANNER_COLOURS) {
       const b = document.createElement("button");
-      b.className = "hp-swatch" + (hex === control.bannerColor ? " active" : "");
+      b.className = "hp-swatch" + (!control.bannerMulti && hex === control.bannerColor ? " active" : "");
       b.style.background = hex;
       b.dataset.tip = hex;
       b.setAttribute("aria-label", `Banner colour ${hex}`);
@@ -501,6 +502,9 @@
     }
   }
 
+  els.hpBannerMulti.onclick = () =>
+    request("hostControl", { action: "bannerMulti" }).catch(() => {});
+
   els.hpBannerHex.onchange = () => {
     let v = els.hpBannerHex.value.trim();
     if (/^[0-9a-fA-F]{6}$/.test(v)) v = "#" + v;
@@ -508,15 +512,30 @@
     else els.hpBannerHex.value = control.bannerColor || "";
   };
 
+  function bannerFg(c) {
+    const r = parseInt(c.slice(1, 3), 16), g = parseInt(c.slice(3, 5), 16), b = parseInt(c.slice(5, 7), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? "#14161a" : "#ffffff";
+  }
+
   function applyBannerColor() {
     const c = control.bannerColor || "#1e2127";
-    const r = parseInt(c.slice(1, 3), 16), g = parseInt(c.slice(3, 5), 16), b = parseInt(c.slice(5, 7), 16);
-    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     els.grid.style.setProperty("--banner-c", c);
-    els.grid.style.setProperty("--banner-fg", lum > 0.55 ? "#14161a" : "#ffffff");
+    els.grid.style.setProperty("--banner-fg", bannerFg(c));
+    // Per-person colours override the shared one on each tile
+    for (const [peerId, tile] of tiles) {
+      const mine = control.bannerMulti ? control.bannerColors?.[peerId] : null;
+      if (mine) {
+        tile.el.style.setProperty("--banner-c", mine);
+        tile.el.style.setProperty("--banner-fg", bannerFg(mine));
+      } else {
+        tile.el.style.removeProperty("--banner-c");
+        tile.el.style.removeProperty("--banner-fg");
+      }
+    }
     if (isHost) {
       if (document.activeElement !== els.hpBannerHex) els.hpBannerHex.value = c;
       renderBannerSwatches();
+      els.hpBannerMulti.classList.toggle("active", !!control.bannerMulti);
     }
   }
 

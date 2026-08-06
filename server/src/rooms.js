@@ -22,6 +22,8 @@ export async function getOrCreateRoom(roomId) {
         volumes: {},             // peerId -> 0..1.5
         muted: {},               // peerId -> true when mic is muted
         bannerColor: null,       // solid colour of the name banners
+        bannerMulti: false,      // one colour per person instead
+        bannerColors: {},        // peerId -> hex when bannerMulti
         autoGain: false          // per-session, host-toggled
       }
     };
@@ -61,6 +63,7 @@ export function removePeer(room, peerId) {
   room.peers.delete(peerId);
   delete room.control.volumes[peerId];
   delete room.control.muted[peerId];
+  delete room.control.bannerColors[peerId];
   if (room.peers.size === 0) {
     try { room.router.close(); } catch { /* already closed */ }
     rooms.delete(room.id);
