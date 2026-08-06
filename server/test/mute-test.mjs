@@ -32,13 +32,14 @@ const g1 = await join("Greta", false);
 const g2 = await join("Gus", false);
 await new Promise((r) => setTimeout(r, 3000));
 
-// Guests arrive muted by default; the host doesn't
-check("guests join muted by default, host does not",
+// Everyone arrives muted - host included
+check("everyone joins muted, host included",
   (await g1.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))) &&
   (await g2.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))) &&
-  !(await host.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))));
+  (await host.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))));
 
-// Both unmute themselves so the rest of the flow starts from live mics
+// All unmute themselves so the rest of the flow starts from live mics
+await host.click("#muteBtn");
 await g1.click("#muteBtn");
 await g2.click("#muteBtn");
 await new Promise((r) => setTimeout(r, 1200));

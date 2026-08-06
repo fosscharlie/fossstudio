@@ -70,8 +70,9 @@ export function attachSignaling(httpServer) {
             const role = canHost && data.role === "host" ? "host" : "guest";
             peer = addPeer(room, { name, tagline, role, socket });
             room.control.noise[peer.id] = !!data.noiseOn;
-            // Guests arrive muted; they can unmute themselves when ready
-            if (role === "guest") room.control.muted[peer.id] = true;
+            // Everyone arrives muted — host included, even alone; you
+            // unmute yourself when you're ready to talk
+            room.control.muted[peer.id] = true;
             const settings = await getSettings(room.ownerId);
             const { findById } = await import("./users.js");
             const canServerRecord = role === "host" &&

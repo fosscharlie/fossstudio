@@ -4,6 +4,11 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Everyone joins muted** — the host too, even when alone; unmute
+  yourself when you're ready to talk
+- Themes pane order: Accent colour, Podcast logo, Background colour,
+  Wallpaper
+
 - **Background colour** in Settings → Themes: same palette as the
   accent plus a hex field for any custom colour, shown behind the
   video grid in sessions — a wallpaper overrides it; with no wallpaper
