@@ -10,7 +10,9 @@ All notable changes to FOSSStudio are documented here.
   unmute themselves.
 - Lower-third text doubled in size; accent stripe removed
 - Banners moved **below** the video as a solid bar; the host picks the
-  banner colour live from a colour chooser in the host panel
+  banner colour live from nine swatches or a hex code in the host panel
+- Host panel restyled to the Lightmorphic house look, with a close
+  button; session controls swapped emoji for modern line icons
 
 - **Fix**: joining with noise suppression crashed some Chromium-based
   browsers (seen in Brave Origin) — session audio is now routed to the

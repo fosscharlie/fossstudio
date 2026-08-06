@@ -43,9 +43,9 @@ check("banner sits below video (not overlapping)",
 // Host changes banner colour to pink; guest should follow
 await host.page.click("#hostPanelBtn");
 await host.page.evaluate(() => {
-  const inp = document.getElementById("hpBannerColor");
+  const inp = document.getElementById("hpBannerHex");
   inp.value = "#e8207e";
-  inp.dispatchEvent(new Event("input"));
+  inp.dispatchEvent(new Event("change"));
 });
 await new Promise((r) => setTimeout(r, 1500));
 const guestColor = await guest.page.evaluate(() =>

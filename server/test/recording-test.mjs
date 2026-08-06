@@ -52,7 +52,7 @@ await host.click("#hostPanelBtn");
 if (MODE === "server") {
   const visible = await host.$eval("#hpServerRecRow", (el) => !el.hidden);
   console.log(`${visible ? "OK  " : "FAIL"} server-rec toggle visible for permitted host`);
-  await host.check("#hpServerRec");
+  await host.$eval("#hpServerRec", (el) => el.click());
 }
 await host.click("#hpRecordBtn");
 await new Promise((r) => setTimeout(r, 2500));

@@ -22,8 +22,22 @@
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
     hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn"),
     hpServerRec: $("hpServerRec"), hpServerRecRow: $("hpServerRecRow"),
-    hpMuteAllBtn: $("hpMuteAllBtn"), hpBannerColor: $("hpBannerColor")
+    hpMuteAllBtn: $("hpMuteAllBtn"),
+    hpBannerSwatches: $("hpBannerSwatches"), hpBannerHex: $("hpBannerHex")
   };
+
+  // Inline SVG control icons (house rule: no icon fonts, no emoji)
+  const ICONS = {
+    mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+    micOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 9v5a3 3 0 0 0 5.1 2.1M15 10V6a3 3 0 0 0-5.6-1.5M5 11a7 7 0 0 0 11 5.7M19 11a7 7 0 0 1-.9 3.4M12 18v3M4 4l16 16"/></svg>',
+    cam: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="12" height="12" rx="3"/><path d="M15 11l6-3.5v9L15 13"/></svg>',
+    camOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 11l6-3.5v9l-2.2-1.3M15 13v2a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3h1M11 6h1a3 3 0 0 1 3 3v1M4 4l16 16"/></svg>',
+    sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 12h4M12 12h8M4 17h13"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18.5" cy="17" r="2"/></svg>',
+    leave: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M15 16l4-4-4-4M19 12H9"/></svg>'
+  };
+  for (const [id, icon] of [["muteBtn", "mic"], ["camBtn", "cam"], ["hostPanelBtn", "sliders"], ["leaveBtn", "leave"]]) {
+    document.getElementById(id).innerHTML = ICONS[icon];
+  }
 
   let previewStream = null;
   let audioCtx = null;
@@ -469,13 +483,46 @@
   }
   matchMedia("(max-width: 700px)").addEventListener("change", applyLayout);
 
+  const BANNER_COLOURS = [
+    "#fbc711", "#f34236", "#e8207e", "#9b26ae", "#3d51b4",
+    "#2295f1", "#019587", "#4bae4f", "#fe9700"
+  ];
+
+  function sendBannerColor(c) {
+    request("hostControl", { action: "bannerColor", color: c })
+      .catch(() => {});
+  }
+
+  function renderBannerSwatches() {
+    els.hpBannerSwatches.innerHTML = "";
+    for (const hex of BANNER_COLOURS) {
+      const b = document.createElement("button");
+      b.className = "hp-swatch" + (hex === control.bannerColor ? " active" : "");
+      b.style.background = hex;
+      b.dataset.tip = hex;
+      b.setAttribute("aria-label", `Banner colour ${hex}`);
+      b.onclick = () => sendBannerColor(hex);
+      els.hpBannerSwatches.appendChild(b);
+    }
+  }
+
+  els.hpBannerHex.onchange = () => {
+    let v = els.hpBannerHex.value.trim();
+    if (/^[0-9a-fA-F]{6}$/.test(v)) v = "#" + v;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) sendBannerColor(v.toLowerCase());
+    else els.hpBannerHex.value = control.bannerColor || "";
+  };
+
   function applyBannerColor() {
     const c = control.bannerColor || "#1e2127";
     const r = parseInt(c.slice(1, 3), 16), g = parseInt(c.slice(3, 5), 16), b = parseInt(c.slice(5, 7), 16);
     const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     els.grid.style.setProperty("--banner-c", c);
     els.grid.style.setProperty("--banner-fg", lum > 0.55 ? "#14161a" : "#ffffff");
-    if (isHost && els.hpBannerColor.value !== c) els.hpBannerColor.value = c;
+    if (isHost) {
+      if (document.activeElement !== els.hpBannerHex) els.hpBannerHex.value = c;
+      renderBannerSwatches();
+    }
   }
 
   function applyControl(next) {
@@ -619,16 +666,10 @@
   }
 
   els.hostPanelBtn.onclick = () => { els.hostPanel.hidden = !els.hostPanel.hidden; };
+  $("hpCloseBtn").onclick = () => { els.hostPanel.hidden = true; };
   els.hpGridBtn.onclick = () => request("hostControl", { action: "layout", layout: "grid" });
   els.hpSpotSelfBtn.onclick = () =>
     request("hostControl", { action: "layout", layout: "spotlight", peerId: selfId });
-  let bannerTimer = null;
-  els.hpBannerColor.oninput = () => {
-    clearTimeout(bannerTimer);
-    bannerTimer = setTimeout(() => {
-      request("hostControl", { action: "bannerColor", color: els.hpBannerColor.value });
-    }, 150);
-  };
   els.hpMuteAllBtn.onclick = () =>
     request("hostControl", { action: "muteAll" })
       .catch((e) => console.error("mute all failed:", e.message));
@@ -831,6 +872,7 @@
     muted ? micProducer.pause() : micProducer.resume();
     micProducer.track.enabled = !muted;
     els.muteBtn.classList.toggle("off", muted);
+    els.muteBtn.innerHTML = muted ? ICONS.micOff : ICONS.mic;
     els.muteBtn.dataset.tip = muted ? "Unmute microphone" : "Mute microphone";
     if (send) request("selfMute", { muted }).catch(() => {});
   }
@@ -846,6 +888,7 @@
     stopping ? camProducer.pause() : camProducer.resume();
     camProducer.track.enabled = !stopping;
     els.camBtn.classList.toggle("off", stopping);
+    els.camBtn.innerHTML = stopping ? ICONS.camOff : ICONS.cam;
     els.camBtn.dataset.tip = stopping ? "Turn camera on" : "Turn camera off";
   };
 
