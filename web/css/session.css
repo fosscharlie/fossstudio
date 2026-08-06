@@ -31,9 +31,26 @@ body {
   gap: 0.9rem;
 }
 .preview-card h1 { font-size: 1.2rem; }
-.preview-video-wrap { position: relative; }
+/* Roomier on desktop: big camera check up top, settings in two columns */
+@media (min-width: 640px) {
+  .preview-card {
+    max-width: 40rem;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1rem;
+  }
+  .preview-card h1,
+  .preview-video-wrap,
+  .preview-card label:has(#nameInput),
+  #joinBtn,
+  #previewError { grid-column: 1 / -1; }
+}
+/* Grid items default to min-width:auto, so the video's native 1280px
+   feed could force everything wider than the card — cap them all. */
+.preview-card > * { min-width: 0; max-width: 100%; }
+.preview-video-wrap { position: relative; min-width: 0; }
 #previewVideo {
   width: 100%;
+  max-width: 100%;
   aspect-ratio: 16 / 9;
   background: #000;
   border-radius: 8px;
