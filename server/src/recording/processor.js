@@ -102,7 +102,7 @@ export async function processRecording(rec) {
     const bannerW = 2 * Math.round(0.38 * cellW / 2);
     const scaled = videos.map((p, i) => {
       const base = `[${p.vIdx}:v]scale=${cellW}:${cellH}:force_original_aspect_ratio=increase,` +
-        `crop=${cellW}:${cellH}:(iw-${cellW})/2:0,setsar=1`;
+        `crop=${cellW}:${cellH}:(iw-${cellW})/2:(ih-${cellH})/2,setsar=1`;
       if (p.bnIdx == null) return `${base}[v${i}]`;
       return `${base}[t${i}];[${p.bnIdx}:v]scale=${bannerW}:-2[bn${i}];` +
         `[t${i}][bn${i}]overlay=x=0:y=main_h-overlay_h:eof_action=repeat[v${i}]`;

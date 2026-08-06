@@ -4,6 +4,10 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Portrait (vertical) camera feeds now crop to the **middle** of the
+  frame instead of the top — in the live grid, the preview, recordings
+  and streams alike
+
 - **Speaker row always shows** — tablets and phones that hide their
   audio outputs get a "Default speaker" entry and a working test
   sound; a Bluetooth speaker still appears as a second choice where

@@ -103,7 +103,7 @@ async function launch(state) {
   const bannerW = 2 * Math.round(0.38 * cellW / 2);
   const scaled = videos.map((v, k) => {
     const base = `[${v.i}:v]scale=${cellW}:${cellH}:force_original_aspect_ratio=increase,` +
-      `crop=${cellW}:${cellH}:(iw-${cellW})/2:0,setsar=1,fps=30`;
+      `crop=${cellW}:${cellH}:(iw-${cellW})/2:(ih-${cellH})/2,setsar=1,fps=30`;
     if (v.bnIdx == null) return `${base}[v${k}]`;
     return `${base}[t${k}];[${v.bnIdx}:v]scale=${bannerW}:-2[bn${k}];` +
       `[t${k}][bn${k}]overlay=x=0:y=main_h-overlay_h:eof_action=repeat[v${k}]`;
