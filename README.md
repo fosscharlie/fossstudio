@@ -9,8 +9,9 @@ dashboard. Live at https://app.fossstudio.org.
 - **Guest flow:** open link → preview screen (camera/mic/speaker pick,
   speaker test sound, mic meter, **camera zoom** — real lens zoom where
   supported, digital crop-zoom everywhere else — mirror toggle, name,
-  noise suppression on by default) → join. Up to 10 people; choices are
-  remembered for next time.
+  noise suppression on by default) → join, arriving muted so there are
+  no accidental hot mics. Up to 10 people; choices are remembered for
+  next time.
 - **Roles:** admins create and manage **hosts** (email invites — each
   host sets their own password) and look after the system; each host
   owns their sessions, recordings, branding and stream key.
