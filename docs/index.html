@@ -132,7 +132,7 @@
   }
 
   /* ---------- sections ---------- */
-  section { padding: 5rem 0; }
+  section.wrap { padding: 3.5rem 1.25rem; }
   h2 { font-size: clamp(1.6rem, 3.5vw, 2.2rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.6rem; }
   .eyebrow {
     display: inline-block;
@@ -149,11 +149,11 @@
 
   .duo {
     display: grid;
-    grid-template-columns: 1fr 1.25fr;
-    gap: var(--gap);
+    grid-template-columns: 1fr 1fr;
+    gap: calc(var(--gap) * 2);
     align-items: center;
   }
-  .duo.flip { grid-template-columns: 1.25fr 1fr; }
+  .duo.flip { grid-template-columns: 1fr 1fr; }
   .duo .shot {
     border: 1px solid var(--line);
     border-radius: 16px;
@@ -215,7 +215,9 @@
     justify-content: center;
     gap: 1rem;
     flex-wrap: wrap;
-    padding: 1.7rem;
+    width: fit-content;
+    margin: 0 auto;
+    padding: 1rem 1.4rem;
     background: linear-gradient(135deg, #171a21, #1a1c14);
     border: 1px solid var(--line);
     border-radius: 18px;
@@ -273,7 +275,6 @@
     font-size: 0.92rem;
   }
   footer .wrap { display: grid; gap: 1.4rem; justify-items: center; text-align: center; }
-  footer .sponsor { padding: 1rem 1.4rem; }
   :is(a, button):focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
 </style>
 </head>
