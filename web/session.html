@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FOSSStudio session</title>
-<link rel="stylesheet" href="/css/session.css?v=20260806i">
+<link rel="stylesheet" href="/css/session.css?v=20260806j">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -37,12 +37,14 @@
       </label>
       <button type="button" id="spkTestBtn" class="small-btn">Play test sound</button>
     </div>
-    <label><span class="lab">Banner title <span class="soft">(required - max 24 characters)</span></span>
-      <input id="nameInput" maxlength="24" autocomplete="name" required>
-    </label>
-    <label><span class="lab">Banner subtitle <span class="soft">(optional - max 32 characters)</span></span>
-      <input id="taglineInput" maxlength="32" autocomplete="off">
-    </label>
+    <div id="bannerRow">
+      <label><span class="lab">Banner title <span class="soft">(required - max 24 characters)</span></span>
+        <input id="nameInput" maxlength="24" autocomplete="name" required>
+      </label>
+      <label><span class="lab">Banner subtitle <span class="soft">(optional - max 32 characters)</span></span>
+        <input id="taglineInput" maxlength="32" autocomplete="off">
+      </label>
+    </div>
     <button id="joinBtn" disabled>Join session</button>
     <p id="previewError" class="error" hidden></p>
   </div>
@@ -88,7 +90,7 @@
       </div>
     </div>
     <div id="hpGuests"></div>
-    <div class="hp-build">Build 20260806i</div>
+    <div class="hp-build">Build 20260806j</div>
   </aside>
   </div>
   <footer class="controls">
@@ -102,7 +104,7 @@
   </footer>
 </div>
 
-<script src="/assets/mediasoup-client.js?v=20260806i"></script>
-<script src="/js/session.js?v=20260806i"></script>
+<script src="/assets/mediasoup-client.js?v=20260806j"></script>
+<script src="/js/session.js?v=20260806j"></script>
 </body>
 </html>

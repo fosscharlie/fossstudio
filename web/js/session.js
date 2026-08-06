@@ -203,8 +203,10 @@
 
   // ---------- Speaker pick + test sound ----------
 
+  // The row always shows: even with one fixed speaker you still want
+  // the test sound, and a Bluetooth speaker can appear as a second
+  // choice at any moment
   const sinkSupported = "setSinkId" in HTMLMediaElement.prototype;
-  if (!sinkSupported) els.spkRow.style.display = "none";
 
   els.spkTestBtn.onclick = async () => {
     const ctx = ensureAudioCtx();
@@ -302,6 +304,15 @@
     fill(els.camSelect, "videoinput", "Camera");
     fill(els.micSelect, "audioinput", "Microphone");
     fill(els.spkSelect, "audiooutput", "Speaker");
+    // Tablets and phones often expose no output devices (or can't
+    // switch): show "Default speaker" and keep the test sound working
+    if (els.spkSelect.options.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Default speaker";
+      els.spkSelect.appendChild(opt);
+    }
+    els.spkSelect.disabled = !sinkSupported || els.spkSelect.options.length <= 1;
   }
 
   async function initPreview() {

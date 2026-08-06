@@ -4,6 +4,13 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Speaker row always shows** — tablets and phones that hide their
+  audio outputs get a "Default speaker" entry and a working test
+  sound; a Bluetooth speaker still appears as a second choice where
+  the browser allows switching
+- Join screen: banner title on the left and subtitle on the right,
+  sharing one line on every screen size
+
 - Subscribe reminder text is now three lines: "Enjoying the show?" /
   "Subscribe and Turn on" / "All notifications" — in the session
   overlay and the animation baked into recordings and streams
