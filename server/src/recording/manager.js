@@ -115,6 +115,7 @@ export function addPeerToRecording(rec, peer) {
   if (rec.peers.has(peer.id) || rec.stopping) return null;
   rec.peers.set(peer.id, {
     name: peer.name,
+    role: peer.role,
     startOffsetMs: Date.now() - rec.startedAt,
     done: rec.mode === "server", // server mode needs no client uploads
     files: {}

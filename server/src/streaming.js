@@ -70,13 +70,15 @@ async function launch(state) {
       });
       const sdpPath = path.join(workDir, `${crypto.randomUUID()}.sdp`);
       await fs.writeFile(sdpPath, sdpFor(port, consumer));
-      inputs.push({ sdpPath, kind: consumer.kind, name: peer.name, peerId: peer.id });
+      inputs.push({ sdpPath, kind: consumer.kind, name: peer.name, peerId: peer.id, role: peer.role });
       cleanup.transports.push(transport);
       cleanup.consumers.push(consumer);
     }
   }
 
   const videos = inputs.map((x, i) => ({ ...x, i })).filter((x) => x.kind === "video");
+  // Host top-left, like every screen
+  videos.sort((a, b) => (b.role === "host") - (a.role === "host"));
   const audios = inputs.map((x, i) => ({ ...x, i })).filter((x) => x.kind === "audio");
   if (videos.length === 0) throw new Error("nothing to stream yet");
   const overlay = state.pendingOverlay || null;
@@ -108,7 +110,15 @@ async function launch(state) {
     return `${base}[t${k}];[${v.bnIdx}:v]scale=${bannerW}:-2[bn${k}];` +
       `[t${k}][bn${k}]overlay=x=0:y=main_h-overlay_h:eof_action=repeat[v${k}]`;
   }).join(";");
-  const layout = videos.map((v, k) => `${(k % cols) * cellW}_${Math.floor(k / cols) * cellH}`);
+  // Balanced centred rows, matching the on-screen layout (7 = 3+2+2)
+  const nRows = Math.ceil(videos.length / cols);
+  const rBase = Math.floor(videos.length / nRows), rExtra = videos.length % nRows;
+  const rowSizes = Array.from({ length: nRows }, (_, r) => rBase + (r < rExtra ? 1 : 0));
+  const layout = [];
+  rowSizes.forEach((size, r) => {
+    const xoff = Math.round((cols * cellW - size * cellW) / 2);
+    for (let cix = 0; cix < size; cix++) layout.push(`${xoff + cix * cellW}_${r * cellH}`);
+  });
   const stack = videos.length === 1
     ? "[v0]copy[vout]"
     : `${videos.map((v, k) => `[v${k}]`).join("")}xstack=inputs=${videos.length}:layout=${layout.join("|")}:fill=black[vout]`;

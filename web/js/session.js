@@ -439,7 +439,7 @@
   // Remote audio plays through a per-guest GainNode so the host's
   // volume sliders affect what everyone hears, including recordings.
 
-  function makeTile(peerId, name, isSelf, tagline = "") {
+  function makeTile(peerId, name, isSelf, tagline = "", isHostPeer = false) {
     const el = document.createElement("div");
     el.className = "tile" + (isSelf ? " self" : "");
     el.dataset.peerId = peerId;
@@ -460,7 +460,9 @@
       third.appendChild(tagEl);
     }
     el.append(video, third);
-    els.grid.appendChild(el);
+    // The host always sits top-left; everyone else in join order
+    if (isHostPeer) els.grid.insertBefore(el, els.banner.nextSibling);
+    else els.grid.appendChild(el);
     const stream = new MediaStream();
     video.srcObject = stream;
     tiles.set(peerId, { el, video, stream, name, gain: null });
@@ -528,11 +530,46 @@
     if (!spot) {
       const mobile = matchMedia("(max-width: 700px)").matches;
       const n = Math.max(1, tiles.size); // self included everywhere
-      const cols = mobile ? (n > 1 ? 2 : 1) : Math.ceil(Math.sqrt(n));
-      els.grid.style.setProperty("--cols", cols);
+      const cols = mobile ? Math.min(2, n) : Math.ceil(Math.sqrt(n));
+      // Rows as even as possible, fuller rows first: 7 people means
+      // 3 + 2 + 2, 8 means 3 + 3 + 2 — never 3 + 3 + 1
+      const rows = Math.ceil(n / cols);
+      const base = Math.floor(n / rows), extra = n % rows;
+      const rowSizes = Array.from({ length: rows }, (_, r) => base + (r < extra ? 1 : 0));
+      // One tile size for everyone: as large as fits both ways
+      const cs = getComputedStyle(els.grid);
+      const gap = parseFloat(cs.gap) || 16;
+      const padL = parseFloat(cs.paddingLeft), padT = parseFloat(cs.paddingTop);
+      const availW = els.grid.clientWidth - padL - parseFloat(cs.paddingRight);
+      const availH = els.grid.clientHeight - padT - parseFloat(cs.paddingBottom);
+      const tileW = Math.max(120, Math.min(
+        (availW - (cols - 1) * gap) / cols,
+        ((availH - (rows - 1) * gap) / rows) * 16 / 9
+      ));
+      const tileH = tileW * 9 / 16;
+      const blockH = rows * tileH + (rows - 1) * gap;
+      const startY = mobile ? padT : padT + Math.max(0, (availH - blockH) / 2);
+      els.grid.style.setProperty("--tile-w", `${Math.floor(tileW)}px`);
+      // Place tiles by hand: same maths as the recording/stream grid
+      const els2 = [...els.grid.querySelectorAll(".tile")];
+      let idx = 0;
+      rowSizes.forEach((size, r) => {
+        const rowW = size * tileW + (size - 1) * gap;
+        const x0 = padL + (availW - rowW) / 2;
+        for (let cix = 0; cix < size && idx < els2.length; cix++, idx++) {
+          els2[idx].style.left = `${Math.round(x0 + cix * (tileW + gap))}px`;
+          els2[idx].style.top = `${Math.round(startY + r * (tileH + gap))}px`;
+        }
+      });
+    } else {
+      for (const t of els.grid.querySelectorAll(".tile")) {
+        t.style.left = "";
+        t.style.top = "";
+      }
     }
     positionTitleBlock();
   }
+  window.addEventListener("resize", () => applyLayout());
   matchMedia("(max-width: 700px)").addEventListener("change", applyLayout);
 
   const BANNER_COLOURS = [
@@ -1201,7 +1238,7 @@
         appData: { source: "camera" }
       });
 
-      const selfTile = makeTile(selfId, selfName, true, els.taglineInput.value.trim());
+      const selfTile = makeTile(selfId, selfName, true, els.taglineInput.value.trim(), isHost);
       selfTile.stream.addTrack(videoTrack);
       if (isHost) {
         const ctx = ensureAudioCtx();
@@ -1212,11 +1249,11 @@
       }
       applyMirror();
       for (const p of info.peers) {
-        makeTile(p.id, p.name, false, p.tagline);
+        makeTile(p.id, p.name, false, p.tagline, p.role === "host");
         for (const prod of p.producers) await consumeProducer(p.id, prod.id);
       }
 
-      eventHandlers.peerJoined = (p) => makeTile(p.id, p.name, false, p.tagline);
+      eventHandlers.peerJoined = (p) => makeTile(p.id, p.name, false, p.tagline, p.role === "host");
       eventHandlers.peerLeft = ({ peerId }) => removeTile(peerId);
       eventHandlers.newProducer = ({ peerId, producerId }) =>
         consumeProducer(peerId, producerId).catch(console.error);

@@ -155,7 +155,9 @@ body {
 /* Episode logo + title block: 180px wide, logo up to 180x50 with the
    title (up to 30px) underneath; text-only titles fill the space.
    The host drags it anywhere; recordings and streams mirror it. */
-.banner {
+#grid .banner {
+  /* #grid prefix: outranks the [data-tip] position:relative helper,
+     which otherwise knocks the host's block out of absolute layout */
   position: absolute;
   top: 14px;
   left: 50%;
@@ -232,21 +234,28 @@ body {
 .grid {
   position: relative;
   flex: 1;
-  display: grid;
+  /* Uniform tiles, centred rows: 2 side by side; 3 = two on top, one
+     centred below; 5 = three up, two centred below - all one size */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
   /* Wide, even spacing all round so the wallpaper shows through -
      80px on desktop, scaling down with the viewport */
   gap: clamp(16px, 5.5vw, 80px);
   padding: clamp(16px, 5.5vw, 80px);
   overflow: hidden;
-  grid-template-columns: repeat(var(--cols, 1), 1fr);
-  align-content: center;
 }
 .tile {
-  position: relative;
+  /* Placed by hand in normal layout (balanced centred rows) */
+  position: absolute;
   background: #000;
   border-radius: 10px;
   overflow: hidden;
   min-height: 0;
+  width: var(--tile-w, 480px);
+  aspect-ratio: 16 / 9;
+  flex: 0 0 auto;
   container-type: inline-size;
 }
 .tile video {
@@ -377,10 +386,12 @@ body {
 /* ---------- Spotlight layout ----------
    Featured tile fills the top; everyone else shrinks to a bottom strip. */
 .grid.spotlight {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   grid-template-rows: 1fr 16vh;
   align-content: stretch;
 }
+.grid.spotlight .tile { position: relative; width: auto; aspect-ratio: auto; flex: initial; }
 .grid.spotlight .tile.featured {
   grid-column: 1 / -1;
   grid-row: 1;
@@ -594,8 +605,7 @@ body.dim-ui .banner:hover { opacity: 1; }
    can always see yourself where you'll appear in the recording. Tiles
    start below the default logo/title block position. */
 @media (max-width: 700px) {
-  .grid { align-content: start; padding-top: 84px; }
-  .tile { aspect-ratio: 16 / 9; }
+  .grid { align-content: flex-start; padding-top: 84px; }
 }
 
 /* ---------- Tooltips: lozenge, background-coloured, outlined ---------- */

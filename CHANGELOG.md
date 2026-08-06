@@ -4,6 +4,13 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **New grid layout**: the host is always top-left; everyone is the
+  same size; rows balance and centre themselves (2 side by side; 3 =
+  two up, one centred below; 5 = 3+2; 7 = 3+2+2; 8 = 3+3+2; 9 = 3×3) —
+  identical on screen, in recordings and on the live stream
+- **Fix**: on the host's screen the logo/title block could jump to the
+  middle-right — a stylesheet clash with its drag tooltip
+
 - **Fix**: the logo/title block stretched to the height of a video row
   on the host's screen when a second participant joined
 - The block now **scales down with the viewport** so tablets and
