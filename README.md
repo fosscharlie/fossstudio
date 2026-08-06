@@ -6,18 +6,26 @@ dashboard. Live at https://app.fossstudio.org.
 
 ## What it does
 
-- **Guest flow:** open link → preview screen (pick camera/mic, test them,
-  set a name, noise suppression on by default) → join. Up to 10 people.
-- **Host dashboard** (`/host/`): sessions, theme (banner, accent,
-  wallpaper), recordings, streaming settings, security (password + 2FA),
-  system (restart, backups, logs, full export).
+- **Guest flow:** open link → preview screen (camera/mic/speaker pick,
+  speaker test sound, mic meter, **camera zoom** — real lens zoom where
+  supported, digital crop-zoom everywhere else — mirror toggle, name,
+  noise suppression on by default) → join. Up to 10 people; choices are
+  remembered for next time.
+- **Roles:** admins create and manage **hosts** (email invites — each
+  host sets their own password) and look after the system; each host
+  owns their sessions, recordings, branding and stream key.
 - **In-session host controls:** spotlight/grid layout, per-guest volume,
-  auto level balancing, start/stop recording, go live.
+  per-session auto level balancing, start/stop recording, go live.
 - **Recording:** browser-side per-person (PCM, best for big sessions) or
-  server-side (small sessions). Output: one combined MKV + a lossless
-  FLAC per participant, downloadable from the dashboard.
+  server-side (a per-host permission, picked per session). Output: one
+  combined MKV + a lossless FLAC per participant.
 - **Streaming:** server-composited RTMP out to YouTube.
 - **Noise suppression:** RNNoise in the guest's browser (WASM worklet).
+- **Email:** SMTP configured in the dashboard; all outgoing mail uses a
+  branded HTML template with a plain-text fallback.
+
+See [CHANGELOG.md](CHANGELOG.md) for release history and
+[SECURITY.md](SECURITY.md) for the security policy.
 
 ## Stack
 

@@ -1,0 +1,37 @@
+# Security Policy
+
+## Reporting a vulnerability
+
+Please report vulnerabilities privately via
+[GitHub's private vulnerability reporting](https://github.com/fosscharlie/fossstudio/security/advisories/new)
+on this repository. You'll get a response as soon as possible, normally
+within a few days. Please don't open public issues for security problems
+before they're fixed.
+
+## Supported versions
+
+Only the latest release (what `main` deploys) is supported. FOSSStudio
+is self-hosted: run the newest version.
+
+## Security design notes
+
+For self-hosters assessing the project:
+
+- **Authentication**: scrypt password hashing, HMAC-signed HttpOnly
+  cookies (`Secure`, `SameSite=Lax`), per-IP login rate limiting with
+  lockout, optional TOTP two-factor per account.
+- **Roles**: admins never host; hosts only ever see their own sessions,
+  recordings and settings. Host powers in a session are granted from the
+  server-side session ownership check, never from client claims.
+- **Session links** must exist in the session registry — arbitrary room
+  IDs are rejected.
+- **Uploads**: recording chunks are gated by per-peer HMAC tokens;
+  wallpaper uploads are content-type and size limited.
+- **Transport**: HTTPS everywhere via Caddy; WebRTC media is DTLS-SRTP
+  encrypted end-to-server; the app binds to loopback behind the proxy.
+- **No third parties**: no CDNs, trackers, or external calls from any
+  page; fonts and libraries are self-hosted.
+- **Secrets** live in the server's `.env` and the data directory —
+  never in the repository.
+- **Headers**: `X-Content-Type-Options`, `X-Frame-Options: DENY`,
+  `Referrer-Policy`, and a restrictive `Permissions-Policy`.
