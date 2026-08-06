@@ -631,6 +631,8 @@
 
   // ---------- Join / leave ----------
 
+  const JOINING_KEY = "fossstudio-joining";
+
   async function join() {
     if (!els.nameInput.value.trim()) {
       showError("Add a banner title first — that's the big text under your video.");
@@ -639,6 +641,7 @@
     }
     els.joinBtn.disabled = true;
     els.joinBtn.textContent = "Joining…";
+    try { localStorage.setItem(JOINING_KEY, els.noiseSelect.value); } catch { /* ignore */ }
     try {
       await connectWs();
       selfName = els.nameInput.value.trim() || "Guest";
@@ -683,9 +686,14 @@
       savePrefs();
       const audioTrack = previewStream.getAudioTracks()[0];
       const videoTrack = outgoingVideoTrack();
-      const sendAudio = els.noiseSelect.value === "rnnoise"
-        ? await noiseProcessedTrack(audioTrack)
-        : audioTrack;
+      let sendAudio = audioTrack;
+      if (els.noiseSelect.value === "rnnoise") {
+        try {
+          sendAudio = await noiseProcessedTrack(audioTrack);
+        } catch (err) {
+          console.error("noise suppression unavailable:", err.message);
+        }
+      }
       micProducer = await sendTransport.produce({ track: sendAudio, appData: { source: "mic" } });
       camProducer = await sendTransport.produce({
         track: videoTrack,
@@ -728,11 +736,13 @@
       if (info.streaming) setLiveIndicator(true);
 
       joined = true;
+      try { localStorage.removeItem(JOINING_KEY); } catch { /* ignore */ }
       els.preview.hidden = true;
       els.session.hidden = false;
       if (audioCtx?.state === "suspended") audioCtx.resume();
       applyLayout();
     } catch (err) {
+      try { localStorage.removeItem(JOINING_KEY); } catch { /* ignore */ }
       els.joinBtn.disabled = false;
       els.joinBtn.textContent = "Join session";
       showError(
@@ -796,6 +806,14 @@
     el.dataset.tip = el.getAttribute("title");
     el.removeAttribute("title");
   }
+
+  try {
+    if (localStorage.getItem(JOINING_KEY) === "rnnoise") {
+      localStorage.removeItem(JOINING_KEY);
+      els.noiseSelect.value = "off";
+      showError("Your last join didn't finish, so noise suppression is switched off for this try. You can turn it back on above.");
+    }
+  } catch { /* ignore */ }
 
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
 

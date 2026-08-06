@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Crash safety: if a join attempt never finishes (e.g. the tab crashed
+  while noise suppression was starting), the next visit turns noise
+  suppression off automatically and says so
 - Banner fields renamed on the join screen: **Banner title** (now
   required to join) and **Banner subtitle** (optional), no placeholder
   clutter; title and subtitle sit side by side on desktop
