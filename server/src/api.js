@@ -110,11 +110,15 @@ api.post("/users/invite", requireAdmin, async (req, res) => {
     let emailed = false;
     if (isConfigured(await getSmtpConfig())) {
       try {
-        await sendEmail(user.email, "You're invited to host on FOSSStudio",
-          `Hello ${user.username},\n\n` +
-          `You've been invited to host shows on FOSSStudio.\n\n` +
-          `Click this link to choose your password and get started:\n${inviteUrl}\n\n` +
-          `The link works for 7 days. After that, ask for a fresh invite.`);
+        await sendEmail(user.email, "You're invited to host on FOSSStudio", {
+          paragraphs: [
+            `Hello ${user.username},`,
+            "You've been invited to host shows on FOSSStudio — your own sessions, recordings and branding, all ready to go.",
+            "Click the button below to choose your password and get started."
+          ],
+          button: { label: "Choose your password", url: inviteUrl },
+          footer: "The link works for 7 days and can only be used once. If it expires, just ask for a fresh invite."
+        });
         emailed = true;
       } catch (err) {
         console.error("invite email failed:", err.message);
@@ -164,7 +168,12 @@ api.post("/smtp/test", requireAdmin, async (req, res) => {
     const smtp = await getSmtpConfig();
     const to = smtp.alertTo || smtp.from || smtp.user;
     if (!to) return res.status(400).json({ error: "Add an alert address first." });
-    await sendEmail(to, "FOSSStudio test email", "If you can read this, email is working. 🎙");
+    await sendEmail(to, "FOSSStudio test email", {
+      paragraphs: [
+        "If you can read this, email is working. 🎙",
+        "Host invites and warning emails will arrive looking just like this one."
+      ]
+    });
     res.json({ ok: true, to });
   } catch (err) {
     res.status(400).json({ error: err.message });
