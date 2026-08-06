@@ -14,7 +14,13 @@ export async function getOrCreateRoom(roomId) {
       id: roomId,
       router: await createRouter(),
       peers: new Map(),
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      // Live host-controlled state, mirrored to every client
+      control: {
+        layout: "grid",          // "grid" | "spotlight"
+        spotlightPeerId: null,
+        volumes: {}              // peerId -> 0..1.5
+      }
     };
     rooms.set(roomId, room);
   }

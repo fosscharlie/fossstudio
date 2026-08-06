@@ -7,6 +7,8 @@ import {
   getOrCreateRoom, addPeer, removePeer, peerSummary, broadcast
 } from "./rooms.js";
 import { iceServers } from "./turn.js";
+import { isAuthedRequest } from "./auth.js";
+import { getSettings, updateSettings } from "./settings.js";
 
 const ROOM_ID_RE = /^[a-zA-Z0-9_-]{4,32}$/;
 const NAME_MAX = 40;
@@ -40,16 +42,54 @@ export function attachSignaling(httpServer) {
             if (peer) return fail("already joined");
             room = await getOrCreateRoom(roomId);
             const name = String(data.name || "").trim().slice(0, NAME_MAX) || "Guest";
-            peer = addPeer(room, { name, role: data.role === "host" ? "host" : "guest", socket });
+            // Host role is granted by the dashboard login cookie, never by
+            // anything the client claims about itself.
+            const role = isAuthedRequest(req) && data.role === "host" ? "host" : "guest";
+            peer = addPeer(room, { name, role, socket });
+            const settings = await getSettings();
             reply({
               peerId: peer.id,
+              role,
               routerRtpCapabilities: room.router.rtpCapabilities,
               iceServers: iceServers(),
+              control: room.control,
+              theme: {
+                podcastName: settings.podcastName,
+                accent: settings.accent,
+                wallpaper: settings.wallpaper ? "/api/wallpaper" : null,
+                autoGain: settings.autoGain
+              },
               peers: [...room.peers.values()]
                 .filter((p) => p.id !== peer.id)
                 .map(peerSummary)
             });
             broadcast(room, peer.id, { event: "peerJoined", data: peerSummary(peer) });
+            break;
+          }
+
+          case "hostControl": {
+            if (!peer || peer.role !== "host") return fail("host only");
+            const c = room.control;
+            switch (data.action) {
+              case "layout":
+                c.layout = data.layout === "spotlight" ? "spotlight" : "grid";
+                c.spotlightPeerId = c.layout === "spotlight" ? String(data.peerId || "") : null;
+                break;
+              case "volume": {
+                const v = Math.min(1.5, Math.max(0, Number(data.volume)));
+                if (room.peers.has(data.peerId) && Number.isFinite(v)) c.volumes[data.peerId] = v;
+                break;
+              }
+              case "autoGain": {
+                await updateSettings({ autoGain: !!data.enabled });
+                broadcast(room, null, { event: "autoGain", data: { enabled: !!data.enabled } });
+                return reply({});
+              }
+              default:
+                return fail("unknown control action");
+            }
+            reply({});
+            broadcast(room, null, { event: "control", data: c });
             break;
           }
 

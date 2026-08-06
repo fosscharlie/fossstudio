@@ -4,9 +4,19 @@ import path from "node:path";
 import { config } from "./config.js";
 import { startMediasoup } from "./media.js";
 import { attachSignaling } from "./signaling.js";
+import { api } from "./api.js";
+import { isAuthedRequest } from "./auth.js";
 
 const app = express();
 app.disable("x-powered-by");
+
+app.use("/api", api);
+
+// The dashboard shell requires login; everything inside it is API-gated too
+app.get(["/host", "/host/"], (req, res) => {
+  if (!isAuthedRequest(req)) return res.redirect("/host/login.html");
+  res.sendFile(path.join(config.webDir, "host", "index.html"));
+});
 
 app.get("/healthz", (req, res) => {
   res.json({ ok: true, uptime: Math.round(process.uptime()) });

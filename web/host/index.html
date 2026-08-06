@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOSS Studio — Host</title>
+<link rel="stylesheet" href="/host/host.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <h1>FOSS Studio</h1>
+    <nav class="nav" aria-label="Sections">
+      <button data-section="sessions" class="active">Sessions</button>
+      <button data-section="theme">Theme</button>
+      <button data-section="security">Security</button>
+      <button data-section="system">System</button>
+    </nav>
+    <button class="btn" id="logoutBtn">Log out</button>
+  </div>
+
+  <!-- Sessions -->
+  <section id="sec-sessions" class="stack">
+    <div class="panel">
+      <h2>New session</h2>
+      <form id="newSessionForm" style="display:flex; gap:0.75rem; flex-wrap:wrap">
+        <input type="text" id="newSessionTitle" placeholder="Episode title (optional)" style="flex:1; min-width:12rem">
+        <button class="btn primary" type="submit">Create session link</button>
+      </form>
+    </div>
+    <div class="panel">
+      <h2>Your sessions</h2>
+      <div id="sessionList"><p class="hint">Loading…</p></div>
+    </div>
+  </section>
+
+  <!-- Theme -->
+  <section id="sec-theme" class="stack" hidden>
+    <div class="grid-2">
+      <div class="panel stack">
+        <div>
+          <h2>Podcast banner</h2>
+          <div class="field">
+            <label for="podcastName">Name shown at the top of every session</label>
+            <input type="text" id="podcastName" maxlength="80">
+          </div>
+        </div>
+        <div>
+          <h2>Accent colour</h2>
+          <p class="hint" style="margin-bottom:0.5rem">Used for highlights in the session view.</p>
+          <div class="swatches" id="swatches"></div>
+        </div>
+        <div>
+          <label class="toggle">
+            <input type="checkbox" id="autoGainToggle">
+            <span class="track"></span>
+            <span>Automatic level balancing<br><span class="hint">Evens out quiet and loud voices for everyone</span></span>
+          </label>
+        </div>
+        <div>
+          <button class="btn primary" id="saveThemeBtn">Save theme</button>
+          <span class="msg ok" id="themeMsg" hidden>✓ Saved</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Wallpaper</h2>
+        <div class="wallpaper-preview" id="wallpaperPreview">No wallpaper set</div>
+        <div style="display:flex; gap:0.6rem; margin-top:0.8rem">
+          <button class="btn" id="wallpaperPick">Upload image</button>
+          <button class="btn" id="wallpaperRemove">Remove</button>
+          <input type="file" id="wallpaperFile" accept="image/jpeg,image/png,image/webp" hidden>
+        </div>
+        <p class="hint" style="margin-top:0.5rem">Shown behind the video grid. JPEG, PNG or WebP, up to 8 MB.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security -->
+  <section id="sec-security" class="stack" hidden>
+    <div class="grid-2">
+      <div class="panel">
+        <h2>Change host password</h2>
+        <div class="field">
+          <label for="newPassword">New password</label>
+          <input type="password" id="newPassword" autocomplete="new-password">
+          <p class="hint">At least 10 characters.</p>
+        </div>
+        <button class="btn primary" id="savePasswordBtn">Change password</button>
+        <p class="msg" id="passwordMsg" hidden></p>
+      </div>
+      <div class="panel">
+        <h2>Two-factor login</h2>
+        <div id="tfaOff">
+          <p class="hint" style="margin-bottom:0.75rem">Adds a 6-digit code from an authenticator app on top of your password.</p>
+          <button class="btn" id="tfaSetupBtn">Set up 2FA</button>
+        </div>
+        <div id="tfaSetup" hidden>
+          <p class="hint">Add this secret to your authenticator app, then enter the code it shows:</p>
+          <p style="font-family:monospace; word-break:break-all; margin:0.5rem 0" id="tfaSecret"></p>
+          <div class="field">
+            <input type="text" id="tfaCode" inputmode="numeric" placeholder="6-digit code">
+          </div>
+          <button class="btn primary" id="tfaEnableBtn">Turn on 2FA</button>
+        </div>
+        <div id="tfaOn" hidden>
+          <p class="msg ok" style="margin:0 0 0.75rem">✓ 2FA is on</p>
+          <div class="field">
+            <input type="text" id="tfaDisableCode" inputmode="numeric" placeholder="6-digit code">
+          </div>
+          <button class="btn danger" id="tfaDisableBtn">Turn off 2FA</button>
+        </div>
+        <p class="msg err" id="tfaMsg" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- System -->
+  <section id="sec-system" class="stack" hidden>
+    <div class="panel">
+      <h2>System</h2>
+      <p class="hint">Restart, backups, logs, and updates land here in a later phase of the build.</p>
+    </div>
+  </section>
+</div>
+
+<script src="/host/host.js"></script>
+</body>
+</html>

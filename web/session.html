@@ -37,8 +37,23 @@
   <footer class="controls">
     <button id="muteBtn" class="ctl" title="Mute microphone">🎙️</button>
     <button id="camBtn" class="ctl" title="Turn camera off">🎥</button>
+    <button id="hostPanelBtn" class="ctl" title="Host controls" hidden>🎛️</button>
     <button id="leaveBtn" class="ctl leave" title="Leave session">✕</button>
   </footer>
+
+  <!-- Host-only control panel -->
+  <aside id="hostPanel" class="host-panel" hidden>
+    <h2>Host controls</h2>
+    <div class="hp-row">
+      <button id="hpGridBtn" class="hp-btn">Grid layout</button>
+      <button id="hpSpotSelfBtn" class="hp-btn">Spotlight me</button>
+    </div>
+    <label class="hp-toggle">
+      <input type="checkbox" id="hpAutoGain">
+      <span>Auto level balancing</span>
+    </label>
+    <div id="hpGuests"></div>
+  </aside>
 </div>
 
 <script src="/assets/mediasoup-client.js"></script>

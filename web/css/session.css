@@ -155,6 +155,60 @@ body {
 .ctl.off { background: #5a3535; }
 .ctl.leave { background: #7a2e2e; border-color: #7a2e2e; }
 
+/* ---------- Spotlight layout ----------
+   Featured tile fills the top; everyone else shrinks to a bottom strip. */
+.grid.spotlight {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  grid-template-rows: 1fr 16vh;
+  align-content: stretch;
+}
+.grid.spotlight .tile.featured {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+.grid.spotlight .tile:not(.featured) { grid-row: 2; }
+.grid.spotlight .tile:not(.featured) .name {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  left: 6px;
+  bottom: 6px;
+}
+
+/* ---------- Host panel ---------- */
+.host-panel {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: min(320px, 85vw);
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  padding: 1rem;
+  overflow-y: auto;
+  z-index: 10;
+}
+.host-panel h2 { font-size: 1rem; margin-bottom: 0.8rem; }
+.hp-row { display: flex; gap: 0.5rem; margin-bottom: 0.8rem; }
+.hp-btn {
+  flex: 1;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+.hp-btn.active { background: var(--accent, #4a7dbd); color: #14161a; border-color: transparent; }
+.hp-toggle { display: flex; gap: 0.5rem; align-items: center; font-size: 0.9rem; margin-bottom: 1rem; }
+.hp-guest { border-top: 1px solid var(--line); padding: 0.7rem 0; }
+.hp-guest .hp-name { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; }
+.hp-guest .hp-name button { margin-left: auto; }
+.hp-guest input[type="range"] { width: 100%; margin-top: 0.4rem; accent-color: var(--accent, #4a7dbd); }
+.hp-vol { font-size: 0.75rem; color: var(--muted); }
+
+/* Session view uses the host-set wallpaper when there is one */
+.session.wallpapered .grid { background-size: cover; background-position: center; }
+
 /* Mobile: stacked simplified view, self-view shrinks */
 @media (max-width: 700px) {
   .grid { align-content: start; }

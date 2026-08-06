@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Host login — FOSS Studio</title>
+<link rel="stylesheet" href="/host/host.css">
+</head>
+<body>
+<div class="login-wrap">
+  <form class="panel" id="loginForm">
+    <h1 style="font-size:1.4rem; margin-bottom:1rem">FOSS Studio</h1>
+    <div class="field">
+      <label for="password">Host password</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+    </div>
+    <div class="field" id="totpField" hidden>
+      <label for="totp">2FA code</label>
+      <input type="text" id="totp" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">
+    </div>
+    <button class="btn primary" style="width:100%" type="submit">Log in</button>
+    <p class="msg err" id="loginError" hidden></p>
+  </form>
+</div>
+<script>
+const form = document.getElementById("loginForm");
+const errEl = document.getElementById("loginError");
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  errEl.hidden = true;
+  const res = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      password: document.getElementById("password").value,
+      totp: document.getElementById("totp").value
+    })
+  });
+  if (res.ok) { location.href = "/host/"; return; }
+  const { error } = await res.json();
+  // If 2FA is on, reveal the code field for the next try
+  if (/2FA/.test(error)) document.getElementById("totpField").hidden = false;
+  errEl.textContent = error;
+  errEl.hidden = false;
+};
+</script>
+</body>
+</html>
