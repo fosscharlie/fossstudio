@@ -161,7 +161,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
-  width: 196px;
+  width: 266px;
   padding: 0.4rem 0.5rem;
   display: flex;
   flex-direction: column;
@@ -177,12 +177,12 @@ body {
 .banner.host-drag { cursor: grab; }
 .banner.host-drag:active { cursor: grabbing; }
 #bannerLogo {
-  max-width: 180px;
+  max-width: 250px;
   max-height: 50px;
   object-fit: contain;
 }
 #bannerTitle {
-  width: 180px;
+  width: 250px;
   font-weight: 700;
   font-size: 0.85rem;
   line-height: 1.15;

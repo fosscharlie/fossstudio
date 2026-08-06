@@ -700,7 +700,7 @@
   function drawTitlePng(text) {
     const logo = document.getElementById("bannerLogo");
     const hasLogo = !logo.hidden && logo.complete && logo.naturalWidth > 0;
-    const W = 392, r = 16, padX = 16;
+    const W = 532, r = 16, padX = 16;
     const logoH = hasLogo ? 100 : 0;
     const titleH = text ? (hasLogo ? 64 : 150) : 0;
     const H = 14 + logoH + (logoH && titleH ? 4 : 0) + titleH + 14;
@@ -716,7 +716,7 @@
     x.stroke();
     let yPos = 14;
     if (hasLogo) {
-      const scale = Math.min(360 / logo.naturalWidth, logoH / logo.naturalHeight);
+      const scale = Math.min(500 / logo.naturalWidth, logoH / logo.naturalHeight);
       const lw = logo.naturalWidth * scale, lh = logo.naturalHeight * scale;
       x.drawImage(logo, (W - lw) / 2, yPos + (logoH - lh) / 2, lw, lh);
       yPos += logoH + 4;

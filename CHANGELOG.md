@@ -5,7 +5,7 @@ All notable changes to FOSSStudio are documented here.
 ## Unreleased
 
 - **Podcast logo block**: upload a logo in Settings → Themes (about
-  180×50) and it appears above the episode title in a compact block
+  250×50) and it appears above the episode title in a compact block
   floating over the video — text-only when there's no logo — baked
   into recordings and streams the same way. The host can **drag the
   block anywhere** on the video with the mouse; everyone's screen and

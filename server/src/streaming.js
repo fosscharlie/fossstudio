@@ -128,7 +128,7 @@ async function launch(state) {
     const pos = room.control?.titlePos || { x: 0.5, y: 0 };
     const px = Number(pos.x).toFixed(3), py = Number(pos.y).toFixed(3);
     titleArgs = ["-loop", "1", "-framerate", "5", "-i", titlePng];
-    titleFilter = `;[${ti}:v]scale=210:-2[tls];${finalLabel}[tls]overlay=` +
+    titleFilter = `;[${ti}:v]scale=286:-2[tls];${finalLabel}[tls]overlay=` +
       `x=(main_w-overlay_w)*${px}:y=(main_h-overlay_h)*${py}+14*(1-${py}):eof_action=repeat[vtl]`;
     finalLabel = "[vtl]";
   }
