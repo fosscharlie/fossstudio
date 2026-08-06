@@ -98,6 +98,79 @@ api.post("/users", requireAdmin, async (req, res) => {
   }
 });
 
+// Invite a host by email: they set their own password via the link
+api.post("/users/invite", requireAdmin, async (req, res) => {
+  try {
+    const { createInvitedUser } = await import("./users.js");
+    const { sendEmail, getSmtpConfig, isConfigured } = await import("./email.js");
+    const user = await createInvitedUser(
+      req.body.username, req.body.email, !!req.body.allowServerRecording
+    );
+    const inviteUrl = `https://${config.domain}/host/invite.html?token=${user.inviteToken}`;
+    let emailed = false;
+    if (isConfigured(await getSmtpConfig())) {
+      try {
+        await sendEmail(user.email, "You're invited to host on FOSSStudio",
+          `Hello ${user.username},\n\n` +
+          `You've been invited to host shows on FOSSStudio.\n\n` +
+          `Click this link to choose your password and get started:\n${inviteUrl}\n\n` +
+          `The link works for 7 days. After that, ask for a fresh invite.`);
+        emailed = true;
+      } catch (err) {
+        console.error("invite email failed:", err.message);
+      }
+    }
+    res.json({ ok: true, emailed, inviteUrl });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Public: accepting an invite (token is the credential)
+api.get("/invite/:token", async (req, res) => {
+  const { findByInviteToken } = await import("./users.js");
+  const user = await findByInviteToken(req.params.token);
+  user
+    ? res.json({ username: user.username })
+    : res.status(404).json({ error: "This invite link has expired or was already used." });
+});
+
+api.post("/invite/accept", async (req, res) => {
+  try {
+    const { acceptInvite } = await import("./users.js");
+    await acceptInvite(String(req.body.token || ""), String(req.body.password || ""));
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// SMTP settings (password write-only; never echoed back)
+api.get("/smtp", requireAdmin, async (req, res) => {
+  const { getSmtpConfig } = await import("./email.js");
+  const smtp = await getSmtpConfig();
+  res.json({ ...smtp, pass: undefined, hasPass: !!smtp.pass });
+});
+
+api.put("/smtp", requireAdmin, async (req, res) => {
+  const { saveSmtpConfig } = await import("./email.js");
+  const saved = await saveSmtpConfig(req.body || {});
+  res.json({ ...saved, pass: undefined, hasPass: !!saved.pass });
+});
+
+api.post("/smtp/test", requireAdmin, async (req, res) => {
+  try {
+    const { sendEmail, getSmtpConfig } = await import("./email.js");
+    const smtp = await getSmtpConfig();
+    const to = smtp.alertTo || smtp.from || smtp.user;
+    if (!to) return res.status(400).json({ error: "Add an alert address first." });
+    await sendEmail(to, "FOSSStudio test email", "If you can read this, email is working. 🎙");
+    res.json({ ok: true, to });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 api.post("/users/:id/permissions", requireAdmin, async (req, res) => {
   try {
     await updateUser(req.params.id, { allowServerRecording: !!req.body.allowServerRecording });

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Set your password — FOSSStudio</title>
+<link rel="stylesheet" href="/host/host.css">
+</head>
+<body>
+<div class="login-wrap">
+  <form class="panel" id="inviteForm">
+    <h1 style="font-size:1.4rem; margin-bottom:0.5rem"><span class="foss">FOSS</span>Studio</h1>
+    <p class="hint" id="welcome" style="margin-bottom:1rem">Checking your invite…</p>
+    <div class="field">
+      <label for="password">Choose a password</label>
+      <input type="password" id="password" autocomplete="new-password" required>
+      <p class="hint">At least 10 characters.</p>
+    </div>
+    <div class="field">
+      <label for="password2">Type it again</label>
+      <input type="password" id="password2" autocomplete="new-password" required>
+    </div>
+    <button class="btn primary" style="width:100%" type="submit" id="goBtn" disabled>Set password &amp; sign in</button>
+    <p class="msg err" id="err" hidden></p>
+  </form>
+</div>
+<script>
+const token = new URLSearchParams(location.search).get("token") || "";
+const err = document.getElementById("err");
+let username = "";
+
+fetch(`/api/invite/${encodeURIComponent(token)}`).then(async (r) => {
+  const data = await r.json();
+  if (!r.ok) {
+    document.getElementById("welcome").textContent = data.error;
+    return;
+  }
+  username = data.username;
+  document.getElementById("welcome").textContent =
+    `Welcome, ${username}! Pick a password and you're in.`;
+  document.getElementById("goBtn").disabled = false;
+});
+
+document.getElementById("inviteForm").onsubmit = async (e) => {
+  e.preventDefault();
+  err.hidden = true;
+  const pw = document.getElementById("password").value;
+  if (pw !== document.getElementById("password2").value) {
+    err.textContent = "Those two don't match — try again.";
+    err.hidden = false;
+    return;
+  }
+  const res = await fetch("/api/invite/accept", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, password: pw })
+  });
+  const data = await res.json();
+  if (!res.ok) { err.textContent = data.error; err.hidden = false; return; }
+  // Log them straight in with their new password
+  await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password: pw })
+  });
+  location.href = "/host/";
+};
+</script>
+</body>
+</html>

@@ -3,8 +3,6 @@
 import { spawn, execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
-import net from "node:net";
-import tls from "node:tls";
 import { config } from "./config.js";
 
 // ---------- log ring buffer ----------
@@ -104,49 +102,6 @@ export function restartApp() {
   setTimeout(() => process.exit(0), 300);
 }
 
-// ---------- email alerts (plain SMTP, no provider lock-in) ----------
-// Minimal SMTP client for alert mail; avoids a dependency for one job.
-
-let lastAlertAt = 0;
-
-export async function sendAlertEmail(subject, body) {
-  const { host, port, user, pass, from, alertTo } = config.smtp;
-  if (!host || !alertTo) return false; // not configured yet
-  if (Date.now() - lastAlertAt < 10 * 60 * 1000) return false; // max one per 10 min
-  lastAlertAt = Date.now();
-
-  const read = (sock) => new Promise((resolve) => sock.once("data", (d) => resolve(d.toString())));
-  const send = async (sock, line) => { sock.write(line + "\r\n"); return read(sock); };
-
-  let sock = net.connect(port, host);
-  await new Promise((r, j) => { sock.once("connect", r); sock.once("error", j); });
-  await read(sock); // greeting
-  await send(sock, `EHLO ${config.domain}`);
-  const upgraded = await send(sock, "STARTTLS");
-  if (upgraded.startsWith("220")) {
-    sock = tls.connect({ socket: sock, host });
-    await new Promise((r, j) => { sock.once("secureConnect", r); sock.once("error", j); });
-    await send(sock, `EHLO ${config.domain}`);
-  }
-  if (user) {
-    await send(sock, "AUTH LOGIN");
-    await send(sock, Buffer.from(user).toString("base64"));
-    const authRes = await send(sock, Buffer.from(pass).toString("base64"));
-    if (!authRes.startsWith("235")) { sock.end(); throw new Error("SMTP auth failed"); }
-  }
-  await send(sock, `MAIL FROM:<${from || user}>`);
-  await send(sock, `RCPT TO:<${alertTo}>`);
-  await send(sock, "DATA");
-  await send(sock, [
-    `From: FOSSStudio <${from || user}>`,
-    `To: <${alertTo}>`,
-    `Subject: ${subject}`,
-    "",
-    body,
-    "."
-  ].join("\r\n"));
-  await send(sock, "QUIT");
-  sock.end();
-  console.log(`alert email sent: ${subject}`);
-  return true;
-}
+// ---------- email alerts ----------
+// Kept as a thin wrapper so callers don't care where SMTP lives now.
+export { sendAlert as sendAlertEmail } from "./email.js";

@@ -123,7 +123,8 @@ export async function tryLogin(ip, username, password, totp) {
   }
   const { findByUsername } = await import("./users.js");
   const user = await findByUsername(username || "");
-  const passOk = user ? verifyPassword(password || "", user.passwordHash) : false;
+  // Invited users have no password until they accept their invite
+  const passOk = user?.passwordHash ? verifyPassword(password || "", user.passwordHash) : false;
   const totpOk = user
     ? (!user.totpEnabled || (user.totpSecret && verifyTotp(user.totpSecret, totp || "")))
     : false;

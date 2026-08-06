@@ -148,19 +148,27 @@
       <!-- Users (admin) -->
       <section id="pane-users" class="stack" hidden>
         <div class="panel">
-          <h2>Add a host</h2>
-          <p class="hint" style="margin-bottom:0.8rem">Hosts run shows: they get their own sessions, recordings, theme and stream key. They can't touch System or anyone else's show.</p>
+          <h2>Invite a host</h2>
+          <p class="hint" style="margin-bottom:0.8rem">Hosts run shows: they get their own sessions, recordings, theme and stream key. They'll receive an email link and choose their own password.</p>
           <form id="newUserForm" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center">
             <input type="text" id="newUserName" placeholder="username" autocomplete="off" style="flex:1; min-width:8rem">
-            <input type="password" id="newUserPass" placeholder="password (10+ chars)" autocomplete="new-password" style="flex:1; min-width:10rem">
+            <input type="email" id="newUserEmail" placeholder="email address" autocomplete="off" style="flex:1.4; min-width:12rem">
             <label class="toggle" style="flex-basis:100%">
               <input type="checkbox" id="newUserServerRec">
               <span class="track"></span>
               <span>Allow server-side recording<br><span class="hint">Heavier on the server — best granted sparingly, for shows with 2–3 guests.</span></span>
             </label>
-            <button class="btn primary" type="submit">Add host</button>
+            <button class="btn primary" type="submit">Send invite</button>
           </form>
-          <p class="msg err" id="userMsg" hidden></p>
+          <p class="msg" id="userMsg" hidden></p>
+          <details style="margin-top:0.8rem">
+            <summary class="hint" style="cursor:pointer">Or add a host with a password instead</summary>
+            <form id="newUserPwForm" style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:0.7rem">
+              <input type="text" id="pwUserName" placeholder="username" autocomplete="off" style="flex:1; min-width:8rem">
+              <input type="password" id="pwUserPass" placeholder="password (10+ chars)" autocomplete="new-password" style="flex:1; min-width:10rem">
+              <button class="btn" type="submit">Add host</button>
+            </form>
+          </details>
         </div>
         <div class="panel">
           <h2>Hosts</h2>
@@ -187,6 +195,26 @@
           <p class="hint" style="margin-bottom:0.6rem">Settings and session history are backed up automatically every day. Recordings aren't included — download those from the Recordings tab.</p>
           <button class="btn primary" id="backupNowBtn">Back up now</button>
           <div id="backupList" style="margin-top:0.8rem"></div>
+        </div>
+      </section>
+
+      <section id="pane-email" class="stack" hidden>
+        <div class="panel">
+          <h2>Email (SMTP)</h2>
+          <p class="hint" style="margin-bottom:0.8rem">Used for host invites and warning emails. Any standard email provider works — the details are in their "SMTP settings" page.</p>
+          <div class="grid-2" style="gap:0.8rem">
+            <div class="field"><label for="smtpHost">Server</label><input type="text" id="smtpHost" placeholder="mail.example.com"></div>
+            <div class="field"><label for="smtpPort">Port</label><input type="number" id="smtpPort" placeholder="587"></div>
+          </div>
+          <div class="field"><label for="smtpUser">Username</label><input type="text" id="smtpUser" autocomplete="off"></div>
+          <div class="field"><label for="smtpPass">Password <span class="hint" id="smtpPassHint"></span></label><input type="password" id="smtpPass" autocomplete="new-password" placeholder=""></div>
+          <div class="field"><label for="smtpFrom">Send from (address)</label><input type="text" id="smtpFrom" placeholder="studio@example.com"></div>
+          <div class="field"><label for="smtpAlertTo">Send warnings to</label><input type="text" id="smtpAlertTo" placeholder="you@example.com"></div>
+          <div style="display:flex; gap:0.6rem">
+            <button class="btn primary" id="saveSmtpBtn">Save email settings</button>
+            <button class="btn" id="testSmtpBtn">Send a test email</button>
+          </div>
+          <p class="msg" id="smtpMsg" hidden></p>
         </div>
       </section>
 

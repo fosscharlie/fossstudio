@@ -16,9 +16,9 @@ const mk = (title) => fetch(`${B}/api/sessions`, {
   headers: { "Content-Type": "application/json", Cookie: cookie },
   body: JSON.stringify({ title })
 }).then((r) => r.json());
-await mk("Episode 14 — Package managers, ranked");
-await mk("Episode 13 — The systemd episode");
-const main = await mk("Episode 15 — Live from FOSDEM");
+await mk("Episode 41 — Package managers, ranked");
+await mk("Episode 40 — The systemd episode");
+const main = await mk("Episode 42 — Live from FOSDEM");
 
 async function studio(cam, name, asHost) {
   const browser = await chromium.launch({
@@ -50,7 +50,7 @@ async function studio(cam, name, asHost) {
   return { browser, page };
 }
 
-const host = await studio("cam1.y4m", "Charlie", true);
+const host = await studio("cam1.y4m", "Alex", true);
 const g2 = await studio("cam2.y4m", "Robin", false);
 const g3 = await studio("cam3.y4m", "Sam", false);
 

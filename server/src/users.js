@@ -64,7 +64,8 @@ export async function listUsers() {
   return users.map((u) => ({
     id: u.id, username: u.username, role: u.role,
     totpEnabled: u.totpEnabled,
-    allowServerRecording: !!u.allowServerRecording
+    allowServerRecording: !!u.allowServerRecording,
+    invited: !u.passwordHash
   }));
 }
 
@@ -93,6 +94,62 @@ export async function createUser(username, password, role = "subadmin", allowSer
   users.push(user);
   await persist();
   return { id: user.id, username: user.username, role: user.role };
+}
+
+// ---------- email invitations ----------
+// The admin enters a username + email; the new host follows an emailed
+// link and picks their own password. No password ever changes hands.
+
+export async function createInvitedUser(username, email, allowServerRecording) {
+  const users = await load();
+  const name = String(username).trim().toLowerCase();
+  if (!/^[a-z0-9_-]{2,24}$/.test(name)) {
+    throw new Error("Usernames are 2-24 characters: letters, numbers, - or _.");
+  }
+  if (users.some((u) => u.username.toLowerCase() === name)) {
+    throw new Error("That username is taken.");
+  }
+  const addr = String(email).trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr)) {
+    throw new Error("That email address doesn't look right.");
+  }
+  const user = {
+    id: crypto.randomUUID(),
+    username: name,
+    email: addr,
+    role: "subadmin",
+    allowServerRecording: !!allowServerRecording,
+    passwordHash: null, // can't log in until the invite is accepted
+    inviteToken: crypto.randomBytes(24).toString("base64url"),
+    inviteExpires: Date.now() + 7 * 24 * 3600 * 1000,
+    totpEnabled: false,
+    totpSecret: null,
+    settings: { ...USER_SETTINGS_DEFAULTS }
+  };
+  users.push(user);
+  await persist();
+  return user;
+}
+
+export async function findByInviteToken(token) {
+  if (!token) return null;
+  const users = await load();
+  const user = users.find((u) => u.inviteToken === token);
+  if (!user || user.inviteExpires < Date.now()) return null;
+  return user;
+}
+
+export async function acceptInvite(token, password) {
+  const user = await findByInviteToken(token);
+  if (!user) throw new Error("This invite link has expired or was already used.");
+  if (String(password).length < 10) {
+    throw new Error("Password needs at least 10 characters.");
+  }
+  user.passwordHash = hashPassword(password);
+  user.inviteToken = null;
+  user.inviteExpires = null;
+  await persist();
+  return user;
 }
 
 export async function deleteUser(id) {

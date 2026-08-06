@@ -33,6 +33,7 @@
     { id: "users", label: "Hosts", adminOnly: true, subs: [{ id: "users", label: "Manage hosts" }] },
     { id: "system", label: "System", adminOnly: true, subs: [
       { id: "service", label: "Service" },
+      { id: "email", label: "Email" },
       { id: "backups", label: "Backups" },
       { id: "logs", label: "Logs" }
     ] }
@@ -186,7 +187,7 @@
       row.innerHTML = `
         <div>
           <div class="title"></div>
-          <div class="meta">${u.role === "admin" ? "admin" : "host"}${u.totpEnabled ? " · 2FA on" : ""}</div>
+          <div class="meta">${u.role === "admin" ? "admin" : "host"}${u.totpEnabled ? " · 2FA on" : ""}${u.invited ? " · ⏳ invite pending" : ""}</div>
         </div>
         <span class="spacer"></span>`;
       row.querySelector(".title").textContent = u.username;
@@ -230,29 +231,99 @@
     }
   }
 
-  function showUserMsg(text) {
+  function showUserMsg(text, ok = false) {
     const m = $("userMsg");
+    m.className = `msg ${ok ? "ok" : "err"}`;
     m.textContent = text;
     m.hidden = false;
-    setTimeout(() => { m.hidden = true; }, 4000);
+    setTimeout(() => { m.hidden = true; }, 6000);
   }
 
   $("newUserForm").onsubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiFetch("/api/users", {
+      const r = await apiFetch("/api/users/invite", {
         method: "POST",
         body: JSON.stringify({
           username: $("newUserName").value,
-          password: $("newUserPass").value,
+          email: $("newUserEmail").value,
           allowServerRecording: $("newUserServerRec").checked
         })
       });
       $("newUserName").value = "";
-      $("newUserPass").value = "";
+      $("newUserEmail").value = "";
       $("newUserServerRec").checked = false;
+      if (r.emailed) {
+        showUserMsg("✓ Invite emailed — they have 7 days to accept.", true);
+      } else {
+        await navigator.clipboard.writeText(r.inviteUrl).catch(() => {});
+        showUserMsg("Email isn't set up, so the invite link was copied to your clipboard instead — send it to them yourself.", true);
+      }
       loadUsers();
     } catch (err) { showUserMsg(err.message); }
+  };
+
+  $("newUserPwForm").onsubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await apiFetch("/api/users", {
+        method: "POST",
+        body: JSON.stringify({
+          username: $("pwUserName").value,
+          password: $("pwUserPass").value
+        })
+      });
+      $("pwUserName").value = "";
+      $("pwUserPass").value = "";
+      loadUsers();
+    } catch (err) { showUserMsg(err.message); }
+  };
+
+  // ---------- SMTP (admin) ----------
+
+  const smtpMsg = (text, ok = true) => {
+    const m = $("smtpMsg");
+    m.className = `msg ${ok ? "ok" : "err"}`;
+    m.textContent = text;
+    m.hidden = false;
+    setTimeout(() => { m.hidden = true; }, 5000);
+  };
+
+  async function loadSmtp() {
+    if (me.role !== "admin") return;
+    const s = await apiFetch("/api/smtp");
+    $("smtpHost").value = s.host || "";
+    $("smtpPort").value = s.port || 587;
+    $("smtpUser").value = s.user || "";
+    $("smtpFrom").value = s.from || "";
+    $("smtpAlertTo").value = s.alertTo || "";
+    $("smtpPassHint").textContent = s.hasPass ? "(saved — leave blank to keep)" : "";
+  }
+
+  $("saveSmtpBtn").onclick = async () => {
+    await apiFetch("/api/smtp", {
+      method: "PUT",
+      body: JSON.stringify({
+        host: $("smtpHost").value,
+        port: Number($("smtpPort").value),
+        user: $("smtpUser").value,
+        pass: $("smtpPass").value || undefined,
+        from: $("smtpFrom").value,
+        alertTo: $("smtpAlertTo").value
+      })
+    });
+    $("smtpPass").value = "";
+    smtpMsg("✓ Saved");
+    loadSmtp();
+  };
+
+  $("testSmtpBtn").onclick = async () => {
+    try {
+      const { to } = await apiFetch("/api/smtp/test", { method: "POST" });
+      smtpMsg(`✓ Test email sent to ${to} — check the inbox.`);
+    } catch (err) {
+      smtpMsg(err.message, false);
+    }
   };
 
   // ---------- recordings ----------
@@ -536,6 +607,7 @@
       loadUsers();
       loadBackups();
       loadLogs();
+      loadSmtp();
     } else {
       loadSessions();
       loadRecordings();
