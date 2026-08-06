@@ -262,6 +262,16 @@
     try {
       await startPreview();          // ask permission first so labels appear
       await populateDevices();
+      // Show the devices actually in use (the system defaults) so the
+      // dropdowns always start on the default camera and microphone
+      const micId = previewStream?.getAudioTracks()[0]?.getSettings().deviceId;
+      if (micId && [...els.micSelect.options].some((o) => o.value === micId)) {
+        els.micSelect.value = micId;
+      }
+      const camId = previewStream?.getVideoTracks()[0]?.getSettings().deviceId;
+      if (camId && [...els.camSelect.options].some((o) => o.value === camId)) {
+        els.camSelect.value = camId;
+      }
       // Bring back last time's choices where the devices still exist
       const prefs = loadPrefs();
       if (prefs.name && !els.nameInput.value) els.nameInput.value = prefs.name;
