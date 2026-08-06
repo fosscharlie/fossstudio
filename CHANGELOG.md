@@ -4,6 +4,20 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Compact host panel**: guests sit in boxed cards, two per row, with
+  the name centred — ten guests fit without scrolling (verified by an
+  automated ten-guest test); Mute all / Subscribe / Ad share one line;
+  your own card is marked with a small person icon (hover: "This is
+  you") instead of "(you)" text
+- **Modern subscribe overlay**: floating rounded card with a red
+  SUBSCRIBE button and bell — same look in the session, the recording
+  and the live stream
+- The browser/server recording switch lives in the host panel and
+  **locks while recording or live** — the capture pipeline can't change
+  mid-take
+- Session pages now cache-bust their scripts and styles on every
+  release, so browsers can't keep serving a stale session view
+
 - **Overlays**: host-panel buttons play a subscribe/notification-bell
   animation or show an uploaded advertising banner (Settings →
   Streaming). They appear instantly in everyone's session view (no need

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FOSSStudio session</title>
-<link rel="stylesheet" href="/css/session.css">
+<link rel="stylesheet" href="/css/session.css?v=20260806b">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -57,29 +57,28 @@
   <!-- Host-only control panel (always open for the host) -->
   <aside id="hostPanel" class="host-panel" hidden>
     <h2>Host controls</h2>
-    <label class="hp-toggle toggle" id="hpServerRecRow" hidden>
-      <input type="checkbox" id="hpServerRec">
-      <span class="track"></span>
-      <span>Server-side recording <span class="hp-vol">(this session)</span></span>
-    </label>
     <div class="hp-row">
       <button id="hpRecordBtn" class="hp-btn record">● Start recording</button>
       <button id="hpStreamBtn" class="hp-btn record">Go live</button>
     </div>
-    <div class="hp-row">
-      <button id="hpMuteAllBtn" class="hp-btn">Mute everyone</button>
+    <div class="hp-toggles">
+      <label class="hp-toggle toggle" id="hpServerRecRow" hidden data-tip="Record on the server this session (best for 2-3 guests)">
+        <input type="checkbox" id="hpServerRec">
+        <span class="track"></span>
+        <span>Server rec</span>
+      </label>
+      <label class="hp-toggle toggle" data-tip="Evens out quiet and loud voices automatically">
+        <input type="checkbox" id="hpAutoGain">
+        <span class="track"></span>
+        <span>Auto level</span>
+      </label>
     </div>
     <div class="hp-row">
-      <button id="hpSubBtn" class="hp-btn" data-tip="Play the subscribe + notification bell reminder on the live stream">Subscribe reminder</button>
-      <button id="hpAdBtn" class="hp-btn" data-tip="Show your advertising banner on the live stream for ~18 seconds">Ad banner</button>
+      <button id="hpMuteAllBtn" class="hp-btn" data-tip="Mute every guest at once">Mute all</button>
+      <button id="hpSubBtn" class="hp-btn" data-tip="Play the subscribe + bell reminder for everyone (and on stream/recording)">Subscribe</button>
+      <button id="hpAdBtn" class="hp-btn" data-tip="Show your advertising banner for ~18 seconds">Ad</button>
     </div>
-    <label class="hp-toggle toggle">
-      <input type="checkbox" id="hpAutoGain">
-      <span class="track"></span>
-      <span>Auto level balancing</span>
-    </label>
-    <div class="hp-color">
-      <span class="hp-color-label">Banner colour</span>
+    <div class="hp-color" data-tip="Banner colour">
       <div class="hp-color-row">
         <div class="hp-swatches" id="hpBannerSwatches"></div>
         <input type="text" id="hpBannerHex" maxlength="7" spellcheck="false" aria-label="Banner colour hex code">
@@ -103,7 +102,7 @@
   </footer>
 </div>
 
-<script src="/assets/mediasoup-client.js"></script>
-<script src="/js/session.js"></script>
+<script src="/assets/mediasoup-client.js?v=20260806b"></script>
+<script src="/js/session.js?v=20260806b"></script>
 </body>
 </html>

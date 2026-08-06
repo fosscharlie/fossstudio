@@ -645,13 +645,23 @@
         <div class="hp-btns">
           <button class="hp-btn nr${nrOn ? " active" : ""}" data-tip="${nrOn ? "Noise reduction is on — click to turn off" : "Noise reduction is OFF — click to turn on"}">NR</button>
           <button class="hp-btn mute">${muted ? "Unmute" : "Mute"}</button>
-          <button class="hp-btn spot">Spotlight</button>
-          ${hand ? '<button class="hp-btn lower" data-tip="Lower their hand">Lower hand</button>' : ""}
+          <button class="hp-btn spot">Spot</button>
+          ${hand ? '<button class="hp-btn lower" data-tip="Lower their hand">Lower</button>' : ""}
         </div>
         <div class="hp-meter"><div class="hp-meter-fill"></div></div>
         <input type="range" min="0" max="150" value="${vol}" aria-label="Volume">
         <span class="hp-vol">${vol}%</span>`;
-      row.querySelector(".hp-name-line").textContent = isSelf ? `${tile.name} (you)` : tile.name;
+      const nameLine = row.querySelector(".hp-name-line");
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = tile.name;
+      nameLine.appendChild(nameSpan);
+      if (isSelf) {
+        const you = document.createElement("span");
+        you.className = "you-ico";
+        you.dataset.tip = "This is you";
+        you.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
+        nameLine.appendChild(you);
+      }
       if (hand) {
         row.querySelector(".lower").onclick = () =>
           request("hostControl", { action: "lowerHand", peerId });
@@ -703,6 +713,21 @@
     if (isHost) {
       els.hpRecordBtn.textContent = on ? "■ Stop recording" : "● Start recording";
       els.hpRecordBtn.classList.toggle("rec-on", on);
+      updateServerRecLock();
+    }
+  }
+
+  // The browser/server capture pipeline is picked when recording starts,
+  // so the switch has to lock while recording or live.
+  function updateServerRecLock() {
+    if (!isHost || !els.hpServerRec) return;
+    const locked = recording || live;
+    els.hpServerRec.disabled = locked;
+    els.hpServerRecRow.classList.toggle("locked", locked);
+    if (locked) {
+      els.hpServerRecRow.dataset.tip = "Can't change while recording or live";
+    } else {
+      els.hpServerRecRow.dataset.tip = "Record on the server this session (best for 2-3 guests)";
     }
   }
 
@@ -768,7 +793,10 @@
       el.innerHTML = `
         <div class="lo-btn">SUBSCRIBE</div>
         <div class="lo-bell"><span>🔔</span></div>
-        <div class="lo-msg">Enjoying the show? Subscribe and hit the bell —<br>choose <b>ALL notifications</b></div>`;
+        <div class="lo-msg">
+          <div class="lo-t">Enjoying The Show?</div>
+          <div class="lo-s">Subscribe And Turn On <b>All Notifications</b></div>
+        </div>`;
     } else {
       const img = document.createElement("img");
       img.src = url;
@@ -829,6 +857,7 @@
     els.banner.classList.toggle("live", on);
     els.hpStreamBtn.textContent = on ? "■ End stream" : "📡 Go live";
     els.hpStreamBtn.classList.toggle("rec-on", on);
+    updateServerRecLock();
   }
   els.hpStreamBtn.onclick = () =>
     request("hostControl", { action: "stream", start: !live })
