@@ -92,7 +92,7 @@ export function renderEmail({ title, paragraphs = [], button = null, footer = ""
         </tr>
       </table>
       <p style="margin:16px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; color:#a1a1aa;">
-        Sent by FOSSStudio &middot; <a href="https://${esc(config.domain)}" style="color:#a1a1aa;">${esc(config.domain)}</a>
+        Sent by FOSSStudio &middot; <a href="https://fossstudio.org" style="color:#a1a1aa;">fossstudio.org</a>
       </p>
     </td></tr>
   </table>
@@ -108,7 +108,7 @@ function renderPlainText({ title, paragraphs = [], button = null, footer = "" })
     ...(button ? ["", `${button.label}: ${button.url}`] : []),
     ...(footer ? ["", footer] : []),
     "",
-    `— Sent by FOSSStudio (${config.domain})`
+    "— Sent by FOSSStudio (fossstudio.org)"
   ].join("\n");
 }
 
