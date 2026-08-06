@@ -12,6 +12,7 @@
     <h1><span class="foss">FOSS</span>Studio</h1>
     <nav class="nav" aria-label="Sections">
       <button data-section="sessions" class="active">Sessions</button>
+      <button data-section="recordings">Recordings</button>
       <button data-section="theme">Theme</button>
       <button data-section="security">Security</button>
       <button data-section="system">System</button>
@@ -31,6 +32,22 @@
     <div class="panel">
       <h2>Your sessions</h2>
       <div id="sessionList"><p class="hint">Loading…</p></div>
+    </div>
+  </section>
+
+  <!-- Recordings -->
+  <section id="sec-recordings" class="stack" hidden>
+    <div class="panel">
+      <h2>Recording mode</h2>
+      <label class="toggle">
+        <input type="checkbox" id="recModeToggle">
+        <span class="track"></span>
+        <span>Server-side recording<br><span class="hint">Best for 2–3 guests. Off = each guest's browser records itself and uploads at the end — better for bigger sessions.</span></span>
+      </label>
+    </div>
+    <div class="panel">
+      <h2>Recordings</h2>
+      <div id="recordingList"><p class="hint">Loading…</p></div>
     </div>
   </section>
 

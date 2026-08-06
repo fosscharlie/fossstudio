@@ -9,6 +9,11 @@ import {
 import { iceServers } from "./turn.js";
 import { isAuthedRequest } from "./auth.js";
 import { getSettings, updateSettings } from "./settings.js";
+import {
+  startRecording, stopRecording, activeRecording,
+  addPeerToRecording, uploadCreds, markPeerDone
+} from "./recording/manager.js";
+import { capturePeer } from "./recording/serverRecorder.js";
 
 const ROOM_ID_RE = /^[a-zA-Z0-9_-]{4,32}$/;
 const NAME_MAX = 40;
@@ -64,6 +69,17 @@ export function attachSignaling(httpServer) {
                 .map(peerSummary)
             });
             broadcast(room, peer.id, { event: "peerJoined", data: peerSummary(peer) });
+            // Someone joining mid-recording starts recording too
+            const rec = activeRecording(room.id);
+            if (rec && addPeerToRecording(rec, peer)) {
+              socket.send(JSON.stringify({
+                event: "recordingStarted",
+                data: {
+                  mode: rec.mode,
+                  upload: rec.mode === "browser" ? uploadCreds(rec, peer.id) : null
+                }
+              }));
+            }
             break;
           }
 
@@ -83,6 +99,28 @@ export function attachSignaling(httpServer) {
               case "autoGain": {
                 await updateSettings({ autoGain: !!data.enabled });
                 broadcast(room, null, { event: "autoGain", data: { enabled: !!data.enabled } });
+                return reply({});
+              }
+              case "record": {
+                if (data.start) {
+                  const settings = await getSettings();
+                  const rec = await startRecording(room, settings.recordingMode);
+                  for (const p of room.peers.values()) {
+                    if (p.socket.readyState === 1) {
+                      p.socket.send(JSON.stringify({
+                        event: "recordingStarted",
+                        data: {
+                          mode: rec.mode,
+                          upload: rec.mode === "browser" ? uploadCreds(rec, p.id) : null
+                        }
+                      }));
+                    }
+                  }
+                } else {
+                  // Tell everyone first; ffmpeg teardown can take seconds
+                  broadcast(room, null, { event: "recordingStopped", data: {} });
+                  await stopRecording(room);
+                }
                 return reply({});
               }
               default:
@@ -134,6 +172,15 @@ export function attachSignaling(httpServer) {
               event: "newProducer",
               data: { peerId: peer.id, producerId: producer.id, kind: producer.kind }
             });
+            // Server-mode recording: start piping this peer once their
+            // mic + camera are both up
+            const recNow = activeRecording(room.id);
+            if (recNow?.mode === "server" &&
+                peer.producers.size >= 2 &&
+                !(recNow.captures || []).some((c) => c.peerId === peer.id)) {
+              capturePeer(recNow, room, peer).catch((e) =>
+                console.error("mid-session capture failed:", e.message));
+            }
             break;
           }
 
@@ -205,8 +252,14 @@ export function attachSignaling(httpServer) {
 
     socket.on("close", () => {
       if (!peer) return;
+      const rec = activeRecording(room.id);
+      if (rec) markPeerDone(rec.id, peer.id);
       removePeer(room, peer.id);
       broadcast(room, null, { event: "peerLeft", data: { peerId: peer.id } });
+      // Last one out stops the tape
+      if (rec && room.peers.size === 0) {
+        stopRecording(room).catch((e) => console.error("auto-stop failed:", e.message));
+      }
     });
   });
 

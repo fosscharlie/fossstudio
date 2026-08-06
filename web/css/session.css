@@ -97,6 +97,15 @@ body {
   background: var(--panel);
   border-bottom: 1px solid var(--line);
 }
+/* Everyone sees when the tape is rolling */
+.banner.recording::before {
+  content: "● REC ";
+  color: #f34236;
+  animation: recblink 1.6s infinite;
+}
+@keyframes recblink { 50% { opacity: 0.35; } }
+.hp-btn.record { border-color: #7a2e2e; }
+.hp-btn.rec-on { background: #7a2e2e; color: #fff; }
 .grid {
   flex: 1;
   display: grid;

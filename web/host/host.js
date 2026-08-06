@@ -120,6 +120,64 @@
     loadSessions();
   };
 
+  // ---------- recordings ----------
+
+  const STATUS_LABELS = {
+    recording: "● recording now",
+    processing: "⏳ processing…",
+    ready: "✓ ready",
+    failed: "! processing failed"
+  };
+
+  async function loadRecordings() {
+    const list = $("recordingList");
+    const recs = await apiFetch("/api/recordings");
+    list.innerHTML = "";
+    if (recs.length === 0) {
+      list.innerHTML = '<p class="hint">Nothing recorded yet. Start one from the host controls inside a session.</p>';
+      return;
+    }
+    for (const r of recs) {
+      const row = document.createElement("div");
+      row.className = "session-row";
+      const when = new Date(r.startedAt).toLocaleString();
+      const mins = r.endedAt ? Math.max(1, Math.round((r.endedAt - r.startedAt) / 60000)) : null;
+      row.innerHTML = `
+        <div>
+          <div class="title"></div>
+          <div class="meta"></div>
+          <div class="files"></div>
+        </div>
+        <span class="badge"></span>
+        <span class="spacer"></span>`;
+      row.querySelector(".title").textContent = `Session ${r.roomId}`;
+      row.querySelector(".meta").textContent =
+        `${when}${mins ? ` · ${mins} min` : ""} · ${r.mode === "server" ? "server-side" : "browser-side"}`;
+      const badge = row.querySelector(".badge");
+      badge.textContent = STATUS_LABELS[r.status] || r.status;
+      const filesEl = row.querySelector(".files");
+      for (const f of r.files || []) {
+        const a = document.createElement("a");
+        a.href = `/api/recordings/${encodeURIComponent(r.id)}/files/${encodeURIComponent(f)}`;
+        a.textContent = f;
+        a.style.marginRight = "0.8rem";
+        filesEl.appendChild(a);
+      }
+      row.appendChild(deleteBtn("Delete recording and its files", async () => {
+        await apiFetch(`/api/recordings/${encodeURIComponent(r.id)}`, { method: "DELETE" });
+        loadRecordings();
+      }));
+      list.appendChild(row);
+    }
+  }
+
+  $("recModeToggle").onchange = async () => {
+    await apiFetch("/api/settings", {
+      method: "PUT",
+      body: JSON.stringify({ recordingMode: $("recModeToggle").checked ? "server" : "browser" })
+    });
+  };
+
   // ---------- theme ----------
 
   const PALETTE = [
@@ -146,6 +204,7 @@
 
   async function loadTheme() {
     const s = await apiFetch("/api/settings");
+    $("recModeToggle").checked = s.recordingMode === "server";
     $("podcastName").value = s.podcastName;
     currentAccent = s.accent;
     $("autoGainToggle").checked = s.autoGain;
@@ -252,7 +311,9 @@
   // ---------- boot ----------
 
   loadSessions();
+  loadRecordings();
   loadTheme();
   load2fa();
-  setInterval(loadSessions, 10000); // keep the live badges fresh
+  setInterval(loadSessions, 10000);   // keep the live badges fresh
+  setInterval(loadRecordings, 15000); // pick up processing -> ready
 })();

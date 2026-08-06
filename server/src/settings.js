@@ -6,7 +6,8 @@ const DEFAULTS = {
   podcastName: "FOSSStudio",
   accent: "#fbc711",
   wallpaper: null,          // filename inside data/uploads, or null
-  autoGain: false
+  autoGain: false,
+  recordingMode: "browser"  // "browser" (each guest records) | "server" (small sessions)
 };
 
 export async function getSettings() {
@@ -25,6 +26,9 @@ export async function updateSettings(patch) {
     clean.wallpaper = patch.wallpaper;
   }
   if (typeof patch.autoGain === "boolean") clean.autoGain = patch.autoGain;
+  if (["browser", "server"].includes(patch.recordingMode)) {
+    clean.recordingMode = patch.recordingMode;
+  }
   const next = { ...(await getSettings()), ...clean };
   await writeJson("settings.json", next);
   return next;

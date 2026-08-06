@@ -17,7 +17,8 @@
     muteBtn: $("muteBtn"), camBtn: $("camBtn"), leaveBtn: $("leaveBtn"),
     hostPanelBtn: $("hostPanelBtn"), hostPanel: $("hostPanel"),
     hpGridBtn: $("hpGridBtn"), hpSpotSelfBtn: $("hpSpotSelfBtn"),
-    hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests")
+    hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
+    hpRecordBtn: $("hpRecordBtn")
   };
 
   let previewStream = null;
@@ -320,12 +321,82 @@
     }
   }
 
+  // ---------- Recording (browser mode records self and uploads) ----------
+
+  let recorders = [];
+  let recUpload = null;
+  let recording = false;
+
+  function setRecIndicator(on) {
+    recording = on;
+    els.banner.classList.toggle("recording", on);
+    if (isHost) {
+      els.hpRecordBtn.textContent = on ? "■ Stop recording" : "● Start recording";
+      els.hpRecordBtn.classList.toggle("rec-on", on);
+    }
+  }
+
+  function startSelfRecording(upload) {
+    recUpload = upload;
+    const base = `/api/rec/chunk?rec=${encodeURIComponent(upload.recId)}&peer=${encodeURIComponent(upload.peerId)}&token=${encodeURIComponent(upload.token)}`;
+    recorders = [];
+
+    const startOne = (track, kind, mime, bitrate) => {
+      if (!track) return;
+      let type = mime.find((m) => MediaRecorder.isTypeSupported(m));
+      if (!type) return;
+      const recorder = new MediaRecorder(new MediaStream([track]), {
+        mimeType: type,
+        ...(bitrate ? { videoBitsPerSecond: bitrate } : {})
+      });
+      let seq = 0;
+      let queue = Promise.resolve();
+      recorder.ondataavailable = (e) => {
+        if (!e.data.size) return;
+        const n = seq++;
+        // Chunks must land in order — chain the uploads
+        queue = queue.then(() =>
+          fetch(`${base}&kind=${kind}&seq=${n}`, { method: "POST", body: e.data })
+        ).catch(() => {});
+      };
+      recorder.start(5000);
+      recorders.push({ recorder, getQueue: () => queue });
+    };
+
+    // Audio: PCM when the browser can (true lossless), else opus
+    startOne(micProducer?.track, "audio",
+      ["audio/webm;codecs=pcm", "audio/webm;codecs=opus", "audio/webm"]);
+    startOne(camProducer?.track, "video",
+      ["video/webm;codecs=vp8", "video/webm"], 2_500_000);
+    setRecIndicator(true);
+  }
+
+  async function stopSelfRecording() {
+    const done = recorders.map(({ recorder, getQueue }) =>
+      new Promise((resolve) => {
+        recorder.onstop = () => resolve(getQueue());
+        try { recorder.stop(); } catch { resolve(); }
+      }).then(() => getQueue())
+    );
+    recorders = [];
+    await Promise.all(done);
+    if (recUpload) {
+      const { recId, peerId, token } = recUpload;
+      await fetch(`/api/rec/done?rec=${encodeURIComponent(recId)}&peer=${encodeURIComponent(peerId)}&token=${encodeURIComponent(token)}`, { method: "POST" }).catch(() => {});
+      recUpload = null;
+    }
+    setRecIndicator(false);
+  }
+
   els.hostPanelBtn.onclick = () => { els.hostPanel.hidden = !els.hostPanel.hidden; };
   els.hpGridBtn.onclick = () => request("hostControl", { action: "layout", layout: "grid" });
   els.hpSpotSelfBtn.onclick = () =>
     request("hostControl", { action: "layout", layout: "spotlight", peerId: selfId });
   els.hpAutoGain.onchange = () =>
     request("hostControl", { action: "autoGain", enabled: els.hpAutoGain.checked });
+  els.hpRecordBtn.onclick = () =>
+    request("hostControl", { action: "record", start: !recording })
+      .catch((e) => console.error("record toggle failed:", e.message));
 
   // ---------- Consuming ----------
 
@@ -435,6 +506,13 @@
         applyAutoGain(enabled);
         els.hpAutoGain.checked = enabled;
       };
+      eventHandlers.recordingStarted = ({ mode, upload }) => {
+        if (mode === "browser" && upload) startSelfRecording(upload);
+        else setRecIndicator(true);
+      };
+      eventHandlers.recordingStopped = () => {
+        recorders.length ? stopSelfRecording() : setRecIndicator(false);
+      };
 
       joined = true;
       els.preview.hidden = true;
@@ -455,6 +533,7 @@
 
   function leaveToPreview(message) {
     joined = false;
+    if (recorders.length) stopSelfRecording();
     try { ws && ws.close(); } catch { /* ignore */ }
     for (const { consumer } of consumers.values()) consumer.close();
     consumers.clear();

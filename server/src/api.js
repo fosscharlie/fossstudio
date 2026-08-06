@@ -9,6 +9,10 @@ import {
 } from "./auth.js";
 import { getSettings, updateSettings, listSessions, createSession, deleteSession } from "./settings.js";
 import { getRoom } from "./rooms.js";
+import {
+  verifyUploadToken, appendChunk, markPeerDone,
+  listRecordings, deleteRecording, recDir
+} from "./recording/manager.js";
 
 export const api = express.Router();
 api.use(express.json({ limit: "64kb" }));
@@ -127,5 +131,53 @@ api.post("/sessions", requireAuth, async (req, res) => {
 
 api.delete("/sessions/:id", requireAuth, async (req, res) => {
   await deleteSession(req.params.id);
+  res.json({ ok: true });
+});
+
+// ---------- recording ----------
+
+// Chunk upload from recording browsers. Not cookie-authed (guests have
+// no login); a per-peer HMAC token issued at recording start gates it.
+function chunkAuth(req, res, next) {
+  const { rec, peer, token } = req.query;
+  if (!rec || !peer || !verifyUploadToken(String(rec), String(peer), String(token))) {
+    return res.status(403).json({ error: "bad upload token" });
+  }
+  next();
+}
+
+api.post("/rec/chunk", chunkAuth,
+  express.raw({ type: () => true, limit: "32mb" }),
+  async (req, res) => {
+    try {
+      await appendChunk(
+        String(req.query.rec), String(req.query.peer),
+        String(req.query.kind), Number(req.query.seq), req.body
+      );
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+api.post("/rec/done", chunkAuth, (req, res) => {
+  markPeerDone(String(req.query.rec), String(req.query.peer));
+  res.json({ ok: true });
+});
+
+api.get("/recordings", requireAuth, async (req, res) => {
+  res.json(await listRecordings());
+});
+
+api.get("/recordings/:id/files/:file", requireAuth, (req, res) => {
+  const id = path.basename(req.params.id);
+  const file = path.basename(req.params.file);
+  res.download(path.join(recDir(id), "out", file), file, (err) => {
+    if (err && !res.headersSent) res.status(404).json({ error: "file not found" });
+  });
+});
+
+api.delete("/recordings/:id", requireAuth, async (req, res) => {
+  await deleteRecording(path.basename(req.params.id));
   res.json({ ok: true });
 });
