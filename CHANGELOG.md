@@ -4,6 +4,12 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- The host panel is a fixed sidebar, always open for the host — the
+  video grid sizes itself around it; a **dim** button fades all controls
+  (and brightens them on hover) instead of open/close
+- Guests can pick their **own banner colour** from the palette when the
+  host enables it — a palette button appears in everyone's controls
+
 - Host panel: your own volume slider, per-guest **Mute/Unmute**, and a
   **Mute everyone** button; muted guests show a 🔇 on their tile, and
   mute state is shared so everyone's view agrees. Guests can still

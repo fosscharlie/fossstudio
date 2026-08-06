@@ -17,13 +17,14 @@
     previewError: $("previewError"), micMeterFill: $("micMeterFill"),
     session: $("session"), banner: $("banner"), grid: $("grid"),
     muteBtn: $("muteBtn"), camBtn: $("camBtn"), leaveBtn: $("leaveBtn"),
-    hostPanelBtn: $("hostPanelBtn"), hostPanel: $("hostPanel"),
+    dimBtn: $("dimBtn"), hostPanel: $("hostPanel"),
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
     hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn"),
     hpServerRec: $("hpServerRec"), hpServerRecRow: $("hpServerRecRow"),
     hpMuteAllBtn: $("hpMuteAllBtn"),
     hpBannerSwatches: $("hpBannerSwatches"), hpBannerHex: $("hpBannerHex"),
-    hpBannerMulti: $("hpBannerMulti")
+    hpBannerMulti: $("hpBannerMulti"), hpBannerChoice: $("hpBannerChoice"),
+    myColorBtn: $("myColorBtn"), myColorPop: $("myColorPop")
   };
 
   // Inline SVG control icons (house rule: no icon fonts, no emoji)
@@ -32,10 +33,11 @@
     micOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 9v5a3 3 0 0 0 5.1 2.1M15 10V6a3 3 0 0 0-5.6-1.5M5 11a7 7 0 0 0 11 5.7M19 11a7 7 0 0 1-.9 3.4M12 18v3M4 4l16 16"/></svg>',
     cam: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="12" height="12" rx="3"/><path d="M15 11l6-3.5v9L15 13"/></svg>',
     camOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 11l6-3.5v9l-2.2-1.3M15 13v2a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3h1M11 6h1a3 3 0 0 1 3 3v1M4 4l16 16"/></svg>',
-    sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 12h4M12 12h8M4 17h13"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18.5" cy="17" r="2"/></svg>',
+    palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 1 9-9c0 2-1.5 3-3 3h-2a2 2 0 0 0-1.5 3.3c.4.5.5 1.2 0 1.7a2.6 2.6 0 0 1-2.5 1z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/><circle cx="17.5" cy="11.5" r="1"/></svg>',
+    dim: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg>',
     leave: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M15 16l4-4-4-4M19 12H9"/></svg>'
   };
-  for (const [id, icon] of [["muteBtn", "mic"], ["camBtn", "cam"], ["hostPanelBtn", "sliders"], ["leaveBtn", "leave"]]) {
+  for (const [id, icon] of [["muteBtn", "mic"], ["camBtn", "cam"], ["dimBtn", "dim"], ["leaveBtn", "leave"], ["myColorBtn", "palette"]]) {
     document.getElementById(id).innerHTML = ICONS[icon];
   }
 
@@ -504,6 +506,29 @@
 
   els.hpBannerMulti.onclick = () =>
     request("hostControl", { action: "bannerMulti" }).catch(() => {});
+  els.hpBannerChoice.onclick = () =>
+    request("hostControl", { action: "bannerChoice" }).catch(() => {});
+
+  // ---------- Everyone's own colour picker (when the host allows) ----------
+
+  function renderMyColors() {
+    els.myColorPop.innerHTML = "";
+    for (const hex of BANNER_COLOURS) {
+      const b = document.createElement("button");
+      b.className = "hp-swatch" + (control.bannerColors?.[selfId] === hex ? " active" : "");
+      b.style.background = hex;
+      b.setAttribute("aria-label", `My banner colour ${hex}`);
+      b.onclick = () => {
+        request("myBannerColor", { color: hex }).catch(() => {});
+        els.myColorPop.hidden = true;
+      };
+      els.myColorPop.appendChild(b);
+    }
+  }
+  els.myColorBtn.onclick = () => {
+    els.myColorPop.hidden = !els.myColorPop.hidden;
+    if (!els.myColorPop.hidden) renderMyColors();
+  };
 
   els.hpBannerHex.onchange = () => {
     let v = els.hpBannerHex.value.trim();
@@ -535,8 +560,12 @@
     if (isHost) {
       if (document.activeElement !== els.hpBannerHex) els.hpBannerHex.value = c;
       renderBannerSwatches();
-      els.hpBannerMulti.classList.toggle("active", !!control.bannerMulti);
+      els.hpBannerMulti.classList.toggle("active", !!control.bannerMulti && !control.bannerChoice);
+      els.hpBannerChoice.classList.toggle("active", !!control.bannerChoice);
     }
+    els.myColorBtn.hidden = !control.bannerChoice;
+    if (!control.bannerChoice) els.myColorPop.hidden = true;
+    else if (!els.myColorPop.hidden) renderMyColors();
   }
 
   function applyControl(next) {
@@ -677,8 +706,11 @@
     setRecIndicator(false);
   }
 
-  els.hostPanelBtn.onclick = () => { els.hostPanel.hidden = !els.hostPanel.hidden; };
-  $("hpCloseBtn").onclick = () => { els.hostPanel.hidden = true; };
+  els.dimBtn.onclick = () => {
+    const on = document.body.classList.toggle("dim-ui");
+    els.dimBtn.classList.toggle("dim-on", on);
+    els.dimBtn.dataset.tip = on ? "Brighten the controls" : "Dim the controls";
+  };
   els.hpMuteAllBtn.onclick = () =>
     request("hostControl", { action: "muteAll" })
       .catch((e) => console.error("mute all failed:", e.message));
@@ -757,7 +789,7 @@
       isHost = info.role === "host";
       applyControl(info.control);
       applyTheme(info.theme);
-      els.hostPanelBtn.hidden = !isHost;
+      els.hostPanel.hidden = !isHost; // sidebar is always open for the host
       els.hpServerRecRow.hidden = !(isHost && info.canServerRecord);
 
       device = new mediasoupClient.Device();
@@ -865,6 +897,8 @@
     masterDest = null;
     els.session.hidden = true;
     els.hostPanel.hidden = true;
+    document.body.classList.remove("dim-ui");
+    els.dimBtn.classList.remove("dim-on");
     els.preview.hidden = false;
     els.joinBtn.disabled = false;
     els.joinBtn.textContent = "Join session";

@@ -41,7 +41,6 @@ check("banner sits below video (not overlapping)",
   }));
 
 // Host changes banner colour to pink; guest should follow
-await host.page.click("#hostPanelBtn");
 await host.page.evaluate(() => {
   const inp = document.getElementById("hpBannerHex");
   inp.value = "#e8207e";
@@ -67,6 +66,26 @@ const uniform = await guest.page.evaluate(() =>
   [...document.querySelectorAll(".tile .lower-third")].map((el) => getComputedStyle(el).backgroundColor));
 check(`swatch returns everyone to one colour (${uniform[0]})`,
   uniform[0] === uniform[1]);
+
+// Guests pick their own colour
+await host.page.click("#hpBannerChoice");
+await new Promise((r) => setTimeout(r, 1200));
+check("guest sees their own colour button",
+  await guest.page.$eval("#myColorBtn", (el) => !el.hidden));
+await guest.page.click("#myColorBtn");
+await guest.page.$$eval("#myColorPop .hp-swatch", (btns) => btns[3].click());
+await new Promise((r) => setTimeout(r, 1200));
+const chosen = await host.page.evaluate(() => {
+  const t = [...document.querySelectorAll(".tile")].find((x) => !x.classList.contains("self"));
+  return getComputedStyle(t.querySelector(".lower-third")).backgroundColor;
+});
+check(`guest's chosen colour shows for everyone (${chosen})`, chosen === "rgb(155, 38, 174)");
+check("layout: grid and panel share the row (no overlap)",
+  await host.page.evaluate(() => {
+    const g = document.getElementById("grid").getBoundingClientRect();
+    const p = document.getElementById("hostPanel").getBoundingClientRect();
+    return g.right <= p.left + 1;
+  }));
 
 await host.page.screenshot({ path: `${CAMS}/banner-under.png` });
 console.log(pass ? "ALL PASS" : "SOME CHECKS FAILED");

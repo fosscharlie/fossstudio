@@ -65,7 +65,7 @@ const a2 = await studio("vcam2.y4m", "Dev", "Kernel maintainer", sessionA.id, fa
 const a3 = await studio("vcam3.y4m", "Margot", "Author, Terminal Tales", sessionA.id, false);
 await joinAll([a1, a2, a3]);
 await new Promise((r) => setTimeout(r, 4000));
-await a1.page.screenshot({ path: `${OUT}/session.png` });
+await a2.page.screenshot({ path: `${OUT}/session.png` });
 for (const s of [a1, a2, a3]) await s.browser.close();
 
 // --- Session B: host panel open (three different people) ---
@@ -74,7 +74,6 @@ const b2 = await studio("vcam5.y4m", "Amara", "Editor, Homelab Weekly", sessionB
 const b3 = await studio("vcam6.y4m", "Rob", "SRE, selfhosted.town", sessionB.id, false);
 await joinAll([b1, b2, b3]);
 await new Promise((r) => setTimeout(r, 4000));
-await b1.page.click("#hostPanelBtn");
 await new Promise((r) => setTimeout(r, 500));
 await b1.page.screenshot({ path: `${OUT}/host-panel.png` });
 for (const s of [b1, b2, b3]) await s.browser.close();

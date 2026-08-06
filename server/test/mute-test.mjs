@@ -32,7 +32,6 @@ const g1 = await join("Greta", false);
 const g2 = await join("Gus", false);
 await new Promise((r) => setTimeout(r, 3000));
 
-await host.click("#hostPanelBtn");
 check("host panel lists self first with (you)",
   await host.$eval(".hp-guest .hp-name span", (el) => el.textContent.includes("(you)")));
 check("self row has slider plus its own Mute and Spotlight",

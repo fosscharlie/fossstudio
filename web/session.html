@@ -58,17 +58,11 @@
 <!-- Live session -->
 <div id="session" class="session" hidden>
   <header id="banner" class="banner">FOSSStudio</header>
+  <div class="session-body">
   <main id="grid" class="grid"></main>
-  <footer class="controls">
-    <button id="muteBtn" class="ctl" title="Mute microphone" aria-label="Mute microphone"></button>
-    <button id="camBtn" class="ctl" title="Turn camera off" aria-label="Turn camera off"></button>
-    <button id="hostPanelBtn" class="ctl" title="Host controls" aria-label="Host controls" hidden></button>
-    <button id="leaveBtn" class="ctl leave" title="Leave session" aria-label="Leave session"></button>
-  </footer>
 
-  <!-- Host-only control panel -->
+  <!-- Host-only control panel (always open for the host) -->
   <aside id="hostPanel" class="host-panel" hidden>
-    <button id="hpCloseBtn" class="hp-close" aria-label="Close host controls"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <h2>Host controls</h2>
     <label class="hp-toggle toggle" id="hpServerRecRow" hidden>
       <input type="checkbox" id="hpServerRec">
@@ -92,9 +86,19 @@
       <div class="hp-swatches" id="hpBannerSwatches"></div>
       <input type="text" id="hpBannerHex" maxlength="7" spellcheck="false" aria-label="Banner colour hex code">
       <button id="hpBannerMulti" class="hp-btn" style="margin-top:0.5rem; width:100%">A different colour for each person</button>
+      <button id="hpBannerChoice" class="hp-btn" style="margin-top:0.5rem; width:100%">Let people pick their own colour</button>
     </div>
     <div id="hpGuests"></div>
   </aside>
+  </div>
+  <footer class="controls">
+    <div id="myColorPop" class="my-colors" hidden></div>
+    <button id="myColorBtn" class="ctl" title="Pick your banner colour" aria-label="Pick your banner colour" hidden></button>
+    <button id="muteBtn" class="ctl" title="Mute microphone" aria-label="Mute microphone"></button>
+    <button id="camBtn" class="ctl" title="Turn camera off" aria-label="Turn camera off"></button>
+    <button id="dimBtn" class="ctl" title="Dim the controls" aria-label="Dim the controls"></button>
+    <button id="leaveBtn" class="ctl leave" title="Leave session" aria-label="Leave session"></button>
+  </footer>
 </div>
 
 <script src="/assets/mediasoup-client.js"></script>

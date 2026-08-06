@@ -23,6 +23,7 @@ export async function getOrCreateRoom(roomId) {
         muted: {},               // peerId -> true when mic is muted
         bannerColor: null,       // solid colour of the name banners
         bannerMulti: false,      // one colour per person instead
+        bannerChoice: false,     // guests may pick their own colour
         bannerColors: {},        // peerId -> hex when bannerMulti
         autoGain: false          // per-session, host-toggled
       }

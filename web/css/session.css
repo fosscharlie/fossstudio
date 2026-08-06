@@ -138,6 +138,12 @@ body {
   display: flex;
   flex-direction: column;
 }
+.session-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+.session-body .grid { flex: 1; min-width: 0; }
 .banner {
   padding: 0.6rem 1rem;
   text-align: center;
@@ -214,6 +220,7 @@ body {
   white-space: nowrap;
 }
 .controls {
+  position: relative;
   display: flex;
   justify-content: center;
   gap: 0.8rem;
@@ -274,9 +281,8 @@ body {
   --lm-accent: #fbc711;
   --lm-on-accent: #645007;
   --lm-danger: #f34236;
-  position: absolute;
-  top: 0; right: 0; bottom: 0;
-  width: min(330px, 85vw);
+  flex: 0 0 330px;
+  width: 330px;
   font-family: "Manrope", system-ui, sans-serif;
   color: var(--lm-fg);
   background: var(--lm-panel);
@@ -287,22 +293,37 @@ body {
   z-index: 10;
 }
 .host-panel h2 { font-size: 1.0625rem; font-weight: 600; margin-bottom: 1rem; }
-.hp-close {
-  position: absolute;
-  top: 0.9rem;
-  right: 0.9rem;
-  width: 2rem;
-  height: 2rem;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--lm-line);
-  border-radius: 0.6rem;
-  background: var(--lm-muted);
-  color: var(--lm-fg);
-  cursor: pointer;
+/* On narrow screens the panel stacks under the grid */
+@media (max-width: 760px) {
+  .session-body { flex-direction: column; }
+  .host-panel { flex: 0 0 auto; width: 100%; max-height: 45dvh; border-left: 0; border-top: 1px solid var(--lm-panel-border); }
 }
-.hp-close svg { width: 1rem; height: 1rem; }
+/* Dim mode: controls fade away until hovered */
+body.dim-ui .controls,
+body.dim-ui .host-panel,
+body.dim-ui .banner {
+  opacity: 0.12;
+  transition: opacity 250ms ease;
+}
+body.dim-ui .controls:hover,
+body.dim-ui .host-panel:hover,
+body.dim-ui .banner:hover { opacity: 1; }
+.controls, .host-panel, .banner { transition: opacity 250ms ease; }
+.ctl.dim-on { background: #3a3f2a; border-color: #6b7a3f; }
+.my-colors {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 20;
+}
 .hp-row { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; }
 .hp-btn {
   flex: 1;

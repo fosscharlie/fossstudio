@@ -111,6 +111,16 @@ export function attachSignaling(httpServer) {
             break;
           }
 
+          case "myBannerColor": {
+            if (!peer) return fail("not joined");
+            if (!room.control.bannerChoice) return fail("colour choice is off");
+            if (!BANNER_PALETTE.includes(String(data.color || ""))) return fail("pick from the palette");
+            room.control.bannerColors[peer.id] = data.color;
+            reply({});
+            broadcast(room, null, { event: "control", data: room.control });
+            break;
+          }
+
           case "selfMute": {
             if (!peer) return fail("not joined");
             room.control.muted[peer.id] = !!data.muted;
@@ -144,10 +154,25 @@ export function attachSignaling(httpServer) {
                 if (/^#[0-9a-fA-F]{6}$/.test(String(data.color || ""))) {
                   c.bannerColor = String(data.color).toLowerCase();
                   c.bannerMulti = false;
+                  c.bannerChoice = false;
                 }
                 break;
+              case "bannerChoice": {
+                // Guests choose their own from the palette; start from
+                // auto-assigned colours so nobody is blank
+                c.bannerChoice = true;
+                c.bannerMulti = true;
+                let ci2 = Object.keys(c.bannerColors).length;
+                for (const p2 of room.peers.values()) {
+                  if (!c.bannerColors[p2.id]) {
+                    c.bannerColors[p2.id] = BANNER_PALETTE[ci2++ % BANNER_PALETTE.length];
+                  }
+                }
+                break;
+              }
               case "bannerMulti": {
                 c.bannerMulti = true;
+                c.bannerChoice = false;
                 c.bannerColors = {};
                 let ci = 0;
                 for (const p2 of room.peers.values()) {

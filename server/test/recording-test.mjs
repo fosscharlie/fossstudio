@@ -48,7 +48,6 @@ const guest = await join(guestCtx, "Guest Greta", false);
 await new Promise((r) => setTimeout(r, 2000));
 
 // Start recording (mode picked per session in the host panel)
-await host.click("#hostPanelBtn");
 if (MODE === "server") {
   const visible = await host.$eval("#hpServerRecRow", (el) => !el.hidden);
   console.log(`${visible ? "OK  " : "FAIL"} server-rec toggle visible for permitted host`);
