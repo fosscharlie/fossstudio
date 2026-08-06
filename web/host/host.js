@@ -178,6 +178,18 @@
     });
   };
 
+  $("saveStreamBtn").onclick = async () => {
+    await apiFetch("/api/settings", {
+      method: "PUT",
+      body: JSON.stringify({
+        streamUrl: $("streamUrl").value.trim() || "rtmp://a.rtmp.youtube.com/live2",
+        streamKey: $("streamKey").value.trim()
+      })
+    });
+    $("streamMsg").hidden = false;
+    setTimeout(() => { $("streamMsg").hidden = true; }, 2000);
+  };
+
   // ---------- theme ----------
 
   const PALETTE = [
@@ -205,6 +217,8 @@
   async function loadTheme() {
     const s = await apiFetch("/api/settings");
     $("recModeToggle").checked = s.recordingMode === "server";
+    $("streamUrl").value = s.streamUrl || "";
+    $("streamKey").value = s.streamKey || "";
     $("podcastName").value = s.podcastName;
     currentAccent = s.accent;
     $("autoGainToggle").checked = s.autoGain;

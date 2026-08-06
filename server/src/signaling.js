@@ -14,6 +14,7 @@ import {
   addPeerToRecording, uploadCreds, markPeerDone
 } from "./recording/manager.js";
 import { capturePeer } from "./recording/serverRecorder.js";
+import { startStream, stopStream, isStreaming, refreshStream } from "./streaming.js";
 
 const ROOM_ID_RE = /^[a-zA-Z0-9_-]{4,32}$/;
 const NAME_MAX = 40;
@@ -58,6 +59,7 @@ export function attachSignaling(httpServer) {
               routerRtpCapabilities: room.router.rtpCapabilities,
               iceServers: iceServers(),
               control: room.control,
+              streaming: isStreaming(room.id),
               theme: {
                 podcastName: settings.podcastName,
                 accent: settings.accent,
@@ -103,6 +105,21 @@ export function attachSignaling(httpServer) {
               case "autoGain": {
                 await updateSettings({ autoGain: !!data.enabled });
                 broadcast(room, null, { event: "autoGain", data: { enabled: !!data.enabled } });
+                return reply({});
+              }
+              case "stream": {
+                if (data.start) {
+                  const settings = await getSettings();
+                  if (!settings.streamKey) {
+                    return fail("Add your YouTube stream key in the dashboard first.");
+                  }
+                  const url = `${settings.streamUrl.replace(/\/$/, "")}/${settings.streamKey}`;
+                  await startStream(room, url);
+                  broadcast(room, null, { event: "streaming", data: { live: true } });
+                } else {
+                  broadcast(room, null, { event: "streaming", data: { live: false } });
+                  await stopStream(room.id);
+                }
                 return reply({});
               }
               case "record": {
@@ -176,6 +193,8 @@ export function attachSignaling(httpServer) {
               event: "newProducer",
               data: { peerId: peer.id, producerId: producer.id, kind: producer.kind }
             });
+            // Live stream picks up new members (debounced relaunch)
+            if (isStreaming(room.id) && peer.producers.size >= 2) refreshStream(room.id);
             // Server-mode recording: start piping this peer once their
             // mic + camera are both up
             const recNow = activeRecording(room.id);
@@ -260,6 +279,7 @@ export function attachSignaling(httpServer) {
       if (rec) markPeerDone(rec.id, peer.id);
       removePeer(room, peer.id);
       broadcast(room, null, { event: "peerLeft", data: { peerId: peer.id } });
+      if (isStreaming(room.id)) refreshStream(room.id);
       // Last one out stops the tape
       if (rec && room.peers.size === 0) {
         stopRecording(room).catch((e) => console.error("auto-stop failed:", e.message));

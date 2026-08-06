@@ -7,7 +7,9 @@ const DEFAULTS = {
   accent: "#fbc711",
   wallpaper: null,          // filename inside data/uploads, or null
   autoGain: false,
-  recordingMode: "browser"  // "browser" (each guest records) | "server" (small sessions)
+  recordingMode: "browser", // "browser" (each guest records) | "server" (small sessions)
+  streamUrl: "rtmp://a.rtmp.youtube.com/live2",
+  streamKey: ""             // host-managed via the dashboard, like the password
 };
 
 export async function getSettings() {
@@ -28,6 +30,12 @@ export async function updateSettings(patch) {
   if (typeof patch.autoGain === "boolean") clean.autoGain = patch.autoGain;
   if (["browser", "server"].includes(patch.recordingMode)) {
     clean.recordingMode = patch.recordingMode;
+  }
+  if (typeof patch.streamUrl === "string" && /^rtmps?:\/\/[^\s]+$/.test(patch.streamUrl.trim())) {
+    clean.streamUrl = patch.streamUrl.trim().slice(0, 200);
+  }
+  if (typeof patch.streamKey === "string") {
+    clean.streamKey = patch.streamKey.trim().slice(0, 200);
   }
   const next = { ...(await getSettings()), ...clean };
   await writeJson("settings.json", next);

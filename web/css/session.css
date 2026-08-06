@@ -103,6 +103,15 @@ body {
   color: #f34236;
   animation: recblink 1.6s infinite;
 }
+.banner.live::after {
+  content: " LIVE";
+  color: #f34236;
+  font-size: 0.8em;
+  border: 1px solid #f34236;
+  border-radius: 4px;
+  padding: 0 0.35em;
+  margin-left: 0.6em;
+}
 @keyframes recblink { 50% { opacity: 0.35; } }
 .hp-btn.record { border-color: #7a2e2e; }
 .hp-btn.rec-on { background: #7a2e2e; color: #fff; }

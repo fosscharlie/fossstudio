@@ -52,6 +52,20 @@
       <h2>Recordings</h2>
       <div id="recordingList"><p class="hint">Loading…</p></div>
     </div>
+    <div class="panel">
+      <h2>YouTube streaming</h2>
+      <p class="hint" style="margin-bottom:0.8rem">Paste the stream key from YouTube Studio → Go live. Then use the "Go live" button in the session's host controls. Best for smaller sessions — the server does heavy lifting while live.</p>
+      <div class="field">
+        <label for="streamUrl">Stream server</label>
+        <input type="text" id="streamUrl" placeholder="rtmp://a.rtmp.youtube.com/live2">
+      </div>
+      <div class="field">
+        <label for="streamKey">Stream key</label>
+        <input type="password" id="streamKey" autocomplete="off" placeholder="xxxx-xxxx-xxxx-xxxx">
+      </div>
+      <button class="btn primary" id="saveStreamBtn">Save streaming settings</button>
+      <span class="msg ok" id="streamMsg" hidden>✓ Saved</span>
+    </div>
   </section>
 
   <!-- Theme -->

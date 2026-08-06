@@ -18,7 +18,7 @@
     hostPanelBtn: $("hostPanelBtn"), hostPanel: $("hostPanel"),
     hpGridBtn: $("hpGridBtn"), hpSpotSelfBtn: $("hpSpotSelfBtn"),
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
-    hpRecordBtn: $("hpRecordBtn")
+    hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn")
   };
 
   let previewStream = null;
@@ -398,6 +398,17 @@
     request("hostControl", { action: "record", start: !recording })
       .catch((e) => console.error("record toggle failed:", e.message));
 
+  let live = false;
+  function setLiveIndicator(on) {
+    live = on;
+    els.banner.classList.toggle("live", on);
+    els.hpStreamBtn.textContent = on ? "■ End stream" : "📡 Go live";
+    els.hpStreamBtn.classList.toggle("rec-on", on);
+  }
+  els.hpStreamBtn.onclick = () =>
+    request("hostControl", { action: "stream", start: !live })
+      .catch((e) => alert(e.message));
+
   // ---------- Consuming ----------
 
   async function consumeProducer(peerId, producerId) {
@@ -513,6 +524,8 @@
       eventHandlers.recordingStopped = () => {
         recorders.length ? stopSelfRecording() : setRecIndicator(false);
       };
+      eventHandlers.streaming = ({ live: isLive }) => setLiveIndicator(isLive);
+      if (info.streaming) setLiveIndicator(true);
 
       joined = true;
       els.preview.hidden = true;

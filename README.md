@@ -1,6 +1,6 @@
 # FOSSStudio
 
-Self-hosted video podcast studio for FOSSNerds & Linux OTC — a StreamYard replacement. Guests join by link with no account; the host runs everything from a web dashboard.
+Self-hosted video podcast studio — a StreamYard replacement for everyone. Guests join by link with no account; the host runs everything from a web dashboard.
 
 Runs at `fossstudio.fosscharlie.uk` as a single Docker Compose stack. Flat-file storage, no database.
 
