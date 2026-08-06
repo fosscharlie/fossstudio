@@ -4,6 +4,12 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Accent colour selector removed** — the dashboard is fixed to the
+  brand yellow; the menu highlight is a solid yellow-navy chip with
+  white text
+- Settings submenu order: Themes, Ad Banner, Streaming, Account,
+  Two-factor
+
 - Settings naming: the "Podcast banner" submenu and its
   "Advertising / support banner" panel are both now "Ad Banner"
 

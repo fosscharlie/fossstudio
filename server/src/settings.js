@@ -12,9 +12,6 @@ export async function getSettings(uid) {
 
 export async function updateSettings(uid, patch) {
   const clean = {};
-  if (typeof patch.accent === "string" && /^#[0-9a-fA-F]{6}$/.test(patch.accent)) {
-    clean.accent = patch.accent.toLowerCase();
-  }
   if (patch.wallpaper === null || typeof patch.wallpaper === "string") {
     clean.wallpaper = patch.wallpaper;
   }

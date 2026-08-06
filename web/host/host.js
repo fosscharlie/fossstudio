@@ -25,11 +25,11 @@
     ] },
     { id: "users", label: "Hosts", adminOnly: true, subs: [{ id: "users", label: "Manage hosts" }] },
     { id: "settings", label: "Settings", subs: [
-      { id: "account", label: "Account" },
-      { id: "twofactor", label: "Two-factor" },
-      { id: "streaming", label: "Streaming", hostOnly: true },
       { id: "themes", label: "Themes", hostOnly: true },
-      { id: "banner", label: "Ad Banner", hostOnly: true }
+      { id: "banner", label: "Ad Banner", hostOnly: true },
+      { id: "streaming", label: "Streaming", hostOnly: true },
+      { id: "account", label: "Account" },
+      { id: "twofactor", label: "Two-factor" }
     ] },
     { id: "system", label: "System", adminOnly: true, subs: [
       { id: "service", label: "Service" },
@@ -421,49 +421,6 @@
     "#cbdc38", "#ffc006", "#fe9700", "#ff5721", "#795649",
     "#9e9d9e", "#607c8b"
   ];
-  let currentAccent = PALETTE[0];
-
-  function renderSwatches() {
-    const wrap = $("swatches");
-    wrap.innerHTML = "";
-    for (const hex of PALETTE) {
-      const b = document.createElement("button");
-      b.className = "swatch" + (hex === currentAccent ? " active" : "");
-      b.style.background = hex;
-      b.dataset.tip = hex;
-      b.setAttribute("aria-label", `Accent ${hex}`);
-      b.onclick = async () => {
-        currentAccent = hex;
-        renderSwatches();
-        applyAccent(hex);
-        // No save button: picking a colour stores it straight away
-        await apiFetch("/api/settings", {
-          method: "PUT",
-          body: JSON.stringify({ accent: hex })
-        });
-        $("themeMsg").hidden = false;
-        clearTimeout(applyAccent.msgTimer);
-        applyAccent.msgTimer = setTimeout(() => { $("themeMsg").hidden = true; }, 2000);
-      };
-      wrap.appendChild(b);
-    }
-  }
-
-  // The accent colour styles this dashboard (buttons, toggles and the
-  // menu highlights) — the session view keeps its own look
-  function applyAccent(hex) {
-    const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-    const root = document.documentElement.style;
-    root.setProperty("--accent", hex);
-    root.setProperty("--accent-hover", `rgb(${Math.round(r * 0.85)}, ${Math.round(g * 0.85)}, ${Math.round(b * 0.85)})`);
-    root.setProperty("--on-accent",
-      (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? "#3a3208" : "#ffffff");
-    // Menu highlights: a solid chip of the accent deepened into brand
-    // navy, with white text — readable for every accent, both themes
-    const mix = (c, n) => Math.round(c * 0.35 + n * 0.65);
-    root.setProperty("--accent-container", `rgb(${mix(r, 17)}, ${mix(g, 24)}, ${mix(b, 39)})`);
-    root.setProperty("--on-accent-container", "#ffffff");
-  }
 
   let currentBg = null;
   function renderBgSwatches() {
@@ -498,9 +455,6 @@
     const s = await apiFetch("/api/settings");
     $("streamUrl").value = s.streamUrl || "";
     $("streamKey").value = s.streamKey || "";
-    currentAccent = s.accent;
-    renderSwatches();
-    applyAccent(currentAccent);
     currentBg = s.bg || null;
     renderBgSwatches();
     $("bgHex").value = currentBg || "";

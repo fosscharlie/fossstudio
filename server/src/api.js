@@ -221,7 +221,6 @@ api.get("/theme", async (req, res) => {
   const session = req.query.room ? await findSession(String(req.query.room)) : null;
   const s = await getSettings(session?.ownerId);
   res.json({
-    accent: s.accent,
     wallpaper: s.wallpaper && session ? `/api/wallpaper/${session.ownerId}` : null
   });
 });

@@ -7,7 +7,6 @@ import { hashPassword } from "./auth.js";
 import { config } from "./config.js";
 
 export const USER_SETTINGS_DEFAULTS = {
-  accent: "#fbc711",
   wallpaper: null,
   bg: null,
   logo: null,
