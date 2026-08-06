@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FOSSStudio session</title>
-<link rel="stylesheet" href="/css/session.css?v=20260807d">
+<link rel="stylesheet" href="/css/session.css?v=20260807e">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -68,14 +68,8 @@
     <div class="hp-row">
       <button id="hpRecordBtn" class="hp-btn record">● Start recording</button>
       <button id="hpStreamBtn" class="hp-btn record">Go live</button>
+      <button id="hpServerRec" type="button" class="hp-btn hp-icon" data-tip="Recording in the browser (click for server recording - best for 2-3 guests)" aria-label="Recording mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg></button>
       <button id="hpAutoGain" class="hp-btn hp-icon" data-tip="Auto level" aria-label="Auto level"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 20v-6"/><path d="M6 10V4"/><path d="M12 20v-4"/><path d="M12 12V4"/><path d="M18 20v-9"/><path d="M18 7V4"/><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="14" r="1.7"/><circle cx="18" cy="9" r="1.7"/></svg></button>
-    </div>
-    <div class="hp-toggles">
-      <label class="hp-toggle toggle" id="hpServerRecRow" hidden data-tip="Record on the server this session (best for 2-3 guests)">
-        <input type="checkbox" id="hpServerRec">
-        <span class="track"></span>
-        <span>Server rec</span>
-      </label>
     </div>
     <div class="hp-row">
       <button id="hpMuteAllBtn" class="hp-btn" data-tip="Mute everyone at once, including you">Mute all</button>
@@ -92,8 +86,10 @@
         <button id="hpBannerChoice" class="hp-btn" data-tip="Let guests pick their own colour from the palette">Guests choose</button>
       </div>
     </div>
+    <hr class="hp-divider">
     <div id="hpGuests"></div>
-    <div class="hp-build">Build 20260807d</div>
+    <hr class="hp-divider">
+    <div class="hp-build">Build 20260807e</div>
   </aside>
   </div>
   <footer class="controls">
@@ -108,7 +104,7 @@
   </footer>
 </div>
 
-<script src="/assets/mediasoup-client.js?v=20260807d"></script>
-<script src="/js/session.js?v=20260807d"></script>
+<script src="/assets/mediasoup-client.js?v=20260807e"></script>
+<script src="/js/session.js?v=20260807e"></script>
 </body>
 </html>

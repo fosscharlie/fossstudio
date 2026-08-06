@@ -233,7 +233,7 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   margin-left: 0.6em;
 }
 @keyframes recblink { 50% { opacity: 0.35; } }
-.hp-btn.record { border-color: #7a2e2e; }
+.hp-btn.record { border-color: #7a2e2e; white-space: nowrap; font-size: 0.72rem; padding-left: 0.45rem; padding-right: 0.45rem; }
 .hp-btn.rec-on { background: #7a2e2e; color: #fff; }
 .grid {
   position: relative;
@@ -433,8 +433,6 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   z-index: 10;
 }
 .host-panel h2 { font-size: 1rem; font-weight: 600; margin-bottom: 0.6rem; }
-.hp-toggles { display: flex; gap: 1rem; margin: 0.45rem 0; }
-.hp-toggles:empty { display: none; }
 .hp-btn.hp-icon {
   flex: 0 0 auto;
   display: grid;
@@ -443,8 +441,12 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
 }
 .hp-btn.hp-icon svg { width: 1.1rem; height: 1.1rem; }
 .hp-btn.active { border-color: var(--lm-accent); color: var(--lm-accent); }
-.hp-toggle.locked { opacity: 0.45; cursor: not-allowed; }
-.hp-toggle.locked .track { pointer-events: none; }
+.hp-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.hp-divider {
+  border: 0;
+  border-top: 1px solid var(--lm-line);
+  margin: 0.9rem 0;
+}
 /* On narrow screens the panel stacks under the grid */
 @media (max-width: 760px) {
   .session-body { flex-direction: column; }

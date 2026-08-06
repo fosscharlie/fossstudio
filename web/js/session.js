@@ -20,7 +20,7 @@
     dimBtn: $("dimBtn"), handBtn: $("handBtn"), hostPanel: $("hostPanel"),
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
     hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn"),
-    hpServerRec: $("hpServerRec"), hpServerRecRow: $("hpServerRecRow"),
+    hpServerRec: $("hpServerRec"),
     hpMuteAllBtn: $("hpMuteAllBtn"), hpSubBtn: $("hpSubBtn"), hpAdBtn: $("hpAdBtn"),
     hpBannerSwatches: $("hpBannerSwatches"), hpBannerHex: $("hpBannerHex"),
     hpBannerMulti: $("hpBannerMulti"), hpBannerChoice: $("hpBannerChoice"),
@@ -982,14 +982,16 @@
   // so the switch has to lock while recording or live.
   function updateServerRecLock() {
     if (!isHost || !els.hpServerRec) return;
-    const locked = recording || live;
-    els.hpServerRec.disabled = locked;
-    els.hpServerRecRow.classList.toggle("locked", locked);
-    if (locked) {
-      els.hpServerRecRow.dataset.tip = "Can't change while recording or live";
-    } else {
-      els.hpServerRecRow.dataset.tip = "Record on the server this session (best for 2-3 guests)";
-    }
+    els.hpServerRec.disabled = recording || live;
+    updateServerRecTip();
+  }
+  function updateServerRecTip() {
+    const server = els.hpServerRec.classList.contains("active");
+    els.hpServerRec.dataset.tip = (recording || live)
+      ? "Recording mode is locked while recording or live"
+      : server
+        ? "Recording on the server (click for browser recording)"
+        : "Recording in the browser (click for server recording - best for 2-3 guests)";
   }
 
   function startSelfRecording(upload) {
@@ -1116,8 +1118,14 @@
     request("hostControl", {
       action: "record",
       start: !recording,
-      mode: els.hpServerRec.checked ? "server" : "browser"
+      mode: els.hpServerRec.classList.contains("active") ? "server" : "browser"
     }).catch((e) => console.error("record toggle failed:", e.message));
+
+  els.hpServerRec.onclick = () => {
+    if (els.hpServerRec.disabled) return;
+    els.hpServerRec.classList.toggle("active");
+    updateServerRecTip();
+  };
 
   let live = false;
   function setLiveIndicator(on) {
@@ -1197,7 +1205,6 @@
       els.dimBtn.hidden = !isHost;    // dimming is a host tool
       document.body.classList.toggle("is-guest", !isHost);
       if (isHost) enableTitleDrag();
-      els.hpServerRecRow.hidden = !(isHost && info.canServerRecord);
 
       device = new mediasoupClient.Device();
       await device.load({ routerRtpCapabilities: info.routerRtpCapabilities });

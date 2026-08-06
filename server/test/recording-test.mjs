@@ -53,9 +53,9 @@ await new Promise((r) => setTimeout(r, 500));
 
 // Start recording (mode picked per session in the host panel)
 if (MODE === "server") {
-  const visible = await host.$eval("#hpServerRecRow", (el) => !el.hidden);
-  console.log(`${visible ? "OK  " : "FAIL"} server-rec toggle visible for permitted host`);
-  await host.$eval("#hpServerRec", (el) => el.click());
+  const visible = await host.$eval("#hpServerRec", (el) => !el.disabled);
+  console.log(`${visible ? "OK  " : "FAIL"} recording-mode button available`);
+  await host.click("#hpServerRec");
 }
 await host.click("#hpRecordBtn");
 await new Promise((r) => setTimeout(r, 2500));

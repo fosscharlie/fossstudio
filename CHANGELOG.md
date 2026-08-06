@@ -4,6 +4,12 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Host panel tidied**: the browser/server recording switch is now an
+  icon button beside Go live and Auto level (lit when server mode is
+  picked, locked while recording or live), and divider lines separate
+  the controls from the guest cards and the guest cards from the build
+  number
+
 - **The browser/server recording switch is available to every host**
   in the host panel (no admin permission needed any more — the
   per-host "allow server-side recording" setting is gone); it locks
