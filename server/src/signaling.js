@@ -22,7 +22,7 @@ const BANNER_PALETTE = [
   "#fbc711", "#f34236", "#e8207e", "#9b26ae", "#3d51b4",
   "#2295f1", "#019587", "#4bae4f", "#fe9700"
 ];
-const NAME_MAX = 40;
+const NAME_MAX = 24;
 
 export function attachSignaling(httpServer) {
   const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
@@ -57,7 +57,7 @@ export function attachSignaling(httpServer) {
             room = await getOrCreateRoom(roomId);
             room.ownerId = session.ownerId;
             const name = String(data.name || "").trim().slice(0, NAME_MAX) || "Guest";
-            const tagline = String(data.tagline || "").trim().slice(0, 60);
+            const tagline = String(data.tagline || "").trim().slice(0, 32);
             // Host role needs a dashboard login AND ownership of this
             // session — never client-claimed. Admins manage the system;
             // they don't host shows.

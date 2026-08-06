@@ -4,6 +4,12 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Portrait phone cameras crop like everyone else's tile, keeping the
+  **top** of the frame — in the live grid, recordings and streams alike
+- Banners are a fixed size: long text truncates instead of growing the
+  banner; title capped at 24 letters, subtitle at 32 (limits shown on
+  the join screen)
+
 - Noise reduction is now controlled **per guest from the host panel**
   (small NR button beside Mute/Spotlight, state visible at a glance);
   the guest-facing option is gone and it defaults to on

@@ -81,8 +81,8 @@ async function launch(state) {
   const cellW = 2 * Math.round(1280 / cols / 2);
   const cellH = 2 * Math.round(720 / rows / 2);
   const scaled = videos.map((v, k) =>
-    `[${v.i}:v]scale=${cellW}:${cellH}:force_original_aspect_ratio=decrease,` +
-    `pad=${cellW}:${cellH}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v${k}]`).join(";");
+    `[${v.i}:v]scale=${cellW}:${cellH}:force_original_aspect_ratio=increase,` +
+    `crop=${cellW}:${cellH}:(iw-${cellW})/2:0,setsar=1,fps=30[v${k}]`).join(";");
   const layout = videos.map((v, k) => `${(k % cols) * cellW}_${Math.floor(k / cols) * cellH}`);
   const stack = videos.length === 1
     ? "[v0]copy[vout]"

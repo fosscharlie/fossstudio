@@ -54,6 +54,7 @@ body {
   background: #000;
   border-radius: 8px;
   object-fit: cover;
+  object-position: center top;
   transform: scaleX(-1);
 }
 .mic-meter {
@@ -191,6 +192,8 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Portrait phone feeds: keep the top of the frame (faces), crop the rest */
+  object-position: center top;
 }
 .tile.self video { transform: scaleX(-1); }
 /* Full-width lower third: name plus a smaller info line */
@@ -200,9 +203,8 @@ body {
   position: absolute;
   left: 0;
   bottom: 0;
-  width: fit-content;
-  min-width: 28cqw;
-  max-width: 85cqw;
+  /* Fixed size: longer text truncates instead of growing the banner */
+  width: 38cqw;
   padding: 1.2cqw 2.4cqw 1.4cqw;
   border-top-right-radius: 1.5cqw;
   background: var(--banner-c, #1e2127);

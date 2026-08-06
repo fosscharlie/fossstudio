@@ -90,8 +90,8 @@ export async function processRecording(rec) {
     const cellH = 2 * Math.round(720 / rows / 2);
 
     const scaled = videos.map((p, i) =>
-      `[${p.vIdx}:v]scale=${cellW}:${cellH}:force_original_aspect_ratio=decrease,` +
-      `pad=${cellW}:${cellH}:(ow-iw)/2:(oh-ih)/2,setsar=1[v${i}]`).join(";");
+      `[${p.vIdx}:v]scale=${cellW}:${cellH}:force_original_aspect_ratio=increase,` +
+      `crop=${cellW}:${cellH}:(iw-${cellW})/2:0,setsar=1[v${i}]`).join(";");
     const layout = videos.map((p, i) =>
       `${(i % cols) * cellW}_${Math.floor(i / cols) * cellH}`);
     const stack = videos.length === 1
