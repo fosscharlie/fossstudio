@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Subscribe reminder casing: "Enjoying the show?" / "Subscribe and
+  turn on" / "ALL NOTIFICATIONS"
+
 - Portrait (vertical) camera feeds now crop to the **middle** of the
   frame instead of the top — in the live grid, the preview, recordings
   and streams alike
