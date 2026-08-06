@@ -270,6 +270,42 @@ api.get("/wallpaper", requireAuth, async (req, res) => {
   res.sendFile(path.join(config.dataDir, "uploads", path.basename(s.wallpaper)));
 });
 
+// Advertising banner for stream overlays: per-user image
+api.post("/adbanner", requireAuth,
+  express.raw({ type: ["image/jpeg", "image/png", "image/webp"], limit: "4mb" }),
+  async (req, res) => {
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+      return res.status(400).json({ error: "Send a JPEG, PNG, or WebP image." });
+    }
+    const ext = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }[req.headers["content-type"]];
+    const name = `ad-${req.user.uid}.${ext}`;
+    const dir = path.join(config.dataDir, "uploads");
+    await fs.mkdir(dir, { recursive: true });
+    for (const f of await fs.readdir(dir)) {
+      if (f.startsWith(`ad-${req.user.uid}.`)) await fs.unlink(path.join(dir, f));
+    }
+    await fs.writeFile(path.join(dir, name), req.body);
+    await updateSettings(req.user.uid, { adBanner: name });
+    res.json({ ok: true });
+  });
+
+api.delete("/adbanner", requireAuth, async (req, res) => {
+  const dir = path.join(config.dataDir, "uploads");
+  try {
+    for (const f of await fs.readdir(dir)) {
+      if (f.startsWith(`ad-${req.user.uid}.`)) await fs.unlink(path.join(dir, f));
+    }
+  } catch { /* nothing uploaded yet */ }
+  await updateSettings(req.user.uid, { adBanner: null });
+  res.json({ ok: true });
+});
+
+api.get("/adbanner", requireAuth, async (req, res) => {
+  const s = await getSettings(req.user.uid);
+  if (!s.adBanner) return res.status(404).end();
+  res.sendFile(path.join(config.dataDir, "uploads", path.basename(s.adBanner)));
+});
+
 // ---------- sessions ----------
 
 api.get("/sessions", requireAuth, async (req, res) => {

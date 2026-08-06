@@ -22,6 +22,7 @@ export async function getOrCreateRoom(roomId) {
         volumes: {},             // peerId -> 0..1.5
         muted: {},               // peerId -> true when mic is muted
         noise: {},               // peerId -> noise suppression on/off
+        hands: {},               // peerId -> wants to talk
         bannerColor: null,       // solid colour of the name banners
         bannerMulti: false,      // one colour per person instead
         bannerChoice: false,     // guests may pick their own colour
@@ -67,6 +68,7 @@ export function removePeer(room, peerId) {
   delete room.control.muted[peerId];
   delete room.control.bannerColors[peerId];
   delete room.control.noise[peerId];
+  delete room.control.hands[peerId];
   if (room.peers.size === 0) {
     try { room.router.close(); } catch { /* already closed */ }
     rooms.delete(room.id);

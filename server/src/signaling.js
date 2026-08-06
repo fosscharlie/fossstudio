@@ -2,6 +2,8 @@
 // Client sends {id, method, data}; server replies {id, ok, data|error}.
 // Server-initiated events are {event, data} with no id.
 import { WebSocketServer } from "ws";
+import path from "node:path";
+import { config } from "./config.js";
 import { createWebRtcTransport } from "./media.js";
 import {
   getOrCreateRoom, addPeer, removePeer, peerSummary, broadcast
@@ -15,7 +17,7 @@ import {
   addPeerToRecording, uploadCreds, markPeerDone
 } from "./recording/manager.js";
 import { capturePeer } from "./recording/serverRecorder.js";
-import { startStream, stopStream, isStreaming, refreshStream } from "./streaming.js";
+import { startStream, stopStream, isStreaming, refreshStream, showOverlay } from "./streaming.js";
 
 const ROOM_ID_RE = /^[a-zA-Z0-9_-]{4,32}$/;
 const BANNER_PALETTE = [
@@ -123,9 +125,19 @@ export function attachSignaling(httpServer) {
             break;
           }
 
+          case "raiseHand": {
+            if (!peer) return fail("not joined");
+            if (data.raised) room.control.hands[peer.id] = true;
+            else delete room.control.hands[peer.id];
+            reply({});
+            broadcast(room, null, { event: "control", data: room.control });
+            break;
+          }
+
           case "selfMute": {
             if (!peer) return fail("not joined");
             room.control.muted[peer.id] = !!data.muted;
+            if (!data.muted) delete room.control.hands[peer.id];
             for (const prod of peer.producers.values()) {
               if (prod.kind === "audio") {
                 data.muted ? await prod.pause() : await prod.resume();
@@ -191,6 +203,7 @@ export function attachSignaling(httpServer) {
                 const target = room.peers.get(data.peerId);
                 if (!target) return fail("no such guest");
                 c.muted[target.id] = !!data.muted;
+                if (!data.muted) delete c.hands[target.id];
                 for (const prod of target.producers.values()) {
                   if (prod.kind === "audio") {
                     data.muted ? await prod.pause() : await prod.resume();
@@ -220,6 +233,27 @@ export function attachSignaling(httpServer) {
                 } else {
                   broadcast(room, null, { event: "streaming", data: { live: false } });
                   await stopStream(room.id);
+                }
+                return reply({});
+              }
+              case "overlay": {
+                if (!isStreaming(room.id)) {
+                  return fail("Go live first — overlays appear on the stream.");
+                }
+                if (data.kind === "subscribe") {
+                  await showOverlay(room.id, { kind: "subscribe", duration: 7 });
+                } else if (data.kind === "ad") {
+                  const settings2 = await getSettings(room.ownerId);
+                  if (!settings2.adBanner) {
+                    return fail("Upload an advertising banner in Settings → Streaming first.");
+                  }
+                  await showOverlay(room.id, {
+                    kind: "ad",
+                    duration: 18,
+                    file: path.join(config.dataDir, "uploads", path.basename(settings2.adBanner))
+                  });
+                } else {
+                  return fail("unknown overlay");
                 }
                 return reply({});
               }

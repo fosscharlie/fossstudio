@@ -18,6 +18,9 @@ export async function updateSettings(uid, patch) {
   if (patch.wallpaper === null || typeof patch.wallpaper === "string") {
     clean.wallpaper = patch.wallpaper;
   }
+  if (patch.adBanner === null || typeof patch.adBanner === "string") {
+    clean.adBanner = patch.adBanner;
+  }
   if (typeof patch.streamUrl === "string") {
     const u = patch.streamUrl.trim();
     // file: destinations are for automated tests only

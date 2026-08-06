@@ -17,11 +17,11 @@
     previewError: $("previewError"), micMeterFill: $("micMeterFill"),
     session: $("session"), banner: $("banner"), grid: $("grid"),
     muteBtn: $("muteBtn"), camBtn: $("camBtn"), leaveBtn: $("leaveBtn"),
-    dimBtn: $("dimBtn"), hostPanel: $("hostPanel"),
+    dimBtn: $("dimBtn"), handBtn: $("handBtn"), hostPanel: $("hostPanel"),
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
     hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn"),
     hpServerRec: $("hpServerRec"), hpServerRecRow: $("hpServerRecRow"),
-    hpMuteAllBtn: $("hpMuteAllBtn"),
+    hpMuteAllBtn: $("hpMuteAllBtn"), hpSubBtn: $("hpSubBtn"), hpAdBtn: $("hpAdBtn"),
     hpBannerSwatches: $("hpBannerSwatches"), hpBannerHex: $("hpBannerHex"),
     hpBannerMulti: $("hpBannerMulti"), hpBannerChoice: $("hpBannerChoice"),
     myColorBtn: $("myColorBtn"), myColorPop: $("myColorPop")
@@ -35,9 +35,10 @@
     camOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 11l6-3.5v9l-2.2-1.3M15 13v2a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3h1M11 6h1a3 3 0 0 1 3 3v1M4 4l16 16"/></svg>',
     palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 1 9-9c0 2-1.5 3-3 3h-2a2 2 0 0 0-1.5 3.3c.4.5.5 1.2 0 1.7a2.6 2.6 0 0 1-2.5 1z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/><circle cx="17.5" cy="11.5" r="1"/></svg>',
     dim: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg>',
+    hand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V6a1.5 1.5 0 0 1 3 0v4V4.5a1.5 1.5 0 0 1 3 0V10V6a1.5 1.5 0 0 1 3 0v5.5l1.6-2.2a1.5 1.5 0 0 1 2.5 1.6L17.5 17a6 6 0 0 1-5.6 4H11a6 6 0 0 1-6-6v-4z"/></svg>',
     leave: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M15 16l4-4-4-4M19 12H9"/></svg>'
   };
-  for (const [id, icon] of [["muteBtn", "mic"], ["camBtn", "cam"], ["dimBtn", "dim"], ["leaveBtn", "leave"], ["myColorBtn", "palette"]]) {
+  for (const [id, icon] of [["muteBtn", "mic"], ["camBtn", "cam"], ["dimBtn", "dim"], ["leaveBtn", "leave"], ["myColorBtn", "palette"], ["handBtn", "hand"]]) {
     document.getElementById(id).innerHTML = ICONS[icon];
   }
 
@@ -594,6 +595,9 @@
       els.hpBannerMulti.classList.toggle("active", !!control.bannerMulti && !control.bannerChoice);
       els.hpBannerChoice.classList.toggle("active", !!control.bannerChoice);
     }
+    const myHand = !!control.hands?.[selfId];
+    els.handBtn.classList.toggle("hand-on", myHand);
+    els.handBtn.dataset.tip = myHand ? "Lower my hand" : "I want to talk";
     els.myColorBtn.hidden = !control.bannerChoice;
     if (!control.bannerChoice) els.myColorPop.hidden = true;
     else if (!els.myColorPop.hidden) renderMyColors();
@@ -634,6 +638,7 @@
       const muted = !!control.muted?.[peerId];
       const nrOn = !!control.noise?.[peerId];
       row.dataset.peerId = peerId;
+      row.classList.toggle("hand", !!control.hands?.[peerId]);
       row.innerHTML = `
         <div class="hp-name">
           <span></span>
@@ -644,7 +649,8 @@
         <div class="hp-meter"><div class="hp-meter-fill"></div></div>
         <input type="range" min="0" max="150" value="${vol}" aria-label="Volume">
         <span class="hp-vol">${vol}%</span>`;
-      row.querySelector("span").textContent = isSelf ? `${tile.name} (you)` : tile.name;
+      row.querySelector("span").textContent =
+        (control.hands?.[peerId] ? "✋ " : "") + (isSelf ? `${tile.name} (you)` : tile.name);
       row.querySelector(".nr").onclick = () => {
         request("hostControl", { action: "noise", peerId, enabled: !nrOn });
       };
@@ -761,11 +767,22 @@
     }
   }, 120);
 
+  els.handBtn.onclick = () => {
+    const raised = !els.handBtn.classList.contains("hand-on");
+    request("raiseHand", { raised }).catch(() => {});
+  };
+
   els.dimBtn.onclick = () => {
     const on = document.body.classList.toggle("dim-ui");
     els.dimBtn.classList.toggle("dim-on", on);
     els.dimBtn.dataset.tip = on ? "Brighten the controls" : "Dim the controls";
   };
+  els.hpSubBtn.onclick = () =>
+    request("hostControl", { action: "overlay", kind: "subscribe" })
+      .catch((e) => alert(e.message));
+  els.hpAdBtn.onclick = () =>
+    request("hostControl", { action: "overlay", kind: "ad" })
+      .catch((e) => alert(e.message));
   els.hpMuteAllBtn.onclick = () =>
     request("hostControl", { action: "muteAll" })
       .catch((e) => console.error("mute all failed:", e.message));

@@ -4,6 +4,14 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Stream overlays**: host-panel buttons play a subscribe/notification-
+  bell animation or show an uploaded advertising banner on the live
+  YouTube stream for a few seconds (ad banner uploads live in
+  Settings → Streaming)
+- **Raise hand**: guests press a hand button when they want to talk;
+  their row lights up in the host panel, and unmuting them lowers it
+- Mute lights turn red; colour picker spacing fixed
+
 - Portrait phone cameras crop like everyone else's tile, keeping the
   **top** of the frame — in the live grid, recordings and streams alike
 - Banners are a fixed size: long text truncates instead of growing the

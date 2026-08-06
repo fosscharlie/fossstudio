@@ -445,6 +445,7 @@
     currentAccent = s.accent;
     renderSwatches();
     updateWallpaperPreview(s.wallpaper);
+    updateAdPreview(!!s.adBanner);
   }
 
   function updateWallpaperPreview(name) {
@@ -468,6 +469,32 @@
     });
     $("themeMsg").hidden = false;
     setTimeout(() => { $("themeMsg").hidden = true; }, 2000);
+  };
+
+  function updateAdPreview(has) {
+    const el = $("adPreview");
+    if (has) {
+      el.style.backgroundImage = `url(/api/adbanner?${Date.now()})`;
+      el.textContent = "";
+    } else {
+      el.style.backgroundImage = "";
+      el.textContent = "No banner uploaded";
+    }
+  }
+  $("adPick").onclick = () => $("adFile").click();
+  $("adFile").onchange = async () => {
+    const file = $("adFile").files[0];
+    if (!file) return;
+    await fetch("/api/adbanner", {
+      method: "POST",
+      headers: { "Content-Type": file.type },
+      body: file
+    }).then(async (r) => { if (!r.ok) throw new Error((await r.json()).error); });
+    updateAdPreview(true);
+  };
+  $("adRemove").onclick = async () => {
+    await apiFetch("/api/adbanner", { method: "DELETE" });
+    updateAdPreview(false);
   };
 
   $("wallpaperPick").onclick = () => $("wallpaperFile").click();

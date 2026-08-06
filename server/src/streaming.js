@@ -9,6 +9,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import crypto from "node:crypto";
+import { fileURLToPath } from "node:url";
+
+const ASSETS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "assets");
 
 const streams = new Map(); // roomId -> state
 
@@ -75,6 +78,8 @@ async function launch(state) {
   const videos = inputs.map((x, i) => ({ ...x, i })).filter((x) => x.kind === "video");
   const audios = inputs.map((x, i) => ({ ...x, i })).filter((x) => x.kind === "audio");
   if (videos.length === 0) throw new Error("nothing to stream yet");
+  const overlay = state.pendingOverlay || null;
+  state.pendingOverlay = null;
 
   const cols = Math.ceil(Math.sqrt(videos.length));
   const rows = Math.ceil(videos.length / cols);
@@ -93,6 +98,26 @@ async function launch(state) {
       ? `[${audios[0].i}:a]aresample=44100[aout]`
       : `${audios.map((a) => `[${a.i}:a]`).join("")}amix=inputs=${audios.length}:normalize=0,aresample=44100[aout]`;
 
+  // Optional one-shot overlay (subscribe reminder / ad banner): part of
+  // this launch's graph, slides in, auto-expires via its enable window.
+  let overlayArgs = [];
+  let finalLabel = "[vout]";
+  let overlayFilter = "";
+  if (overlay) {
+    const oi = inputs.length;
+    const D = overlay.duration;
+    const slide = (margin) =>
+      `'main_h-(overlay_h+${margin})*clip(min(t/0.5\,(${D}-t)/0.5)\,0\,1)+${margin}*0'`;
+    if (overlay.kind === "subscribe") {
+      overlayArgs = ["-i", path.join(ASSETS, "subscribe.mp4")];
+      overlayFilter = `;[${oi}:v]scale=1280:-2[ovv];[vout][ovv]overlay=x=0:y=${slide(0)}:eof_action=pass:enable='lte(t\,${D})'[vfin]`;
+    } else {
+      overlayArgs = ["-loop", "1", "-i", overlay.file];
+      overlayFilter = `;[${oi}:v]scale=-2:150[ovv];[vout][ovv]overlay=x=main_w-overlay_w-24:y=${slide(24)}:eof_action=pass:enable='lte(t\,${D})'[vfin]`;
+    }
+    finalLabel = "[vfin]";
+  }
+
   // "file:" destinations exist for tests; anything else goes out as RTMP
   const dest = state.rtmpUrl.startsWith("file:")
     ? [state.rtmpUrl.slice(5)]
@@ -106,8 +131,9 @@ async function launch(state) {
       "-analyzeduration", "10M", "-probesize", "10M",
       "-i", x.sdpPath
     ]),
-    "-filter_complex", `${scaled};${stack};${amix}`,
-    "-map", "[vout]", "-map", "[aout]",
+    ...overlayArgs,
+    "-filter_complex", `${scaled};${stack};${amix}${overlayFilter}`,
+    "-map", finalLabel, "-map", "[aout]",
     "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
     "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k", "-g", "60",
     "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
@@ -172,6 +198,21 @@ export function refreshStream(roomId) {
       state.relaunching = false;
     }
   }, 2000);
+}
+
+// Relaunch immediately with a one-shot overlay in the graph
+export async function showOverlay(roomId, spec) {
+  const state = streams.get(roomId);
+  if (!state || state.stopping) throw new Error("not streaming");
+  if (state.relaunching) throw new Error("stream is busy, try again in a moment");
+  state.relaunching = true;
+  try {
+    state.pendingOverlay = spec;
+    await teardown(state.current);
+    await launch(state);
+  } finally {
+    state.relaunching = false;
+  }
 }
 
 export async function stopStream(roomId) {

@@ -61,6 +61,16 @@
           <button class="btn primary" id="saveStreamBtn">Save streaming settings</button>
           <span class="msg ok" id="streamMsg" hidden>✓ Saved</span>
         </div>
+        <div class="panel">
+          <h2>Advertising banner</h2>
+          <p class="hint" style="margin-bottom:0.8rem">Shown on the live stream when you press "Ad banner" in the host panel — good for sponsors. Wide and short works best (e.g. 900×150). JPEG, PNG or WebP, up to 4 MB.</p>
+          <div class="wallpaper-preview" id="adPreview" style="aspect-ratio: 6 / 1">No banner uploaded</div>
+          <div style="display:flex; gap:0.6rem; margin-top:0.8rem">
+            <button class="btn" id="adPick">Upload banner</button>
+            <button class="btn" id="adRemove">Remove</button>
+            <input type="file" id="adFile" accept="image/jpeg,image/png,image/webp" hidden>
+          </div>
+        </div>
       </section>
 
       <!-- Theme: branding -->

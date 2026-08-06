@@ -320,6 +320,7 @@ body.dim-ui .host-panel:hover,
 body.dim-ui .banner:hover { opacity: 1; }
 .controls, .host-panel, .banner { transition: opacity 250ms ease; }
 .ctl.dim-on { background: #3a3f2a; border-color: #6b7a3f; }
+.ctl.hand-on { background: #fbc711; color: #14161a; border-color: transparent; }
 .my-colors {
   position: absolute;
   bottom: calc(100% + 10px);
@@ -350,6 +351,7 @@ body.dim-ui .banner:hover { opacity: 1; }
 .hp-btn:hover { border-color: var(--lm-muted-fg); }
 .hp-btn.active { background: var(--lm-accent); color: var(--lm-on-accent); border-color: transparent; }
 .hp-btn.record { border-color: rgba(243, 66, 54, 0.45); }
+.hp-btn.mute.active { background: var(--lm-danger); color: #fff; border-color: transparent; }
 .hp-btn.rec-on { background: var(--lm-danger); color: #fff; border-color: transparent; }
 .hp-toggle {
   display: flex;
@@ -385,10 +387,10 @@ body.dim-ui .banner:hover { opacity: 1; }
 .hp-color { margin: 0.9rem 0; }
 .hp-color-label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; }
 .hp-color-row { display: flex; gap: 0.5rem; align-items: center; }
-.hp-swatches { display: flex; gap: 0.35rem; flex-wrap: nowrap; }
+.hp-swatches { display: flex; gap: 0.25rem; flex-wrap: nowrap; }
 .hp-swatch {
   flex-shrink: 0;
-  width: 1.55rem; height: 1.55rem;
+  width: 1.45rem; height: 1.45rem;
   border-radius: 50%;
   border: 2px solid var(--lm-btn-border);
   padding: 0;
@@ -402,15 +404,16 @@ body.dim-ui .banner:hover { opacity: 1; }
   font: inherit;
   font-size: 0.85rem;
   flex: 1;
-  min-width: 0;
-  width: 4.5rem;
+  min-width: 5.4rem;
+  width: 5.4rem;
   padding: 0.35rem 0.6rem;
   border: 1px solid var(--lm-btn-border);
   border-radius: 0.6rem;
   background: var(--lm-muted);
   color: var(--lm-fg);
 }
-.hp-guest { border-top: 1px solid var(--lm-line); padding: 0.8rem 0; }
+.hp-guest { border-top: 1px solid var(--lm-line); padding: 0.8rem 0.5rem; margin: 0 -0.5rem; }
+.hp-guest.hand { background: rgba(251, 199, 17, 0.14); border-radius: 10px; }
 .hp-guest .hp-name { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; }
 .hp-guest .hp-name button { margin-left: auto; flex: 0 0 auto; }
 .hp-guest .hp-name button + button { margin-left: 0; }
