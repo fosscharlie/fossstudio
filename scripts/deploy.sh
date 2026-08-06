@@ -25,7 +25,11 @@ run "ln -s $BASE/.env $BASE/releases/$RELEASE/.env \
   && ln -sfn $BASE/releases/$RELEASE $BASE/current"
 
 echo "== Starting stack =="
-run "cd $BASE/current && DATA_PATH=$BASE/data docker compose -p fossstudio up -d --build --remove-orphans"
+# Run compose from the release dir itself (not the `current` symlink):
+# bind-mount paths then change every release, so containers are
+# recreated exactly when their files changed. Docker pins symlink
+# targets at container creation, which once left stale files serving.
+run "cd $BASE/releases/$RELEASE && DATA_PATH=$BASE/data docker compose -p fossstudio up -d --build --remove-orphans"
 
 echo "== Health check =="
 sleep 3

@@ -1,4 +1,5 @@
-// Website screenshots: real UI, gradient fake cameras, themed session.
+// Website screenshots. Two separate sessions and a solo preview so no
+// generated face appears in more than one image on the site.
 import { chromium } from "playwright";
 import fs from "node:fs";
 import { hostLogin, TEST_HOST } from "./helpers.mjs";
@@ -9,7 +10,6 @@ const CAMS = "/tmp/claude-1000/-home-charlie-GitHub-fossstudio/30aef10b-264b-440
 const OUT = "/home/charlie/GitHub/fossstudio/docs/shots";
 fs.mkdirSync(OUT, { recursive: true });
 
-// Sessions list should look like a real show's
 const cookie = await hostLogin(B, PW);
 const mk = (title) => fetch(`${B}/api/sessions`, {
   method: "POST",
@@ -18,9 +18,10 @@ const mk = (title) => fetch(`${B}/api/sessions`, {
 }).then((r) => r.json());
 await mk("Episode 41 — Package managers, ranked");
 await mk("Episode 40 — The systemd episode");
-const main = await mk("Episode 42 — Live from FOSDEM");
+const sessionA = await mk("Episode 42 — Live from FOSDEM");
+const sessionB = await mk("Episode 39 — Homelab horror stories");
 
-async function studio(cam, name, asHost) {
+async function studio(cam, name, tagline, sessionId, asHost) {
   const browser = await chromium.launch({
     args: [
       "--use-fake-device-for-media-stream",
@@ -44,36 +45,47 @@ async function studio(cam, name, asHost) {
     await login.close();
   }
   const page = await ctx.newPage();
-  await page.goto(`${B}/s/${main.id}${asHost ? "?as=host" : ""}`);
+  await page.goto(`${B}/s/${sessionId}${asHost ? "?as=host" : ""}`);
   await page.waitForSelector("#joinBtn:not([disabled])");
   await page.fill("#nameInput", name);
+  if (tagline) await page.fill("#taglineInput", tagline);
   return { browser, page };
 }
 
-const host = await studio("cam1.y4m", "Alex", true);
-const g2 = await studio("cam2.y4m", "Robin", false);
-const g3 = await studio("cam3.y4m", "Sam", false);
-
-// Preview screen shot before anyone joins (guest's view)
-await g2.page.screenshot({ path: `${OUT}/preview.png` });
-
-for (const s of [host, g2, g3]) {
-  await s.page.click("#joinBtn");
-  await s.page.waitForSelector("#session:not([hidden])");
+async function joinAll(list) {
+  for (const s of list) {
+    await s.page.click("#joinBtn");
+    await s.page.waitForSelector("#session:not([hidden])");
+  }
 }
+
+// --- Session A: the hero shot (three unique people) ---
+const a1 = await studio("vcam1.y4m", "Anna", "Host — awesomepodcast.org", sessionA.id, true);
+const a2 = await studio("vcam2.y4m", "Dev", "Kernel maintainer", sessionA.id, false);
+const a3 = await studio("vcam3.y4m", "Margot", "Author, Terminal Tales", sessionA.id, false);
+await joinAll([a1, a2, a3]);
 await new Promise((r) => setTimeout(r, 4000));
+await a1.page.screenshot({ path: `${OUT}/session.png` });
+for (const s of [a1, a2, a3]) await s.browser.close();
 
-// Hero: the live grid from the host's seat
-await host.page.screenshot({ path: `${OUT}/session.png` });
-
-// Host controls open
-await host.page.click("#hostPanelBtn");
+// --- Session B: host panel open (three different people) ---
+const b1 = await studio("vcam4.y4m", "Ken", "ken.codes", sessionB.id, true);
+const b2 = await studio("vcam5.y4m", "Amara", "Editor, Homelab Weekly", sessionB.id, false);
+const b3 = await studio("vcam6.y4m", "Rob", "SRE, selfhosted.town", sessionB.id, false);
+await joinAll([b1, b2, b3]);
+await new Promise((r) => setTimeout(r, 4000));
+await b1.page.click("#hostPanelBtn");
 await new Promise((r) => setTimeout(r, 500));
-await host.page.screenshot({ path: `${OUT}/host-panel.png` });
+await b1.page.screenshot({ path: `${OUT}/host-panel.png` });
+for (const s of [b1, b2, b3]) await s.browser.close();
 
-for (const s of [host, g2, g3]) await s.browser.close();
+// --- Preview: a seventh person, never seen elsewhere ---
+const p = await studio("vcam7.y4m", "", "", sessionA.id, false);
+await new Promise((r) => setTimeout(r, 800));
+await p.page.screenshot({ path: `${OUT}/preview.png` });
+await p.browser.close();
 
-// Dashboard shots
+// --- Dashboard shots (no faces) ---
 const plain = await chromium.launch();
 const dctx = await plain.newContext({ viewport: { width: 1560, height: 900 }, deviceScaleFactor: 2, colorScheme: "dark" });
 const dash = await dctx.newPage();
@@ -85,7 +97,6 @@ await dash.waitForURL("**/host/");
 await dash.waitForTimeout(700);
 await dash.screenshot({ path: `${OUT}/dashboard.png` });
 
-// Admin: hosts management
 const actx = await plain.newContext({ viewport: { width: 1560, height: 900 }, deviceScaleFactor: 2, colorScheme: "dark" });
 const admin = await actx.newPage();
 await admin.goto(`${B}/host/login.html`);
@@ -96,6 +107,8 @@ await admin.waitForURL("**/host/");
 await admin.waitForTimeout(700);
 await admin.click('#mainMenu button:has-text("Hosts")');
 await admin.waitForTimeout(400);
+await admin.click('.iconbtn[aria-label="Settings for testhost"]');
+await admin.waitForTimeout(300);
 await admin.screenshot({ path: `${OUT}/hosts.png` });
 
 await plain.close();

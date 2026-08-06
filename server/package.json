@@ -23,5 +23,6 @@
     "esbuild": "^0.28.1",
     "mediasoup-client": "^3.21.0",
     "playwright": "^1.62.1"
-  }
+  },
+  "license": "GPL-3.0-or-later"
 }

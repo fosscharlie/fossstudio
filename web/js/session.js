@@ -13,7 +13,7 @@
     camSelect: $("camSelect"), micSelect: $("micSelect"), noiseSelect: $("noiseSelect"),
     spkSelect: $("spkSelect"), spkRow: $("spkRow"), spkTestBtn: $("spkTestBtn"),
     zoomSlider: $("zoomSlider"), zoomValue: $("zoomValue"), mirrorToggle: $("mirrorToggle"),
-    nameInput: $("nameInput"), joinBtn: $("joinBtn"),
+    nameInput: $("nameInput"), taglineInput: $("taglineInput"), joinBtn: $("joinBtn"),
     previewError: $("previewError"), micMeterFill: $("micMeterFill"),
     session: $("session"), banner: $("banner"), grid: $("grid"),
     muteBtn: $("muteBtn"), camBtn: $("camBtn"), leaveBtn: $("leaveBtn"),
@@ -42,7 +42,8 @@
         spk: els.spkSelect.value,
         noise: els.noiseSelect.value,
         mirror: els.mirrorToggle.checked,
-        name: els.nameInput.value.trim()
+        name: els.nameInput.value.trim(),
+        tagline: els.taglineInput.value.trim()
       }));
     } catch { /* private browsing */ }
   }
@@ -264,6 +265,7 @@
       // Bring back last time's choices where the devices still exist
       const prefs = loadPrefs();
       if (prefs.name && !els.nameInput.value) els.nameInput.value = prefs.name;
+      if (prefs.tagline && !els.taglineInput.value) els.taglineInput.value = prefs.tagline;
       if (prefs.noise) els.noiseSelect.value = prefs.noise;
       if (typeof prefs.mirror === "boolean") els.mirrorToggle.checked = prefs.mirror;
       applyMirror();
@@ -362,7 +364,7 @@
   // Remote audio plays through a per-guest GainNode so the host's
   // volume sliders affect what everyone hears, including recordings.
 
-  function makeTile(peerId, name, isSelf) {
+  function makeTile(peerId, name, isSelf, tagline = "") {
     const el = document.createElement("div");
     el.className = "tile" + (isSelf ? " self" : "");
     el.dataset.peerId = peerId;
@@ -370,10 +372,19 @@
     video.autoplay = true;
     video.playsInline = true;
     video.muted = true; // audio goes through the gain graph, not the element
+    const third = document.createElement("div");
+    third.className = "lower-third";
     const nameEl = document.createElement("div");
     nameEl.className = "name";
     nameEl.textContent = name;
-    el.append(video, nameEl);
+    third.appendChild(nameEl);
+    if (tagline) {
+      const tagEl = document.createElement("div");
+      tagEl.className = "tagline";
+      tagEl.textContent = tagline;
+      third.appendChild(tagEl);
+    }
+    el.append(video, third);
     els.grid.appendChild(el);
     const stream = new MediaStream();
     video.srcObject = stream;
@@ -618,6 +629,7 @@
       selfName = els.nameInput.value.trim() || "Guest";
       const info = await request("join", {
         name: selfName,
+        tagline: els.taglineInput.value.trim(),
         role: wantHost ? "host" : "guest"
       });
       selfId = info.peerId;
@@ -671,15 +683,15 @@
         audioCtx.setSinkId(els.spkSelect.value).catch(() => {});
       }
 
-      const selfTile = makeTile(selfId, selfName, true);
+      const selfTile = makeTile(selfId, selfName, true, els.taglineInput.value.trim());
       selfTile.stream.addTrack(videoTrack);
       applyMirror();
       for (const p of info.peers) {
-        makeTile(p.id, p.name, false);
+        makeTile(p.id, p.name, false, p.tagline);
         for (const prod of p.producers) await consumeProducer(p.id, prod.id);
       }
 
-      eventHandlers.peerJoined = (p) => makeTile(p.id, p.name, false);
+      eventHandlers.peerJoined = (p) => makeTile(p.id, p.name, false, p.tagline);
       eventHandlers.peerLeft = ({ peerId }) => removeTile(peerId);
       eventHandlers.newProducer = ({ peerId, producerId }) =>
         consumeProducer(peerId, producerId).catch(console.error);

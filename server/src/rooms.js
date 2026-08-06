@@ -32,13 +32,14 @@ export function getRoom(roomId) {
   return rooms.get(roomId);
 }
 
-export function addPeer(room, { name, role, socket }) {
+export function addPeer(room, { name, tagline, role, socket }) {
   if (room.peers.size >= MAX_GUESTS) {
     throw Object.assign(new Error("session full"), { code: "ROOM_FULL" });
   }
   const peer = {
     id: crypto.randomUUID(),
     name,
+    tagline: tagline || "",
     role, // "host" | "guest"
     socket,
     transports: new Map(),
@@ -66,6 +67,7 @@ export function peerSummary(peer) {
   return {
     id: peer.id,
     name: peer.name,
+    tagline: peer.tagline,
     role: peer.role,
     producers: [...peer.producers.values()].map((p) => ({
       id: p.id,

@@ -15,5 +15,6 @@ previous="$(ls -1t $BASE/releases | grep -vx "$current" | head -1)"
 if [ -z "$previous" ]; then echo "No previous release to roll back to."; exit 1; fi
 echo "Rolling back: $current -> $previous"
 ln -sfn "$BASE/releases/$previous" "$BASE/current"
-cd "$BASE/current" && DATA_PATH=$BASE/data docker compose -p fossstudio up -d --build --remove-orphans
+# From the release dir, not the symlink — see deploy.sh
+cd "$BASE/releases/$previous" && DATA_PATH=$BASE/data docker compose -p fossstudio up -d --build --remove-orphans
 EOF

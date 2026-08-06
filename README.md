@@ -25,7 +25,8 @@ dashboard. Live at https://app.fossstudio.org.
   branded HTML template with a plain-text fallback.
 
 See [CHANGELOG.md](CHANGELOG.md) for release history and
-[SECURITY.md](SECURITY.md) for the security policy.
+[SECURITY.md](SECURITY.md) for the security policy. FOSSStudio is free
+software under the [GNU GPL v3](LICENSE).
 
 ## Stack
 
