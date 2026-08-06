@@ -54,6 +54,9 @@ await host.$$eval(".hp-guest .lower", (btns) => btns[0].click());
 await new Promise((r) => setTimeout(r, 1000));
 check("lower-hand clears the highlight",
   await host.$$eval(".hp-guest", (rows) => !rows.some((r) => r.classList.contains("hand"))));
+// Guest joined muted by default: start the mute/hand dance unmuted
+await guest.click("#muteBtn");
+await new Promise((r) => setTimeout(r, 800));
 await guest.click("#handBtn"); // raise again for the unmute-clears path
 await new Promise((r) => setTimeout(r, 800));
 // unmuting via host clears the hand

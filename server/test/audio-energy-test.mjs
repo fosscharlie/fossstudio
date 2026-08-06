@@ -24,6 +24,8 @@ async function join(room, name, noise) {
 async function measure(noise) {
   const room = await makeRoom(B, PW);
   const sender = await join(room, "Sender", noise);
+  // Guests join muted by default: unmute the sender for the measurement
+  await sender.click("#muteBtn");
   const receiver = await join(room, "Receiver", false);
   await new Promise((r) => setTimeout(r, 2000));
   const rms = await receiver.evaluate(() => new Promise((resolve) => {

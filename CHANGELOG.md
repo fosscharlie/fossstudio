@@ -4,6 +4,10 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- **Guests join muted by default** — mic button starts muted, the tile
+  shows the badge, and the mic only opens when the guest unmutes
+  themselves (or the host unmutes them)
+
 - Banner palette: the last swatch is now the default banner grey
   (#1e2127) instead of green, so the host can always click back to the
   default look

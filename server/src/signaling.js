@@ -70,6 +70,8 @@ export function attachSignaling(httpServer) {
             const role = canHost && data.role === "host" ? "host" : "guest";
             peer = addPeer(room, { name, tagline, role, socket });
             room.control.noise[peer.id] = !!data.noiseOn;
+            // Guests arrive muted; they can unmute themselves when ready
+            if (role === "guest") room.control.muted[peer.id] = true;
             const settings = await getSettings(room.ownerId);
             const { findById } = await import("./users.js");
             const canServerRecord = role === "host" &&
@@ -379,6 +381,10 @@ export function attachSignaling(httpServer) {
             });
             peer.producers.set(producer.id, producer);
             producer.on("transportclose", () => peer.producers.delete(producer.id));
+            // Join-muted (or host-muted) peers: their mic arrives paused
+            if (producer.kind === "audio" && room.control.muted[peer.id]) {
+              await producer.pause();
+            }
             reply({ producerId: producer.id });
             broadcast(room, peer.id, {
               event: "newProducer",

@@ -32,6 +32,17 @@ const g1 = await join("Greta", false);
 const g2 = await join("Gus", false);
 await new Promise((r) => setTimeout(r, 3000));
 
+// Guests arrive muted by default; the host doesn't
+check("guests join muted by default, host does not",
+  (await g1.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))) &&
+  (await g2.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))) &&
+  !(await host.evaluate(() => document.querySelector("#muteBtn").classList.contains("off"))));
+
+// Both unmute themselves so the rest of the flow starts from live mics
+await g1.click("#muteBtn");
+await g2.click("#muteBtn");
+await new Promise((r) => setTimeout(r, 1200));
+
 check("host panel lists self first with you-icon",
   await host.$eval(".hp-guest .hp-name-line", (el) => !!el.querySelector(".you-ico")));
 check("self row has slider plus its own Mute and Spotlight",

@@ -1101,6 +1101,9 @@
       }
       window.__noiseApplied = appliedNoise;
       micProducer = await sendTransport.produce({ track: sendAudio, appData: { source: "mic" } });
+      // Guests join muted (server marks it in control): sync the local
+      // producer and the mic button straight away
+      if (control.muted?.[selfId]) setMicMuted(true);
       camProducer = await sendTransport.produce({
         track: videoTrack,
         encodings: [{ maxBitrate: 1_200_000 }],
