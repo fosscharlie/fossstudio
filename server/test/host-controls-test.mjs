@@ -46,8 +46,10 @@ check("host sees the host-controls button",
   await host.$eval("#hostPanelBtn", (el) => !el.hidden));
 check("guest without login cookie does NOT get host powers",
   await guest.$eval("#hostPanelBtn", (el) => el.hidden));
+const themeName = await host.evaluate(() =>
+  fetch("/api/theme").then((r) => r.json()).then((t) => t.podcastName));
 check("theme banner applied from settings",
-  (await host.$eval("#banner", (el) => el.textContent)) === "Linux OTC");
+  (await host.$eval("#banner", (el) => el.textContent)) === themeName);
 
 // Open panel, spotlight the guest
 await host.click("#hostPanelBtn");
