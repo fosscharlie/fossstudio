@@ -2,7 +2,10 @@
 
 All notable changes to FOSSStudio are documented here.
 
-## Unreleased
+## 1.2.0 — 2026-08-06
+
+A day of host-driven refinement: the session view, host panel and
+recording pipeline all now match what is on screen.
 
 - **Host panel tidied**: the browser/server recording switch is now an
   icon button beside Go live and Auto level (lit when server mode is

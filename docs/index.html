@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FOSSStudio — self-hosted video podcast studio</title>
-<meta name="description" content="FOSSStudio is a free, open-source, self-hosted video podcast studio. Guests join by link with no account. Lossless recordings, noise suppression, YouTube streaming — all on your own server.">
+<title>FOSSStudio: self-hosted video podcast studio</title>
+<meta name="description" content="FOSSStudio is a free, open-source, self-hosted video podcast studio. Guests join by link with no account. Lossless recordings, noise suppression, YouTube streaming, all on your own server.">
 <link rel="icon" href="icon.png">
-<meta property="og:title" content="FOSSStudio — self-hosted video podcast studio">
-<meta property="og:description" content="Guests click a link and they're in. Lossless recordings, noise suppression, YouTube streaming — on your own server.">
+<meta property="og:title" content="FOSSStudio: self-hosted video podcast studio">
+<meta property="og:description" content="Guests click a link and they're in. Lossless recordings, noise suppression, YouTube streaming, on your own server.">
 <meta property="og:image" content="https://fossstudio.org/shots/session.jpg">
 <script type="application/ld+json">
 {
@@ -285,7 +285,7 @@
 <header class="hero">
   <div class="wrap">
     <h1><span class="foss">FOSS</span>Studio</h1>
-    <p class="tag">The video podcast studio you run on your own server. Guests click a link and they're in — no accounts, no cloud, no subscription.</p>
+    <p class="tag">The video podcast studio you run on your own server. Guests click a link and they're in. No accounts, no cloud, no subscription.</p>
     <a class="cta primary" href="https://github.com/fosscharlie/fossstudio">Get the code</a>
     <a class="cta ghost" href="#self-host">Self-host it</a>
     <div class="frame">
@@ -300,12 +300,12 @@
   <div class="duo">
     <div>
       <span class="eyebrow" style="color:var(--blue); border-color:var(--blue)">For guests</span>
-      <h3>Guests just… join</h3>
-      <p>Send one link. Your guest picks their camera, microphone and speaker, hears a test sound, watches their mic level bounce, zooms their camera if they like — then clicks join.</p>
+      <h3>Guests just join</h3>
+      <p>Send one link. Your guest picks their camera, microphone and speaker, hears a test sound, watches their mic level bounce, zooms their camera if they like, then clicks join.</p>
       <ul>
         <li>No account, no app install, phone-friendly</li>
         <li>RNNoise noise suppression on by default</li>
-        <li>Everyone joins muted — no accidental hot mics</li>
+        <li>Everyone joins muted, so there are no accidental hot mics</li>
         <li>Their choices are remembered for next time</li>
       </ul>
     </div>
@@ -342,7 +342,7 @@
     <div>
       <span class="eyebrow" style="color:var(--teal); border-color:var(--teal)">Daily driving</span>
       <h3>A dashboard, not a config file</h3>
-      <p>Sessions, recordings, branding, stream keys, backups — everything is a button. The server looks after HTTPS certificates, daily backups and health checks itself.</p>
+      <p>Sessions, recordings, branding, stream keys, backups: everything is a button. The server looks after HTTPS certificates, daily backups and health checks itself.</p>
       <ul>
         <li>Recordings appear processed and ready to download</li>
         <li>One combined MKV + a lossless FLAC per person</li>
@@ -355,11 +355,11 @@
 
 <section class="wrap" id="multihost">
   <div class="duo flip">
-    <div class="shot"><img src="shots/hosts.png" alt="The admin view for managing host accounts, with a per-host settings drawer" loading="lazy"></div>
+    <div class="shot"><img src="shots/hosts.png" alt="The admin view for managing host accounts and email invites" loading="lazy"></div>
     <div>
       <span class="eyebrow" style="color:var(--orange); border-color:var(--orange)">For teams</span>
       <h3>One server, many shows</h3>
-      <p>An admin account invites hosts by email — each host sets their own password and gets their own sessions, recordings, banner, wallpaper and YouTube stream key. Two shows can record at the same time without ever seeing each other.</p>
+      <p>An admin account invites hosts by email; each host sets their own password and gets their own sessions, recordings, banner, wallpaper and YouTube stream key. Two shows can record at the same time without ever seeing each other.</p>
       <ul>
         <li>Each host manages their own theme, sessions and stream key</li>
         <li>Optional two-factor login for every account</li>
@@ -373,14 +373,14 @@
   <h2>And the rest</h2>
   <p class="lead">Everything else that comes in the box.</p>
   <div class="grid">
-    <div class="card" style="--c:var(--yellow)"><span class="dot">🔍</span><h3>Camera zoom</h3><p>Guests can zoom their camera right on the preview screen — real lens zoom where the camera supports it, digital crop-zoom everywhere else. Rare even in the paid tools.</p></div>
-    <div class="card" style="--c:var(--red)"><span class="dot">●</span><h3>Lossless recording</h3><p>Browser-side per-person capture in raw PCM, converted to FLAC on the server — plus a combined video that matches the screen: every tile, name banners and overlays included.</p></div>
+    <div class="card" style="--c:var(--yellow)"><span class="dot">🔍</span><h3>Camera zoom</h3><p>Guests can zoom their camera right on the preview screen: real lens zoom where the camera supports it, digital crop-zoom everywhere else. Rare even in the paid tools.</p></div>
+    <div class="card" style="--c:var(--red)"><span class="dot">●</span><h3>Lossless recording</h3><p>Browser-side per-person capture in raw PCM, converted to FLAC on the server, plus a combined video that matches the screen: every tile, name banners and overlays included.</p></div>
     <div class="card" style="--c:var(--pink)"><span class="dot">📡</span><h3>YouTube live</h3><p>Server-composited 720p grid over RTMP, name banners and all. The grid rebuilds itself when someone joins or leaves.</p></div>
     <div class="card" style="--c:var(--blue)"><span class="dot">👥</span><h3>Up to 10 people</h3><p>A forwarding media engine (mediasoup) means a 2-core VPS handles a full grid comfortably.</p></div>
     <div class="card" style="--c:var(--teal)"><span class="dot">🗂</span><h3>No database</h3><p>Flat JSON files in one folder. Back it up, export it as a zip, restore it with a click.</p></div>
     <div class="card" style="--c:var(--green)"><span class="dot">🛡</span><h3>Privacy by default</h3><p>No CDNs, no trackers, no cookies for guests, no external calls. Even the font is self-hosted.</p></div>
     <div class="card" style="--c:var(--cyan)"><span class="dot">🌐</span><h3>Strict-network friendly</h3><p>A built-in TURN relay gets guests through corporate and mobile networks.</p></div>
-    <div class="card" style="--c:var(--purple)"><span class="dot">📱</span><h3>Installable</h3><p>The dashboard is a PWA with push notifications — know when a guest arrives or a recording is ready.</p></div>
+    <div class="card" style="--c:var(--purple)"><span class="dot">📱</span><h3>Installable</h3><p>The dashboard is a PWA with push notifications, so you know when a guest arrives or a recording is ready.</p></div>
     <div class="card" style="--c:var(--orange)"><span class="dot">🔧</span><h3>Operable by humans</h3><p>Daily backups with tested restore, uptime alerts by email, rollback deploys, and a plain-language runbook.</p></div>
   </div>
 </section>

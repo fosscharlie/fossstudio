@@ -105,9 +105,7 @@ await admin.click("button[type=submit]");
 await admin.waitForURL("**/host/");
 await admin.waitForTimeout(700);
 await admin.click('#mainMenu button:has-text("Hosts")');
-await admin.waitForTimeout(400);
-await admin.click('.iconbtn[aria-label="Settings for testhost"]');
-await admin.waitForTimeout(300);
+await admin.waitForTimeout(500);
 await admin.screenshot({ path: `${OUT}/hosts.png` });
 
 await plain.close();
