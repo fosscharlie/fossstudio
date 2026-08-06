@@ -100,6 +100,19 @@ export function attachSignaling(httpServer) {
             break;
           }
 
+          case "selfMute": {
+            if (!peer) return fail("not joined");
+            room.control.muted[peer.id] = !!data.muted;
+            for (const prod of peer.producers.values()) {
+              if (prod.kind === "audio") {
+                data.muted ? await prod.pause() : await prod.resume();
+              }
+            }
+            reply({});
+            broadcast(room, null, { event: "control", data: room.control });
+            break;
+          }
+
           case "hostControl": {
             if (!peer || peer.role !== "host") return fail("host only");
             const c = room.control;
@@ -116,6 +129,27 @@ export function attachSignaling(httpServer) {
               case "autoGain":
                 c.autoGain = !!data.enabled;
                 break;
+              case "mute": {
+                const target = room.peers.get(data.peerId);
+                if (!target) return fail("no such guest");
+                c.muted[target.id] = !!data.muted;
+                for (const prod of target.producers.values()) {
+                  if (prod.kind === "audio") {
+                    data.muted ? await prod.pause() : await prod.resume();
+                  }
+                }
+                break;
+              }
+              case "muteAll": {
+                for (const p2 of room.peers.values()) {
+                  if (p2.id === peer.id) continue; // not the host themself
+                  c.muted[p2.id] = true;
+                  for (const prod of p2.producers.values()) {
+                    if (prod.kind === "audio") await prod.pause();
+                  }
+                }
+                break;
+              }
               case "stream": {
                 if (data.start) {
                   const settings = await getSettings(room.ownerId);

@@ -21,7 +21,8 @@
     hpGridBtn: $("hpGridBtn"), hpSpotSelfBtn: $("hpSpotSelfBtn"),
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
     hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn"),
-    hpServerRec: $("hpServerRec"), hpServerRecRow: $("hpServerRecRow")
+    hpServerRec: $("hpServerRec"), hpServerRecRow: $("hpServerRecRow"),
+    hpMuteAllBtn: $("hpMuteAllBtn")
   };
 
   let previewStream = null;
@@ -472,6 +473,11 @@
     control = next;
     for (const [peerId, tile] of tiles) {
       if (tile.gain) tile.gain.gain.value = control.volumes[peerId] ?? 1;
+      tile.el.classList.toggle("muted", !!control.muted?.[peerId]);
+    }
+    if (micProducer && selfId) {
+      const mine = !!control.muted?.[selfId];
+      if (mine !== micProducer.paused) setMicMuted(mine);
     }
     applyAutoGain(!!control.autoGain);
     els.hpAutoGain.checked = !!control.autoGain;
@@ -483,30 +489,42 @@
 
   function renderHostGuests() {
     els.hpGuests.innerHTML = "";
-    for (const [peerId, tile] of tiles) {
-      if (peerId === selfId) continue;
+    // Self first, then everyone else
+    const order = [...tiles.keys()].sort((a, b) => (a === selfId ? -1 : b === selfId ? 1 : 0));
+    for (const peerId of order) {
+      const tile = tiles.get(peerId);
+      const isSelf = peerId === selfId;
       const row = document.createElement("div");
       row.className = "hp-guest";
       const vol = Math.round((control.volumes[peerId] ?? 1) * 100);
+      const muted = !!control.muted?.[peerId];
       row.innerHTML = `
         <div class="hp-name">
           <span></span>
-          <button class="hp-btn spot">Spotlight</button>
+          ${isSelf ? "" : `<button class="hp-btn mute">${muted ? "Unmute" : "Mute"}</button>
+          <button class="hp-btn spot">Spotlight</button>`}
         </div>
         <input type="range" min="0" max="150" value="${vol}" aria-label="Volume">
         <span class="hp-vol">${vol}%</span>`;
-      row.querySelector("span").textContent = tile.name;
-      const spotBtn = row.querySelector(".spot");
-      spotBtn.classList.toggle(
-        "active",
-        control.layout === "spotlight" && control.spotlightPeerId === peerId
-      );
-      spotBtn.onclick = () => {
-        const active = control.layout === "spotlight" && control.spotlightPeerId === peerId;
-        request("hostControl", active
-          ? { action: "layout", layout: "grid" }
-          : { action: "layout", layout: "spotlight", peerId });
-      };
+      row.querySelector("span").textContent = isSelf ? `${tile.name} (you)` : tile.name;
+      if (!isSelf) {
+        const muteBtn = row.querySelector(".mute");
+        muteBtn.classList.toggle("active", muted);
+        muteBtn.onclick = () => {
+          request("hostControl", { action: "mute", peerId, muted: !muted });
+        };
+        const spotBtn = row.querySelector(".spot");
+        spotBtn.classList.toggle(
+          "active",
+          control.layout === "spotlight" && control.spotlightPeerId === peerId
+        );
+        spotBtn.onclick = () => {
+          const active = control.layout === "spotlight" && control.spotlightPeerId === peerId;
+          request("hostControl", active
+            ? { action: "layout", layout: "grid" }
+            : { action: "layout", layout: "spotlight", peerId });
+        };
+      }
       const slider = row.querySelector("input");
       const volLabel = row.querySelector(".hp-vol");
       let sendTimer = null;
@@ -520,9 +538,6 @@
         }, 120);
       };
       els.hpGuests.appendChild(row);
-    }
-    if (els.hpGuests.children.length === 0) {
-      els.hpGuests.innerHTML = '<p class="hp-vol">No guests yet.</p>';
     }
   }
 
@@ -597,6 +612,9 @@
   els.hpGridBtn.onclick = () => request("hostControl", { action: "layout", layout: "grid" });
   els.hpSpotSelfBtn.onclick = () =>
     request("hostControl", { action: "layout", layout: "spotlight", peerId: selfId });
+  els.hpMuteAllBtn.onclick = () =>
+    request("hostControl", { action: "muteAll" })
+      .catch((e) => console.error("mute all failed:", e.message));
   els.hpAutoGain.onchange = () =>
     request("hostControl", { action: "autoGain", enabled: els.hpAutoGain.checked });
   els.hpRecordBtn.onclick = () =>
@@ -791,13 +809,18 @@
 
   els.joinBtn.onclick = join;
 
+  function setMicMuted(muted, { send = false } = {}) {
+    if (!micProducer) return;
+    muted ? micProducer.pause() : micProducer.resume();
+    micProducer.track.enabled = !muted;
+    els.muteBtn.classList.toggle("off", muted);
+    els.muteBtn.dataset.tip = muted ? "Unmute microphone" : "Mute microphone";
+    if (send) request("selfMute", { muted }).catch(() => {});
+  }
+
   els.muteBtn.onclick = () => {
     if (!micProducer) return;
-    const muting = !micProducer.paused;
-    muting ? micProducer.pause() : micProducer.resume();
-    micProducer.track.enabled = !muting;
-    els.muteBtn.classList.toggle("off", muting);
-    els.muteBtn.dataset.tip = muting ? "Unmute microphone" : "Mute microphone";
+    setMicMuted(!micProducer.paused, { send: true });
   };
 
   els.camBtn.onclick = () => {

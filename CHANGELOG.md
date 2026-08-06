@@ -4,6 +4,12 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Host panel: your own volume slider, per-guest **Mute/Unmute**, and a
+  **Mute everyone** button; muted guests show a 🔇 on their tile, and
+  mute state is shared so everyone's view agrees. Guests can still
+  unmute themselves.
+- Lower-third text doubled in size; accent stripe removed
+
 - **Fix**: joining with noise suppression crashed some Chromium-based
   browsers (seen in Brave Origin) — session audio is now routed to the
   chosen speaker via an audio element instead of the AudioContext call

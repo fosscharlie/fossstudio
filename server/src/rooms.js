@@ -20,6 +20,7 @@ export async function getOrCreateRoom(roomId) {
         layout: "grid",          // "grid" | "spotlight"
         spotlightPeerId: null,
         volumes: {},             // peerId -> 0..1.5
+        muted: {},               // peerId -> true when mic is muted
         autoGain: false          // per-session, host-toggled
       }
     };
@@ -57,6 +58,8 @@ export function removePeer(room, peerId) {
     try { t.close(); } catch { /* already closed */ }
   }
   room.peers.delete(peerId);
+  delete room.control.volumes[peerId];
+  delete room.control.muted[peerId];
   if (room.peers.size === 0) {
     try { room.router.close(); } catch { /* already closed */ }
     rooms.delete(room.id);
