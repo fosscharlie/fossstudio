@@ -528,7 +528,7 @@
 
   const BANNER_COLOURS = [
     "#fbc711", "#f34236", "#e8207e", "#9b26ae",
-    "#3d51b4", "#2295f1", "#019587", "#4bae4f"
+    "#3d51b4", "#2295f1", "#019587", "#1e2127"
   ];
 
   function sendBannerColor(c) {

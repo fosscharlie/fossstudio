@@ -23,7 +23,7 @@ import { startStream, stopStream, isStreaming, refreshStream, showOverlay } from
 const ROOM_ID_RE = /^[a-zA-Z0-9_-]{4,32}$/;
 const BANNER_PALETTE = [
   "#fbc711", "#f34236", "#e8207e", "#9b26ae",
-  "#3d51b4", "#2295f1", "#019587", "#4bae4f"
+  "#3d51b4", "#2295f1", "#019587", "#1e2127"
 ];
 const NAME_MAX = 24;
 

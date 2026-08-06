@@ -4,6 +4,10 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Banner palette: the last swatch is now the default banner grey
+  (#1e2127) instead of green, so the host can always click back to the
+  default look
+
 - Subscribe reminder casing: "Enjoying the show?" / "Subscribe and
   turn on" / "ALL NOTIFICATIONS"
 
