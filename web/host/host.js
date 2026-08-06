@@ -23,6 +23,7 @@
     { id: "recordings", label: "Recordings", hostOnly: true, subs: [
       { id: "library", label: "Library" }
     ] },
+    { id: "users", label: "Hosts", adminOnly: true, subs: [{ id: "users", label: "Manage hosts" }] },
     { id: "settings", label: "Settings", subs: [
       { id: "account", label: "Account" },
       { id: "twofactor", label: "Two-factor" },
@@ -30,7 +31,6 @@
       { id: "branding", label: "Podcast banner", hostOnly: true },
       { id: "wallpaper", label: "Wallpaper", hostOnly: true }
     ] },
-    { id: "users", label: "Hosts", adminOnly: true, subs: [{ id: "users", label: "Manage hosts" }] },
     { id: "system", label: "System", adminOnly: true, subs: [
       { id: "service", label: "Service" },
       { id: "email", label: "Email" },
@@ -77,7 +77,22 @@
     document.querySelectorAll("section[id^=pane-]").forEach((s) => {
       s.hidden = s.id !== `pane-${subId}`;
     });
+    // Remember the spot in the URL so a refresh comes back here
+    history.replaceState(null, "", `#${currentMenu.id}/${subId}`);
   }
+
+  // Restore #menu/sub from the URL; false if it doesn't point anywhere
+  function applyHash() {
+    const [m, sub] = location.hash.replace(/^#/, "").split("/");
+    const menu = visibleMenus().find((x) => x.id === m);
+    if (!menu) return false;
+    currentMenu = menu;
+    renderMainMenu();
+    const subs = visibleSubs(menu);
+    showSub((subs.find((x) => x.id === sub) || subs[0]).id);
+    return true;
+  }
+  window.addEventListener("hashchange", applyHash);
 
   $("logoutBtn").onclick = async () => {
     await apiFetch("/api/logout", { method: "POST" });
@@ -609,9 +624,11 @@
     $("accountRole").textContent = me.role === "admin"
       ? "Admin — creates and manages hosts, and looks after the system. Hosting shows is what host accounts are for."
       : "Host — your own sessions, recordings and settings.";
-    currentMenu = visibleMenus()[0];
-    renderMainMenu();
-    showSub(visibleSubs(currentMenu)[0].id);
+    if (!applyHash()) {
+      currentMenu = visibleMenus()[0];
+      renderMainMenu();
+      showSub(visibleSubs(currentMenu)[0].id);
+    }
     load2fa();
     if (me.role === "admin") {
       loadUsers();
