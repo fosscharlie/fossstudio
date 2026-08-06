@@ -19,9 +19,12 @@
       <video id="previewVideo" autoplay playsinline muted></video>
       <div id="micMeter" class="mic-meter"><div id="micMeterFill"></div></div>
     </div>
-    <label>Camera
-      <select id="camSelect"></select>
-    </label>
+    <div id="camRow">
+      <label>Camera
+        <select id="camSelect"></select>
+      </label>
+      <button type="button" id="mirrorBtn" class="small-btn iconish" aria-pressed="true" aria-label="Mirror my preview" data-tip="Mirror my preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18" stroke-dasharray="2 3"/><path d="M8 8L4 12l4 4M16 8l4 4-4 4"/></svg></button>
+    </div>
     <label><span class="lab">Zoom <span id="zoomValue" class="soft">1.0×</span></span>
       <input type="range" id="zoomSlider" min="1" max="3" step="0.1" value="1" aria-label="Camera zoom">
     </label>
@@ -34,10 +37,6 @@
       </label>
       <button type="button" id="spkTestBtn" class="small-btn">Play test sound</button>
     </div>
-    <label class="check">
-      <input type="checkbox" id="mirrorToggle" checked>
-      Mirror my preview
-    </label>
     <label><span class="lab">Banner title <span class="soft">(required - max 24 characters)</span></span>
       <input id="nameInput" maxlength="24" autocomplete="name" required>
     </label>

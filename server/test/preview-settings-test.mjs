@@ -42,9 +42,9 @@ await a.click("#spkTestBtn");
 await a.waitForTimeout(300);
 check("test sound played without page error", true);
 
-// Mirror off
-await a.uncheck("#mirrorToggle");
-check("mirror toggle unmirrors preview",
+// Mirror off via the button
+await a.click("#mirrorBtn");
+check("mirror button unmirrors preview",
   await a.$eval("#previewVideo", (el) => el.style.transform === "none"));
 
 // Join with zoom active; a second guest must still receive video
@@ -77,7 +77,7 @@ await a.waitForSelector("#joinBtn:not([disabled])");
 check("name remembered after reload",
   await a.$eval("#nameInput", (el) => el.value === "Zoomed Zoe"));
 check("mirror preference remembered",
-  await a.$eval("#mirrorToggle", (el) => !el.checked));
+  await a.$eval("#mirrorBtn", (el) => el.getAttribute("aria-pressed") === "false"));
 
 console.log(pass ? "ALL PASS" : "SOME CHECKS FAILED");
 await browser.close();

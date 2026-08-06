@@ -12,7 +12,7 @@
     preview: $("preview"), previewVideo: $("previewVideo"),
     camSelect: $("camSelect"), micSelect: $("micSelect"),
     spkSelect: $("spkSelect"), spkRow: $("spkRow"), spkTestBtn: $("spkTestBtn"),
-    zoomSlider: $("zoomSlider"), zoomValue: $("zoomValue"), mirrorToggle: $("mirrorToggle"),
+    zoomSlider: $("zoomSlider"), zoomValue: $("zoomValue"), mirrorBtn: $("mirrorBtn"),
     nameInput: $("nameInput"), taglineInput: $("taglineInput"), joinBtn: $("joinBtn"),
     previewError: $("previewError"), micMeterFill: $("micMeterFill"),
     session: $("session"), banner: $("banner"), grid: $("grid"),
@@ -60,7 +60,7 @@
         cam: els.camSelect.value,
         mic: els.micSelect.value,
         spk: els.spkSelect.value,
-        mirror: els.mirrorToggle.checked,
+        mirror: mirrored,
         name: els.nameInput.value.trim(),
         tagline: els.taglineInput.value.trim()
       }));
@@ -230,12 +230,16 @@
 
   // ---------- Mirror ----------
 
+  let mirrored = true;
   function applyMirror() {
-    els.previewVideo.style.transform = els.mirrorToggle.checked ? "scaleX(-1)" : "none";
+    els.previewVideo.style.transform = mirrored ? "scaleX(-1)" : "none";
     const self = tiles.get(selfId);
-    if (self) self.video.style.transform = els.mirrorToggle.checked ? "scaleX(-1)" : "none";
+    if (self) self.video.style.transform = mirrored ? "scaleX(-1)" : "none";
+    els.mirrorBtn.classList.toggle("active", mirrored);
+    els.mirrorBtn.setAttribute("aria-pressed", String(mirrored));
+    els.mirrorBtn.dataset.tip = mirrored ? "Stop mirroring my preview" : "Mirror my preview";
   }
-  els.mirrorToggle.onchange = applyMirror;
+  els.mirrorBtn.onclick = () => { mirrored = !mirrored; applyMirror(); };
 
   function stopPreview() {
     if (previewStream) {
@@ -317,7 +321,7 @@
       const prefs = loadPrefs();
       if (prefs.name && !els.nameInput.value) els.nameInput.value = prefs.name;
       if (prefs.tagline && !els.taglineInput.value) els.taglineInput.value = prefs.tagline;
-      if (typeof prefs.mirror === "boolean") els.mirrorToggle.checked = prefs.mirror;
+      if (typeof prefs.mirror === "boolean") mirrored = prefs.mirror;
       applyMirror();
       if (prefs.spk && [...els.spkSelect.options].some((o) => o.value === prefs.spk)) {
         els.spkSelect.value = prefs.spk;

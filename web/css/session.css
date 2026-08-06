@@ -93,8 +93,11 @@ body {
   gap: 0.5rem;
 }
 .preview-card .check input { width: auto; }
-#spkRow { display: flex; gap: 0.6rem; align-items: end; }
-#spkRow label { flex: 1; }
+#spkRow, #camRow { display: flex; gap: 0.6rem; align-items: end; }
+#spkRow label, #camRow label { flex: 1; }
+.small-btn.iconish { padding: 0.5rem 0.6rem; }
+.small-btn.iconish svg { width: 1.15rem; height: 1.15rem; display: block; }
+.small-btn.active { border-color: var(--accent, #4a7dbd); color: var(--accent, #4a7dbd); }
 .small-btn {
   font: inherit;
   font-size: 0.85rem;
