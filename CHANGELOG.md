@@ -2,6 +2,16 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased — security hardening
+
+- App container now runs as a non-root user (uid 1000) instead of root
+- Content-Security-Policy header added (strict script-src 'self'; the
+  two previously-inline dashboard scripts are now external files)
+- Data files (password hashes, SMTP credentials, sessions) are written
+  and stored owner-only (0600) instead of world-readable
+- Docker image rebuilds with OS patches (`apt upgrade` + `--pull` each
+  deploy); dependencies on patched node-tar/minimatch
+
 ## Unreleased
 
 - README rewritten for the public: no personal server links, and a

@@ -22,6 +22,8 @@ export async function writeJson(name, value) {
   const file = path.join(config.dataDir, name);
   await ensureDir(path.dirname(file));
   const tmp = `${file}.${process.pid}.tmp`;
-  await fs.writeFile(tmp, JSON.stringify(value, null, 2), "utf8");
+  // Owner-only: these files hold password hashes, SMTP credentials and
+  // session state — never world-readable.
+  await fs.writeFile(tmp, JSON.stringify(value, null, 2), { encoding: "utf8", mode: 0o600 });
   await fs.rename(tmp, file);
 }

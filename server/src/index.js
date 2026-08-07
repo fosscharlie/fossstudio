@@ -17,6 +17,25 @@ app.use((req, res, next) => {
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("Referrer-Policy", "same-origin");
   res.setHeader("Permissions-Policy", "camera=(self), microphone=(self), geolocation=()");
+  // Content Security Policy: everything loads from our own origin. No
+  // inline scripts (they were externalised); inline styles are still
+  // used as element style= attributes. blob:/data: cover the audio
+  // worklet and canvas-drawn banner images; wss: is the signaling
+  // socket. frame-ancestors none double-locks against clickjacking.
+  res.setHeader("Content-Security-Policy", [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    "media-src 'self' blob:",
+    "connect-src 'self' wss: ws:",
+    "worker-src 'self' blob:",
+    "font-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "object-src 'none'"
+  ].join("; "));
   // Pages and the service worker must always come from the server —
   // a cached copy pins old asset versions and serves stale app code
   if (/^\/(s\/|host\/?$|sw\.js$)|\.html$|^\/$/.test(req.path)) {

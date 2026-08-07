@@ -30,8 +30,12 @@ For self-hosters assessing the project:
   (the lower-third images baked into recordings/streams) are host-only,
   PNG-only, size-capped, and written under server-controlled names for
   peers that actually exist in the room.
-- **Transport**: HTTPS everywhere via Caddy; WebRTC media is DTLS-SRTP
-  encrypted end-to-server; the app binds to loopback behind the proxy.
+- **Transport**: HTTPS everywhere via Caddy (TLS 1.2/1.3, HSTS); WebRTC
+  media is DTLS-SRTP encrypted end-to-server; the app binds to loopback
+  behind the proxy. A strict Content-Security-Policy, X-Frame-Options,
+  nosniff and Referrer-Policy are set on every response.
+- **Least privilege**: the application container runs as a non-root
+  user; data files holding credentials are stored owner-only (0600).
 - **No third parties**: no CDNs, trackers, or external calls from any
   page; fonts and libraries are self-hosted.
 - **Secrets** live in the server's `.env` and the data directory —
