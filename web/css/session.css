@@ -436,10 +436,15 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   inset: 0;
   z-index: 40;
   background: #000;
-  display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
+/* Guard display behind :not([hidden]) — a bare `display` would override
+   the hidden attribute and leave the black overlay permanently visible */
+.intro-overlay:not([hidden]) { display: flex; }
+.intro-overlay.in { opacity: 1; }
 .intro-video { width: 100%; height: 100%; object-fit: contain; background: #000; }
 
 :is(button, select, input, a):focus-visible {

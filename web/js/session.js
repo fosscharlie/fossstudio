@@ -1236,18 +1236,24 @@
       .catch((e) => console.error("intro failed:", e.message));
   }
 
-  // Everyone (host included) plays the intro fullscreen from the file
+  // Everyone (host included) plays the intro fullscreen from the file,
+  // crossfading in over the grid and back out (matching the recording)
   let introHideTimer = null;
   function playDomIntro({ url, durationMs }) {
     const ov = els.introOverlay, v = els.introVideo;
     v.src = url;
     try { v.currentTime = 0; } catch { /* not seekable yet */ }
-    ov.hidden = false;
+    ov.hidden = false;                                     // display, still at opacity 0
+    requestAnimationFrame(() => ov.classList.add("in"));   // fade in over the grid
     if (sinkSupported && els.spkSelect.value) v.setSinkId?.(els.spkSelect.value).catch(() => {});
     v.play().catch(() => {});
     const done = () => {
-      ov.hidden = true;
-      try { v.pause(); v.removeAttribute("src"); v.load(); } catch { /* ignore */ }
+      clearTimeout(introHideTimer);
+      ov.classList.remove("in");                           // fade back out to the grid
+      setTimeout(() => {
+        ov.hidden = true;
+        try { v.pause(); v.removeAttribute("src"); v.load(); } catch { /* ignore */ }
+      }, 450);
     };
     v.onended = done;
     clearTimeout(introHideTimer);

@@ -8,9 +8,13 @@ All notable changes to FOSSStudio are documented here.
   MP4 or WebM, 80 MB each), then fire one from the Soundboard bar. It
   **takes over every screen fullscreen**, mutes everyone while it plays,
   and returns to the grid when it ends, restoring mutes
-- Baked into the recording (full-frame over its window, with its audio)
-  and shown fullscreen on the live stream — the stream cuts to the file
-  at full quality and back, both cuts masked by the takeover
+- **Crossfades** in the recording and in the live in-room view: the grid
+  dissolves into the intro and back (~0.4s), with the audio fading to
+  match. The live stream stays a cut (it relaunches to the file), masked
+  by the takeover
+- Baked into the recording (full-frame over its window, positioned at its
+  trigger time, with its audio) and shown fullscreen on the live stream —
+  the stream cuts to the file at full quality and back
 - Length and whether the video has an audio track are measured on upload,
   so the stream and recording never mis-handle a silent intro
 

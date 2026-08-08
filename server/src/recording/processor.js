@@ -179,23 +179,31 @@ export async function processRecording(rec) {
     }
 
     // Intro videos: each covers the whole frame for its window (scaled to
-    // the composite size) and its audio replaces the silence of the muted
-    // room over that window. Overlaid last, so it sits above everything.
+    // the composite size), crossfading in over the grid and back out, with
+    // its audio fading with it. Positioned at its trigger time (setpts /
+    // adelay) and overlaid last, so it sits above everything.
     const introW = cols * cellW, introH = nRows * cellH;
+    const XF = 0.4; // crossfade seconds each side
     const introAudioLabels = [];
     (rec.intros || []).forEach((iv, i) => {
-      const t0 = (iv.offsetMs / 1000).toFixed(2);
-      const t1 = (iv.offsetMs / 1000 + (iv.durationMs || 8000) / 1000).toFixed(2);
       const off = Math.max(0, Math.round(iv.offsetMs));
+      const t0s = off / 1000;
+      const durS = Math.max(XF * 2 + 0.1, (iv.durationMs || 8000) / 1000);
+      const t0 = t0s.toFixed(2);
+      const t1 = (t0s + durS).toFixed(2);
+      const fo = (durS - XF).toFixed(2); // fade-out start, in the intro's own time
       const idx = inputIdx.size;
       args.push("-i", path.join(raw, iv.file));
       inputIdx.set(`__intro${i}`, idx);
+      // Alpha-fade the intro in and out, then shift it to its trigger time
       overlayFilters += `;[${idx}:v]scale=${introW}:${introH}:force_original_aspect_ratio=decrease,` +
-        `pad=${introW}:${introH}:(ow-iw)/2:(oh-ih)/2,setsar=1[introv${i}];` +
-        `${finalLabel}[introv${i}]overlay=0:0:enable='between(t,${t0},${t1})'[vintro${i}]`;
+        `pad=${introW}:${introH}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuva420p,` +
+        `fade=t=in:st=0:d=${XF}:alpha=1,fade=t=out:st=${fo}:d=${XF}:alpha=1,setpts=PTS+${t0}/TB[introv${i}];` +
+        `${finalLabel}[introv${i}]overlay=0:0:enable='between(t,${t0},${t1})':eof_action=pass[vintro${i}]`;
       finalLabel = `[vintro${i}]`;
       if (iv.hasAudio !== false) {
-        clipFilters += `;[${idx}:a]aresample=44100,aformat=channel_layouts=stereo,adelay=${off}|${off}[introa${i}]`;
+        clipFilters += `;[${idx}:a]aresample=44100,aformat=channel_layouts=stereo,` +
+          `afade=t=in:st=0:d=${XF},afade=t=out:st=${fo}:d=${XF},adelay=${off}|${off}[introa${i}]`;
         introAudioLabels.push(`[introa${i}]`);
       }
     });
