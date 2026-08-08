@@ -90,6 +90,10 @@ h2 { font-size: 1.0625rem; font-weight: 600; margin-bottom: 0.75rem; }
   gap: 1.25rem;
   align-items: start;
 }
+/* A menu with a single section needs no submenu: drop its column and hide
+   the bar (.submenu sets display:flex, so the hidden attribute alone won't) */
+.layout.no-sub { grid-template-columns: 11rem 1fr; }
+.layout.no-sub .submenu { display: none; }
 /* Menus sit in panel boxes, matching the content cards */
 .mainmenu, .submenu {
   display: flex;
@@ -132,7 +136,7 @@ h2 { font-size: 1.0625rem; font-weight: 600; margin-bottom: 0.75rem; }
 .content { min-width: 0; }
 
 @media (max-width: 820px) {
-  .layout { grid-template-columns: 1fr; }
+  .layout, .layout.no-sub { grid-template-columns: 1fr; }
   .mainmenu, .submenu {
     position: static;
     flex-direction: row;

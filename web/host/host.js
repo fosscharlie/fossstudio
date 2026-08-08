@@ -71,7 +71,12 @@
   function showSub(subId) {
     const nav = $("subMenu");
     nav.innerHTML = "";
-    for (const sub of visibleSubs(currentMenu)) {
+    const subs = visibleSubs(currentMenu);
+    // One section only: the main-menu item is enough - no submenu bar
+    const single = subs.length <= 1;
+    nav.hidden = single;
+    document.querySelector(".layout").classList.toggle("no-sub", single);
+    for (const sub of subs) {
       const b = document.createElement("button");
       b.textContent = sub.label;
       b.classList.toggle("active", sub.id === subId);
