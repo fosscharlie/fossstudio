@@ -3,6 +3,7 @@
 import express from "express";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { spawn } from "node:child_process";
 import { config } from "./config.js";
 import {
   tryLogin, setAuthCookie, clearAuthCookie, isAuthedRequest,
@@ -10,7 +11,8 @@ import {
 } from "./auth.js";
 import {
   getSettings, updateSettings, listSessions, createSession, deleteSession, findSession,
-  listSounds, addSound, removeSound, findSound
+  listSounds, addSound, removeSound, findSound,
+  listIntros, addIntro, removeIntro, findIntro
 } from "./settings.js";
 import { listUsers, createUser, deleteUser, findById, updateUser } from "./users.js";
 import { hashPassword } from "./auth.js";
@@ -431,6 +433,76 @@ api.get("/sounds/:uid/:id", async (req, res) => {
   const clip = await findSound(uid, id);
   if (!clip) return res.status(404).end();
   res.sendFile(path.join(config.dataDir, "uploads", `sound-${uid}-${clip.id}.${clip.ext}`));
+});
+
+// ---------- intro videos ----------
+// Fullscreen takeovers the host fires between segments.
+const VIDEO_TYPES = { "video/mp4": "mp4", "video/webm": "webm" };
+
+// Probe length + whether there's an audio track, so the stream and the
+// recording know the window and never render a missing [0:a].
+function probeMedia(file) {
+  return new Promise((resolve) => {
+    let out = "";
+    const p = spawn("ffprobe",
+      ["-v", "error", "-print_format", "json", "-show_format", "-show_streams", file]);
+    p.stdout.on("data", (d) => { out += d; });
+    p.on("error", () => resolve({ durationMs: 0, hasAudio: true }));
+    p.on("close", () => {
+      try {
+        const j = JSON.parse(out);
+        resolve({
+          durationMs: Math.round(parseFloat(j.format?.duration || 0) * 1000) || 0,
+          hasAudio: (j.streams || []).some((s) => s.codec_type === "audio")
+        });
+      } catch { resolve({ durationMs: 0, hasAudio: true }); }
+    });
+  });
+}
+
+api.get("/intros", requireAuth, async (req, res) => res.json(await listIntros(req.user.uid)));
+
+api.post("/intros", requireAuth,
+  express.raw({ type: Object.keys(VIDEO_TYPES), limit: "80mb" }),
+  async (req, res) => {
+    const ext = VIDEO_TYPES[req.headers["content-type"]];
+    if (!ext) return res.status(400).json({ error: "Send an MP4 or WebM video." });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+      return res.status(400).json({ error: "That file was empty." });
+    }
+    const dir = path.join(config.dataDir, "uploads");
+    await fs.mkdir(dir, { recursive: true });
+    const tmp = path.join(dir, `intro-tmp-${req.user.uid}-${Date.now()}.${ext}`);
+    try {
+      await fs.writeFile(tmp, req.body);
+      const { durationMs, hasAudio } = await probeMedia(tmp);
+      const clip = await addIntro(req.user.uid, { name: req.query.name, ext, durationMs, hasAudio });
+      await fs.rename(tmp, path.join(dir, `intro-${req.user.uid}-${clip.id}.${ext}`));
+      res.json(clip);
+    } catch (err) {
+      await fs.unlink(tmp).catch(() => {});
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+api.delete("/intros/:id", requireAuth, async (req, res) => {
+  const id = path.basename(req.params.id);
+  const clip = await findIntro(req.user.uid, id);
+  if (clip) {
+    await removeIntro(req.user.uid, id);
+    await fs.unlink(path.join(config.dataDir, "uploads",
+      `intro-${req.user.uid}-${clip.id}.${clip.ext}`)).catch(() => {});
+  }
+  res.json({ ok: true });
+});
+
+// Everyone's session page fetches the intro to play it fullscreen.
+api.get("/intros/:uid/:id", async (req, res) => {
+  const uid = path.basename(req.params.uid);
+  const id = path.basename(req.params.id);
+  const clip = await findIntro(uid, id);
+  if (!clip) return res.status(404).end();
+  res.sendFile(path.join(config.dataDir, "uploads", `intro-${uid}-${clip.id}.${clip.ext}`));
 });
 
 // ---------- recording ----------

@@ -11,14 +11,16 @@ import {
 } from "./rooms.js";
 import { iceServers } from "./turn.js";
 import { isAuthedRequest } from "./auth.js";
-import { getSettings, updateSettings, findSession, findSound } from "./settings.js";
+import { getSettings, updateSettings, findSession, findSound, findIntro } from "./settings.js";
 import { notifyUser } from "./push.js";
 import {
   startRecording, stopRecording, activeRecording,
-  addPeerToRecording, uploadCreds, markPeerDone, logOverlay, logClip, recDir
+  addPeerToRecording, uploadCreds, markPeerDone, logOverlay, logClip, logIntro, recDir
 } from "./recording/manager.js";
 import { capturePeer } from "./recording/serverRecorder.js";
-import { startStream, stopStream, isStreaming, refreshStream, showOverlay } from "./streaming.js";
+import {
+  startStream, stopStream, isStreaming, refreshStream, showOverlay, playIntroOnStream
+} from "./streaming.js";
 
 const ROOM_ID_RE = /^[a-zA-Z0-9_-]{4,32}$/;
 const BANNER_PALETTE = [
@@ -26,6 +28,29 @@ const BANNER_PALETTE = [
   "#3d51b4", "#2295f1", "#019587", "#1e2127"
 ];
 const NAME_MAX = 24;
+
+// Silence every mic for a fixed window (a clip sting or an intro video),
+// then restore each person to how they were. The pre-mute snapshot is
+// taken once, so overlapping windows never restore to the all-muted state.
+function forceMuteWindow(room, durationMs) {
+  const c = room.control;
+  if (!room.clipUnmuteTimer) room.clipMuteBefore = { ...c.muted };
+  for (const p2 of room.peers.values()) {
+    c.muted[p2.id] = true;
+    delete c.hands[p2.id];
+  }
+  broadcast(room, null, { event: "control", data: c });
+  const dur = Math.min(120000, Math.max(500, Number(durationMs) || 4000));
+  clearTimeout(room.clipUnmuteTimer);
+  room.clipUnmuteTimer = setTimeout(() => {
+    for (const [pid, was] of Object.entries(room.clipMuteBefore || {})) {
+      if (room.peers.has(pid)) c.muted[pid] = was;
+    }
+    room.clipUnmuteTimer = null;
+    room.clipMuteBefore = null;
+    broadcast(room, null, { event: "control", data: c });
+  }, dur + 250);
+}
 
 export function attachSignaling(httpServer) {
   const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
@@ -82,6 +107,7 @@ export function attachSignaling(httpServer) {
               // The host fires these one-click from the in-session soundboard
               ownerId: role === "host" ? room.ownerId : undefined,
               sounds: role === "host" ? (settings.sounds || []) : undefined,
+              intros: role === "host" ? (settings.intros || []) : undefined,
               routerRtpCapabilities: room.router.rtpCapabilities,
               iceServers: iceServers(),
               control: room.control,
@@ -288,26 +314,29 @@ export function attachSignaling(httpServer) {
                     `sound-${room.ownerId}-${clip.id}.${clip.ext}`);
                   await logClip(recClip, clip, file);
                 }
-                if (data.mute) {
-                  // Snapshot the pre-clip mute state once; back-to-back
-                  // stings just extend the window, never overwrite it with
-                  // the already-all-muted state
-                  if (!room.clipUnmuteTimer) room.clipMuteBefore = { ...c.muted };
-                  for (const p2 of room.peers.values()) {
-                    c.muted[p2.id] = true;
-                    delete c.hands[p2.id];
-                  }
-                  broadcast(room, null, { event: "control", data: c });
-                  const dur = Math.min(30000, Math.max(500, Number(data.durationMs) || 4000));
-                  clearTimeout(room.clipUnmuteTimer);
-                  room.clipUnmuteTimer = setTimeout(() => {
-                    for (const [pid, was] of Object.entries(room.clipMuteBefore || {})) {
-                      if (room.peers.has(pid)) c.muted[pid] = was;
-                    }
-                    room.clipUnmuteTimer = null;
-                    room.clipMuteBefore = null;
-                    broadcast(room, null, { event: "control", data: c });
-                  }, dur + 250);
+                if (data.mute) forceMuteWindow(room, data.durationMs);
+                return reply({});
+              }
+              case "playIntro": {
+                // Fullscreen intro video: it takes over every screen, the
+                // recording and the stream, muting everyone until it ends.
+                const intro = await findIntro(room.ownerId, String(data.introId || ""));
+                if (!intro) return fail("no such intro");
+                const file = path.join(config.dataDir, "uploads",
+                  `intro-${room.ownerId}-${intro.id}.${intro.ext}`);
+                // Duration is measured server-side at upload; fall back if a
+                // legacy intro predates that
+                const durationMs = Math.min(120000, Math.max(500,
+                  intro.durationMs || Number(data.durationMs) || 8000));
+                const url = `/api/intros/${room.ownerId}/${intro.id}`;
+                // Everyone plays it fullscreen from the file
+                broadcast(room, null, { event: "intro", data: { url, durationMs } });
+                forceMuteWindow(room, durationMs);
+                const recIntro = activeRecording(room.id);
+                if (recIntro) await logIntro(recIntro, intro, file, durationMs);
+                if (isStreaming(room.id)) {
+                  playIntroOnStream(room.id, file, durationMs, intro.hasAudio !== false).catch((e) =>
+                    console.error("intro on stream failed:", e.message));
                 }
                 return reply({});
               }

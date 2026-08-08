@@ -404,6 +404,43 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   padding: 0 0.65rem;
 }
 .sb-solo:hover { background: #f34236; color: #fff; }
+.sound-bar-list { flex-direction: column; align-items: stretch; }
+.sb-group-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0.2rem 0 0.4rem;
+}
+.sb-group + .sb-group { margin-top: 0.7rem; padding-top: 0.6rem; border-top: 1px solid var(--line); }
+.sb-group-row { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+.sb-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  border: 1px solid #3a4a6a;
+  border-radius: 10px;
+  background: #232a3a;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0.5rem 0.7rem;
+  min-width: 6.5rem;
+  text-align: left;
+}
+.sb-intro:hover { background: #2c3550; }
+
+/* ---------- Fullscreen intro takeover ---------- */
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.intro-video { width: 100%; height: 100%; object-fit: contain; background: #000; }
 
 :is(button, select, input, a):focus-visible {
   outline: 2px solid var(--accent, #4a7dbd);

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FOSSStudio session</title>
-<link rel="stylesheet" href="/css/session.css?v=20260808a">
+<link rel="stylesheet" href="/css/session.css?v=20260808b">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -92,9 +92,14 @@
     <hr class="hp-divider">
     <div id="hpGuests"></div>
     <hr class="hp-divider">
-    <div class="hp-build">Build 20260808a</div>
+    <div class="hp-build">Build 20260808b</div>
   </aside>
   </div>
+  <!-- Fullscreen intro video: takes over every screen while it plays -->
+  <div id="introOverlay" class="intro-overlay" hidden>
+    <video id="introVideo" class="intro-video" playsinline></video>
+  </div>
+
   <!-- Soundboard: host-only floating bar of one-click clips -->
   <div id="soundBar" class="sound-bar" hidden>
     <div class="sound-bar-head">
@@ -116,6 +121,6 @@
 </div>
 
 <script src="/assets/mediasoup-client.js?v=20260807e"></script>
-<script src="/js/session.js?v=20260808a"></script>
+<script src="/js/session.js?v=20260808b"></script>
 </body>
 </html>

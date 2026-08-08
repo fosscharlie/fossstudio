@@ -68,6 +68,38 @@ export async function removeSound(uid, id) {
   await updateUserSettings(uid, { sounds: sounds.filter((c) => c.id !== id) });
 }
 
+// Fullscreen intro videos: the host fires one and it takes over every
+// screen (and the recording/stream), muting everyone until it ends.
+export const MAX_INTROS = 5;
+
+export async function listIntros(uid) {
+  const s = await getUserSettings(uid);
+  return Array.isArray(s.intros) ? s.intros : [];
+}
+
+export async function findIntro(uid, id) {
+  return (await listIntros(uid)).find((c) => c.id === id) || null;
+}
+
+export async function addIntro(uid, { name, ext, durationMs = 0, hasAudio = true }) {
+  const intros = await listIntros(uid);
+  if (intros.length >= MAX_INTROS) {
+    throw new Error(`You can keep up to ${MAX_INTROS} intro videos — remove one first.`);
+  }
+  const id = crypto.randomBytes(4).toString("hex");
+  const clip = {
+    id, name: String(name || "").trim().slice(0, 40) || "Intro", ext,
+    durationMs: Math.max(0, Math.round(durationMs)), hasAudio: hasAudio !== false
+  };
+  await updateUserSettings(uid, { intros: [...intros, clip] });
+  return clip;
+}
+
+export async function removeIntro(uid, id) {
+  const intros = await listIntros(uid);
+  await updateUserSettings(uid, { intros: intros.filter((c) => c.id !== id) });
+}
+
 // ---------- sessions (each belongs to a user) ----------
 
 export async function listSessions(user) {

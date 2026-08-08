@@ -50,6 +50,23 @@ export async function logClip(rec, clip, file) {
   }
 }
 
+// A fullscreen intro video played mid-recording. Copy the source now and
+// note when it played and for how long; the processor covers the grid
+// with it (and mixes its audio) over that window.
+export async function logIntro(rec, intro, file, durationMs) {
+  const idx = rec.intros.length;
+  const dest = `intro-${idx}-${intro.id}${path.extname(file)}`;
+  try {
+    await fs.copyFile(file, path.join(recDir(rec.id), "raw", dest));
+    rec.intros.push({
+      offsetMs: Date.now() - rec.startedAt, file: dest, durationMs,
+      hasAudio: intro.hasAudio !== false
+    });
+  } catch (err) {
+    console.error("logIntro failed:", err.message);
+  }
+}
+
 export async function logOverlay(rec, kind, adFile) {
   const entry = { kind, offsetMs: Date.now() - rec.startedAt };
   if (adFile) {
@@ -92,6 +109,7 @@ export async function startRecording(room, mode) {
     peers: new Map(), // peerId -> {name, files:{}, clientStartOffsetMs, done}
     overlays: [],     // {kind, offsetMs, file?} baked into combined.mkv
     clips: [],        // soundboard clips fired during the take (separate track)
+    intros: [],       // fullscreen intro videos, baked into combined.mkv
     stopping: false
   };
   await fs.mkdir(path.join(recDir(recId), "raw"), { recursive: true });

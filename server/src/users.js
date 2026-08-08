@@ -12,7 +12,8 @@ export const USER_SETTINGS_DEFAULTS = {
   logo: null,
   streamUrl: "rtmp://a.rtmp.youtube.com/live2",
   streamKey: "",
-  sounds: []   // soundboard clips: [{ id, name, ext }]
+  sounds: [],  // soundboard clips: [{ id, name, ext }]
+  intros: []   // fullscreen intro videos: [{ id, name, ext }]
 };
 
 let cache = null;

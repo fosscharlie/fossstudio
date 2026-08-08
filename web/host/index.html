@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio — Host</title>
-<link rel="stylesheet" href="/host/host.css?v=20260808a">
+<link rel="stylesheet" href="/host/host.css?v=20260808b">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -136,6 +136,32 @@
         </div>
       </section>
 
+      <!-- Settings: intro videos -->
+      <section id="pane-intros" class="stack" hidden>
+        <div class="panel">
+          <h2>Intro videos</h2>
+          <p class="hint" style="margin-bottom:0.8rem">Upload short intro or transition videos, then fire one from the <b>Soundboard</b> button in a session's host controls. It takes over every screen fullscreen, mutes everyone while it plays, and returns to the grid when it ends — baked into the recording and the live stream. Up to 5 videos. MP4 or WebM, up to 80 MB each. Keep them short (a few seconds).</p>
+          <div class="field">
+            <label for="introName">Name</label>
+            <input type="text" id="introName" maxlength="40" placeholder="e.g. Show open">
+          </div>
+          <div style="display:flex; gap:0.6rem; margin-top:0.4rem; align-items:center; flex-wrap:wrap">
+            <button class="btn" id="introPick">Choose video file</button>
+            <span class="soft" id="introFileName"></span>
+            <input type="file" id="introFile" accept="video/mp4,video/webm" hidden>
+          </div>
+          <div style="display:flex; gap:0.6rem; align-items:center; margin-top:0.8rem">
+            <button class="btn primary" id="introAdd" disabled>Add intro</button>
+            <span class="msg ok" id="introMsg" hidden>✓ Added</span>
+            <span class="msg err" id="introErr" hidden></span>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Your intros <span class="soft" id="introCount"></span></h2>
+          <div id="introList" class="sound-list">No intros uploaded yet.</div>
+        </div>
+      </section>
+
       <!-- Settings: account -->
       <section id="pane-account" class="stack" hidden>
         <div class="panel">
@@ -262,6 +288,6 @@
   </div>
 </div>
 
-<script src="/host/host.js?v=20260808a"></script>
+<script src="/host/host.js?v=20260808b"></script>
 </body>
 </html>

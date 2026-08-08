@@ -178,9 +178,32 @@ export async function processRecording(rec) {
       clipOutLabel = "[clipout]";
     }
 
-    // Combined-audio mix = participants + (the clip bus, if any)
+    // Intro videos: each covers the whole frame for its window (scaled to
+    // the composite size) and its audio replaces the silence of the muted
+    // room over that window. Overlaid last, so it sits above everything.
+    const introW = cols * cellW, introH = nRows * cellH;
+    const introAudioLabels = [];
+    (rec.intros || []).forEach((iv, i) => {
+      const t0 = (iv.offsetMs / 1000).toFixed(2);
+      const t1 = (iv.offsetMs / 1000 + (iv.durationMs || 8000) / 1000).toFixed(2);
+      const off = Math.max(0, Math.round(iv.offsetMs));
+      const idx = inputIdx.size;
+      args.push("-i", path.join(raw, iv.file));
+      inputIdx.set(`__intro${i}`, idx);
+      overlayFilters += `;[${idx}:v]scale=${introW}:${introH}:force_original_aspect_ratio=decrease,` +
+        `pad=${introW}:${introH}:(ow-iw)/2:(oh-ih)/2,setsar=1[introv${i}];` +
+        `${finalLabel}[introv${i}]overlay=0:0:enable='between(t,${t0},${t1})'[vintro${i}]`;
+      finalLabel = `[vintro${i}]`;
+      if (iv.hasAudio !== false) {
+        clipFilters += `;[${idx}:a]aresample=44100,aformat=channel_layouts=stereo,adelay=${off}|${off}[introa${i}]`;
+        introAudioLabels.push(`[introa${i}]`);
+      }
+    });
+
+    // Combined-audio mix = participants + the clip bus + intro audio
     const mixLabels = audios.map((p) => `[${p.aIdx}:a]`);
     if (clipMixLabel) mixLabels.push(clipMixLabel);
+    mixLabels.push(...introAudioLabels);
     const amix = mixLabels.length === 0
       ? null
       : mixLabels.length === 1

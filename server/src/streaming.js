@@ -50,6 +50,9 @@ export async function startStream(room, rtmpUrl) {
 async function launch(state) {
   const { room } = state;
   const gen = ++state.generation;
+  // Intro takeover: stream the uploaded file fullscreen instead of the
+  // grid. The switch in and back out is masked by the intro transition.
+  if (state.introFile) return launchIntro(state, gen);
   const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "fslive-"));
   const cleanup = { transports: [], consumers: [], ffmpeg: null, workDir };
   state.current = cleanup;
@@ -212,6 +215,81 @@ async function launch(state) {
   console.log(`streaming ${room.id}: ${videos.length} video + ${audios.length} audio inputs, ${bannerArgs.length / 6} banners`);
 }
 
+// Fullscreen intro: one file, looped and paced in realtime, scaled to
+// 720p. No RTP inputs — the participants keep producing, we just don't
+// consume them until we relaunch back to the grid.
+async function launchIntro(state, gen) {
+  const cleanup = { transports: [], consumers: [], ffmpeg: null, workDir: null };
+  state.current = cleanup;
+  const dest = state.rtmpUrl.startsWith("file:")
+    ? [state.rtmpUrl.slice(5)]
+    : ["-f", "flv", state.rtmpUrl];
+  // Silent intros still need an audio track for the AAC/RTMP output
+  const audioIn = state.introHasAudio
+    ? []
+    : ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo"];
+  const aLabel = state.introHasAudio ? "[0:a]aresample=44100[aout]" : "[1:a]anull[aout]";
+  const ffArgs = [
+    "-nostdin", "-loglevel", "warning",
+    "-re", "-stream_loop", "-1", "-i", state.introFile,
+    ...audioIn,
+    "-filter_complex",
+    "[0:v]scale=1280:720:force_original_aspect_ratio=decrease," +
+      `pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[vout];${aLabel}`,
+    "-map", "[vout]", "-map", "[aout]",
+    "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
+    "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k", "-g", "60",
+    "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
+    "-y", ...dest
+  ];
+  cleanup.ffmpeg = spawn("ffmpeg", ffArgs);
+  cleanup.ffmpeg.stderr.on("data", (d) => {
+    const line = d.toString().trim();
+    if (line) console.error(`stream[${state.room.id}] intro: ${line.slice(0, 200)}`);
+  });
+  cleanup.ffmpeg.on("close", (code) => {
+    const s = streams.get(state.room.id);
+    // If the intro ffmpeg dies unexpectedly, fall back to the grid
+    if (s && s.generation === gen && !s.stopping && !s.relaunching) {
+      console.error(`intro ffmpeg exited (${code}); returning to grid`);
+      s.introFile = null;
+      refreshStream(state.room.id);
+    }
+  });
+  console.log(`streaming ${state.room.id}: intro takeover`);
+}
+
+// Play a fullscreen intro on the live stream, then return to the grid.
+export async function playIntroOnStream(roomId, file, durationMs, hasAudio) {
+  const state = streams.get(roomId);
+  if (!state || state.stopping || state.relaunching) return;
+  state.relaunching = true;
+  try {
+    state.introFile = file;
+    state.introHasAudio = hasAudio !== false;
+    await teardown(state.current);
+    await launch(state);
+  } finally {
+    state.relaunching = false;
+  }
+  clearTimeout(state.introTimer);
+  state.introTimer = setTimeout(async () => {
+    if (!streams.has(roomId) || state.stopping) return;
+    state.relaunching = true;
+    try {
+      state.introFile = null;
+      await teardown(state.current);
+      if (state.room.peers.size > 0) await launch(state);
+      else await stopStream(roomId);
+    } catch (err) {
+      console.error("intro->grid relaunch failed:", err.message);
+      await stopStream(roomId).catch(() => {});
+    } finally {
+      state.relaunching = false;
+    }
+  }, durationMs + 300);
+}
+
 async function teardown(cleanup) {
   if (!cleanup) return;
   for (const c of cleanup.consumers) { try { c.close(); } catch { /* closed */ } }
@@ -223,13 +301,17 @@ async function teardown(cleanup) {
       setTimeout(() => { cleanup.ffmpeg.kill("SIGKILL"); resolve(); }, 4000);
     });
   }
-  await fs.rm(cleanup.workDir, { recursive: true, force: true }).catch(() => {});
+  if (cleanup.workDir) {
+    await fs.rm(cleanup.workDir, { recursive: true, force: true }).catch(() => {});
+  }
 }
 
 // Membership changed mid-stream: relaunch with the new grid (debounced)
 export function refreshStream(roomId) {
   const state = streams.get(roomId);
   if (!state || state.stopping) return;
+  // Don't disturb an intro takeover — its own timer relaunches the grid
+  if (state.introFile) return;
   clearTimeout(state.refreshTimer);
   state.refreshTimer = setTimeout(async () => {
     if (!streams.has(roomId) || state.stopping) return;
@@ -267,6 +349,7 @@ export async function stopStream(roomId) {
   if (!state) return;
   state.stopping = true;
   clearTimeout(state.refreshTimer);
+  clearTimeout(state.introTimer);
   streams.delete(roomId);
   await teardown(state.current);
   console.log(`stream stopped for ${roomId}`);

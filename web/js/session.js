@@ -26,6 +26,7 @@
     hpBannerMulti: $("hpBannerMulti"), hpBannerChoice: $("hpBannerChoice"),
     hpSoundBtn: $("hpSoundBtn"), soundBar: $("soundBar"),
     soundBarList: $("soundBarList"), soundBarClose: $("soundBarClose"),
+    introOverlay: $("introOverlay"), introVideo: $("introVideo"),
     myColorBtn: $("myColorBtn"), myColorPop: $("myColorPop")
   };
 
@@ -1081,14 +1082,16 @@
   // the live stream, so firing a clip never relaunches the stream. The
   // recording captures them separately, from the source files server-side.
   let soundboardClips = [];
+  let introClips = [];
   let soundboardOwner = null;
   let clipBus = null;             // gain node every clip plays through
   let clipsProducer = null;
   const clipBuffers = new Map();  // soundId -> decoded AudioBuffer
   const clipSinkEls = [];         // keep guest clip elements alive (Chrome quirk)
 
-  async function setupSoundboard(sounds, ownerId) {
+  async function setupSoundboard(sounds, intros, ownerId) {
     soundboardClips = Array.isArray(sounds) ? sounds : [];
+    introClips = Array.isArray(intros) ? intros : [];
     soundboardOwner = ownerId || null;
     const ctx = ensureAudioCtx();
     clipBus = ctx.createGain();
@@ -1156,40 +1159,99 @@
     ctx.createMediaStreamSource(new MediaStream([track])).connect(g).connect(audioSink());
   }
 
+  function sbGroup(label) {
+    const group = document.createElement("div");
+    group.className = "sb-group";
+    const lab = document.createElement("div");
+    lab.className = "sb-group-label";
+    lab.textContent = label;
+    const row = document.createElement("div");
+    row.className = "sb-group-row";
+    group.append(lab, row);
+    return { group, row };
+  }
+
   function renderSoundBar() {
     const list = els.soundBarList;
     list.textContent = "";
-    if (!soundboardClips.length) {
+    if (!soundboardClips.length && !introClips.length) {
       const empty = document.createElement("div");
       empty.className = "sb-empty";
-      empty.textContent = "No sounds yet — upload them in Settings → Sounds.";
+      empty.textContent = "Nothing yet — upload clips in Settings → Sounds and videos in Settings → Intros.";
       list.appendChild(empty);
       return;
     }
-    for (const clip of soundboardClips) {
-      const tile = document.createElement("div");
-      tile.className = "sb-tile";
-      const play = document.createElement("button");
-      play.type = "button";
-      play.className = "sb-play";
-      const name = document.createElement("span");
-      name.className = "sb-name";
-      name.textContent = clip.name;
-      const hint = document.createElement("span");
-      hint.className = "sb-hint";
-      hint.textContent = "▶ Play over";
-      play.append(name, hint);
-      play.onclick = () => playClip(clip, false);
-      const solo = document.createElement("button");
-      solo.type = "button";
-      solo.className = "sb-solo";
-      solo.textContent = "🔇";
-      solo.dataset.tip = "Mute everyone, then play";
-      solo.setAttribute("aria-label", `Mute everyone and play ${clip.name}`);
-      solo.onclick = () => playClip(clip, true);
-      tile.append(play, solo);
-      list.appendChild(tile);
+    if (introClips.length) {
+      const { group, row } = sbGroup("Intros — fullscreen, mutes everyone");
+      for (const intro of introClips) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "sb-intro";
+        const name = document.createElement("span");
+        name.className = "sb-name";
+        name.textContent = intro.name;
+        const hint = document.createElement("span");
+        hint.className = "sb-hint";
+        hint.textContent = "▶ Take over";
+        btn.append(name, hint);
+        btn.onclick = () => playIntro(intro);
+        row.appendChild(btn);
+      }
+      list.appendChild(group);
     }
+    if (soundboardClips.length) {
+      const { group, row } = sbGroup("Sounds");
+      for (const clip of soundboardClips) {
+        const tile = document.createElement("div");
+        tile.className = "sb-tile";
+        const play = document.createElement("button");
+        play.type = "button";
+        play.className = "sb-play";
+        const name = document.createElement("span");
+        name.className = "sb-name";
+        name.textContent = clip.name;
+        const hint = document.createElement("span");
+        hint.className = "sb-hint";
+        hint.textContent = "▶ Play over";
+        play.append(name, hint);
+        play.onclick = () => playClip(clip, false);
+        const solo = document.createElement("button");
+        solo.type = "button";
+        solo.className = "sb-solo";
+        solo.textContent = "🔇";
+        solo.dataset.tip = "Mute everyone, then play";
+        solo.setAttribute("aria-label", `Mute everyone and play ${clip.name}`);
+        solo.onclick = () => playClip(clip, true);
+        tile.append(play, solo);
+        row.appendChild(tile);
+      }
+      list.appendChild(group);
+    }
+  }
+
+  // Fire a fullscreen intro; the server broadcasts it to everyone, mutes
+  // the room for its length, and (if live/recording) bakes it in
+  function playIntro(intro) {
+    request("hostControl", { action: "playIntro", introId: intro.id })
+      .catch((e) => console.error("intro failed:", e.message));
+  }
+
+  // Everyone (host included) plays the intro fullscreen from the file
+  let introHideTimer = null;
+  function playDomIntro({ url, durationMs }) {
+    const ov = els.introOverlay, v = els.introVideo;
+    v.src = url;
+    try { v.currentTime = 0; } catch { /* not seekable yet */ }
+    ov.hidden = false;
+    if (sinkSupported && els.spkSelect.value) v.setSinkId?.(els.spkSelect.value).catch(() => {});
+    v.play().catch(() => {});
+    const done = () => {
+      ov.hidden = true;
+      try { v.pause(); v.removeAttribute("src"); v.load(); } catch { /* ignore */ }
+    };
+    v.onended = done;
+    clearTimeout(introHideTimer);
+    introHideTimer = setTimeout(done, (durationMs || 8000) + 800);
   }
 
   els.hpSoundBtn.onclick = () => {
@@ -1391,8 +1453,8 @@
 
       // Host soundboard: open the always-on clip channel now, before any
       // stream launches, so firing a clip never relaunches the stream
-      if (isHost) await setupSoundboard(info.sounds || [], info.ownerId).catch((e) =>
-        console.error("soundboard setup failed:", e.message));
+      if (isHost) await setupSoundboard(info.sounds || [], info.intros || [], info.ownerId)
+        .catch((e) => console.error("soundboard setup failed:", e.message));
 
       const selfTile = makeTile(selfId, selfName, true, els.taglineInput.value.trim(), isHost);
       selfTile.stream.addTrack(videoTrack);
@@ -1429,6 +1491,7 @@
       };
       eventHandlers.streaming = ({ live: isLive }) => setLiveIndicator(isLive);
       eventHandlers.overlay = playDomOverlay;
+      eventHandlers.intro = playDomIntro;
       if (info.streaming) setLiveIndicator(true);
 
       joined = true;

@@ -2,6 +2,18 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased — intro videos
+
+- **Intro videos**: upload short videos in Settings → Intros (up to 5,
+  MP4 or WebM, 80 MB each), then fire one from the Soundboard bar. It
+  **takes over every screen fullscreen**, mutes everyone while it plays,
+  and returns to the grid when it ends, restoring mutes
+- Baked into the recording (full-frame over its window, with its audio)
+  and shown fullscreen on the live stream — the stream cuts to the file
+  at full quality and back, both cuts masked by the takeover
+- Length and whether the video has an audio track are measured on upload,
+  so the stream and recording never mis-handle a silent intro
+
 ## Unreleased — soundboard
 
 - **Soundboard**: the host uploads short audio clips (laughs, applause,

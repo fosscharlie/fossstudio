@@ -28,6 +28,7 @@
       { id: "themes", label: "Themes", hostOnly: true },
       { id: "banner", label: "Ad Banner", hostOnly: true },
       { id: "sounds", label: "Sounds", hostOnly: true },
+      { id: "intros", label: "Intros", hostOnly: true },
       { id: "streaming", label: "Streaming", hostOnly: true },
       { id: "account", label: "Account" },
       { id: "twofactor", label: "Two-factor" }
@@ -533,6 +534,66 @@
     }
   };
 
+  // ---------- intro videos ----------
+  let pendingIntro = null;
+  function renderIntros(list) {
+    $("introCount").textContent = list.length ? `(${list.length}/5)` : "";
+    const box = $("introList");
+    if (!list.length) { box.textContent = "No intros uploaded yet."; return; }
+    box.textContent = "";
+    for (const clip of list) {
+      const row = document.createElement("div");
+      row.className = "sound-row";
+      const name = document.createElement("span");
+      name.className = "sound-name";
+      name.textContent = clip.name + (clip.durationMs ? ` · ${(clip.durationMs / 1000).toFixed(1)}s` : "");
+      const play = document.createElement("button");
+      play.className = "btn small";
+      play.textContent = "▶ Preview";
+      play.onclick = () => window.open(`/api/intros/${me.uid}/${clip.id}`, "_blank", "noopener");
+      const del = document.createElement("button");
+      del.className = "btn small danger";
+      del.textContent = "Remove";
+      del.onclick = async () => { await apiFetch(`/api/intros/${clip.id}`, { method: "DELETE" }); loadIntros(); };
+      row.append(name, play, del);
+      box.appendChild(row);
+    }
+  }
+  async function loadIntros() {
+    renderIntros(await apiFetch("/api/intros").catch(() => []));
+  }
+  $("introPick").onclick = () => $("introFile").click();
+  $("introFile").onchange = () => {
+    pendingIntro = $("introFile").files[0] || null;
+    $("introFileName").textContent = pendingIntro ? pendingIntro.name : "";
+    if (pendingIntro && !$("introName").value.trim()) {
+      $("introName").value = pendingIntro.name.replace(/\.[^.]+$/, "").slice(0, 40);
+    }
+    $("introAdd").disabled = !pendingIntro;
+  };
+  $("introAdd").onclick = async () => {
+    if (!pendingIntro) return;
+    $("introMsg").hidden = true; $("introErr").hidden = true;
+    $("introAdd").disabled = true; $("introAdd").textContent = "Uploading…";
+    const name = $("introName").value.trim() || pendingIntro.name;
+    try {
+      const res = await fetch(`/api/intros?name=${encodeURIComponent(name)}`, {
+        method: "POST",
+        headers: { "Content-Type": pendingIntro.type || "video/mp4" },
+        body: pendingIntro
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Upload failed.");
+      $("introMsg").hidden = false;
+      $("introName").value = ""; $("introFileName").textContent = "";
+      $("introFile").value = ""; pendingIntro = null;
+      loadIntros();
+    } catch (err) {
+      $("introErr").textContent = err.message; $("introErr").hidden = false;
+    } finally {
+      $("introAdd").textContent = "Add intro";
+    }
+  };
+
   function updateLogoPreview(has) {
     const el = $("logoPreview");
     if (has) {
@@ -731,6 +792,7 @@
       loadRecordings();
       loadSettings();
       loadSounds();
+      loadIntros();
       setInterval(loadSessions, 10000);   // keep the live badges fresh
       setInterval(loadRecordings, 15000); // pick up processing -> ready
     }
