@@ -24,6 +24,8 @@
     hpMuteAllBtn: $("hpMuteAllBtn"), hpSubBtn: $("hpSubBtn"), hpAdBtn: $("hpAdBtn"),
     hpBannerSwatches: $("hpBannerSwatches"), hpBannerHex: $("hpBannerHex"),
     hpBannerMulti: $("hpBannerMulti"), hpBannerChoice: $("hpBannerChoice"),
+    hpSoundBtn: $("hpSoundBtn"), soundBar: $("soundBar"),
+    soundBarList: $("soundBarList"), soundBarClose: $("soundBarClose"),
     myColorBtn: $("myColorBtn"), myColorPop: $("myColorPop")
   };
 
@@ -1073,6 +1075,133 @@
     setTimeout(() => el.remove(), duration * 1000);
   }
 
+  // ---------- Soundboard (host) ----------
+  // Clips uploaded in the dashboard, fired one-click. A single always-on
+  // "clips" audio producer (silent when idle) carries them to guests and
+  // the live stream, so firing a clip never relaunches the stream. The
+  // recording captures them separately, from the source files server-side.
+  let soundboardClips = [];
+  let soundboardOwner = null;
+  let clipBus = null;             // gain node every clip plays through
+  let clipsProducer = null;
+  const clipBuffers = new Map();  // soundId -> decoded AudioBuffer
+  const clipSinkEls = [];         // keep guest clip elements alive (Chrome quirk)
+
+  async function setupSoundboard(sounds, ownerId) {
+    soundboardClips = Array.isArray(sounds) ? sounds : [];
+    soundboardOwner = ownerId || null;
+    const ctx = ensureAudioCtx();
+    clipBus = ctx.createGain();
+    clipBus.gain.value = 1;
+    const dest = ctx.createMediaStreamDestination();
+    // A steady zero source keeps the track producing (silent) samples, so
+    // the producer — and the live mixer — never starve between clips
+    const keepalive = ctx.createConstantSource();
+    keepalive.offset.value = 0;
+    keepalive.connect(dest);
+    keepalive.start();
+    clipBus.connect(dest);        // -> guests + live stream
+    clipBus.connect(audioSink()); // -> the host's own monitor
+    clipsProducer = await sendTransport.produce({
+      track: dest.stream.getAudioTracks()[0],
+      appData: { source: "clips" }
+    });
+    renderSoundBar();
+    // Decode ahead so the first hit is instant
+    for (const clip of soundboardClips) loadClipBuffer(clip).catch(() => {});
+  }
+
+  async function loadClipBuffer(clip) {
+    if (clipBuffers.has(clip.id)) return clipBuffers.get(clip.id);
+    const res = await fetch(`/api/sounds/${soundboardOwner}/${clip.id}`);
+    if (!res.ok) throw new Error("clip fetch failed");
+    const buf = await ensureAudioCtx().decodeAudioData(await res.arrayBuffer());
+    clipBuffers.set(clip.id, buf);
+    return buf;
+  }
+
+  async function playClip(clip, mute) {
+    try {
+      const ctx = ensureAudioCtx();
+      if (ctx.state === "suspended") await ctx.resume();
+      const buf = await loadClipBuffer(clip);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(clipBus);
+      // Server logs it into any recording and, for a sting, mutes everyone
+      // for the clip's length then restores them
+      request("hostControl", {
+        action: "playClip",
+        soundId: clip.id,
+        mute: !!mute,
+        durationMs: Math.ceil(buf.duration * 1000)
+      }).catch(() => {});
+      src.start();
+    } catch (err) {
+      console.error("clip playback failed:", err.message);
+    }
+  }
+
+  // A guest receiving the host's clip channel: play it, but it isn't a
+  // person, so keep it off the tiles and the per-guest volume graph
+  function attachClipAudio(track) {
+    const ctx = ensureAudioCtx();
+    const el = new Audio();
+    el.muted = true;
+    el.srcObject = new MediaStream([track]);
+    el.play().catch(() => {});
+    clipSinkEls.push(el);
+    const g = ctx.createGain();
+    g.gain.value = 1;
+    ctx.createMediaStreamSource(new MediaStream([track])).connect(g).connect(audioSink());
+  }
+
+  function renderSoundBar() {
+    const list = els.soundBarList;
+    list.textContent = "";
+    if (!soundboardClips.length) {
+      const empty = document.createElement("div");
+      empty.className = "sb-empty";
+      empty.textContent = "No sounds yet — upload them in Settings → Sounds.";
+      list.appendChild(empty);
+      return;
+    }
+    for (const clip of soundboardClips) {
+      const tile = document.createElement("div");
+      tile.className = "sb-tile";
+      const play = document.createElement("button");
+      play.type = "button";
+      play.className = "sb-play";
+      const name = document.createElement("span");
+      name.className = "sb-name";
+      name.textContent = clip.name;
+      const hint = document.createElement("span");
+      hint.className = "sb-hint";
+      hint.textContent = "▶ Play over";
+      play.append(name, hint);
+      play.onclick = () => playClip(clip, false);
+      const solo = document.createElement("button");
+      solo.type = "button";
+      solo.className = "sb-solo";
+      solo.textContent = "🔇";
+      solo.dataset.tip = "Mute everyone, then play";
+      solo.setAttribute("aria-label", `Mute everyone and play ${clip.name}`);
+      solo.onclick = () => playClip(clip, true);
+      tile.append(play, solo);
+      list.appendChild(tile);
+    }
+  }
+
+  els.hpSoundBtn.onclick = () => {
+    const show = els.soundBar.hidden;
+    els.soundBar.hidden = !show;
+    els.hpSoundBtn.classList.toggle("active", show);
+  };
+  els.soundBarClose.onclick = () => {
+    els.soundBar.hidden = true;
+    els.hpSoundBtn.classList.remove("active");
+  };
+
   // Panel sound meters: read each analyser ~8x a second
   const meterBuf = new Uint8Array(128);
   setInterval(() => {
@@ -1147,7 +1276,7 @@
 
   // ---------- Consuming ----------
 
-  async function consumeProducer(peerId, producerId) {
+  async function consumeProducer(peerId, producerId, source) {
     const { consumerId, kind, rtpParameters } = await request("consume", {
       transportId: recvTransport.id,
       producerId,
@@ -1157,7 +1286,11 @@
       id: consumerId, producerId, kind, rtpParameters
     });
     consumers.set(consumerId, { consumer, peerId });
-    if (kind === "audio") {
+    if (kind === "audio" && source === "clips") {
+      // The host's soundboard channel: play it, but it isn't anyone's mic
+      // — keep it off the tiles and the per-guest volume/meter graph
+      attachClipAudio(consumer.track);
+    } else if (kind === "audio") {
       attachAudio(peerId, consumer.track);
     } else {
       const tile = tiles.get(peerId);
@@ -1256,6 +1389,11 @@
         appData: { source: "camera" }
       });
 
+      // Host soundboard: open the always-on clip channel now, before any
+      // stream launches, so firing a clip never relaunches the stream
+      if (isHost) await setupSoundboard(info.sounds || [], info.ownerId).catch((e) =>
+        console.error("soundboard setup failed:", e.message));
+
       const selfTile = makeTile(selfId, selfName, true, els.taglineInput.value.trim(), isHost);
       selfTile.stream.addTrack(videoTrack);
       if (isHost) {
@@ -1268,13 +1406,13 @@
       applyMirror();
       for (const p of info.peers) {
         makeTile(p.id, p.name, false, p.tagline, p.role === "host");
-        for (const prod of p.producers) await consumeProducer(p.id, prod.id);
+        for (const prod of p.producers) await consumeProducer(p.id, prod.id, prod.source);
       }
 
       eventHandlers.peerJoined = (p) => makeTile(p.id, p.name, false, p.tagline, p.role === "host");
       eventHandlers.peerLeft = ({ peerId }) => removeTile(peerId);
-      eventHandlers.newProducer = ({ peerId, producerId }) =>
-        consumeProducer(peerId, producerId).catch(console.error);
+      eventHandlers.newProducer = ({ peerId, producerId, source }) =>
+        consumeProducer(peerId, producerId, source).catch(console.error);
       eventHandlers.producerClosed = ({ producerId }) => {
         for (const [cid, c] of consumers) {
           if (c.consumer.producerId === producerId) dropConsumer(cid);

@@ -26,7 +26,9 @@ For self-hosters assessing the project:
 - **Session links** must exist in the session registry — arbitrary room
   IDs are rejected.
 - **Uploads**: recording chunks are gated by per-peer HMAC tokens;
-  wallpaper uploads are content-type and size limited. Banner snapshots
+  wallpaper, ad-banner and soundboard-clip uploads are login-gated,
+  content-type and size limited, and written under server-controlled
+  names (never a client-supplied path). Banner snapshots
   (the lower-third images baked into recordings/streams) are host-only,
   PNG-only, size-capped, and written under server-controlled names for
   peers that actually exist in the room.

@@ -17,10 +17,16 @@ dashboard.
   owns their sessions, recordings, branding and stream key.
 - **In-session host controls:** spotlight/grid layout, per-guest volume,
   per-session auto level balancing, start/stop recording, go live.
+- **Soundboard:** upload short clips (laughs, applause, stings) in the
+  dashboard, then fire them one-click in-session — played over everyone,
+  or with all mics muted for the clip's length and then restored.
+  Carried on an always-on audio channel so a clip never interrupts the
+  live stream; mixed into the recording and saved as a separate track.
 - **Recording:** browser-side per-person (PCM, best for big sessions) or
   server-side (a host-panel switch, picked per session, locked while
   recording or live). Output: one combined MKV + a lossless FLAC per
-  participant, named after the episode. The combined video matches the
+  participant (plus a `soundboard.flac` when clips were fired), named
+  after the episode. The combined video matches the
   screen: everyone's tile, their lower-third name banners, the podcast
   logo + episode title block (draggable anywhere by the host), and any
   subscribe/ad overlays you triggered, at the moment you triggered

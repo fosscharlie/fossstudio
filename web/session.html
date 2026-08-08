@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FOSSStudio session</title>
-<link rel="stylesheet" href="/css/session.css?v=20260807e">
+<link rel="stylesheet" href="/css/session.css?v=20260808a">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -76,6 +76,9 @@
       <button id="hpSubBtn" class="hp-btn" data-tip="Play the subscribe + bell reminder for everyone (and on stream/recording)">Subscribe</button>
       <button id="hpAdBtn" class="hp-btn" data-tip="Show your advertising banner for ~18 seconds">Ad</button>
     </div>
+    <div class="hp-row">
+      <button id="hpSoundBtn" class="hp-btn" data-tip="Open the soundboard - fire your clips one-click">🔊 Soundboard</button>
+    </div>
     <div class="hp-color" data-tip="Banner colour">
       <div class="hp-color-row">
         <div class="hp-swatches" id="hpBannerSwatches"></div>
@@ -89,8 +92,16 @@
     <hr class="hp-divider">
     <div id="hpGuests"></div>
     <hr class="hp-divider">
-    <div class="hp-build">Build 20260807e</div>
+    <div class="hp-build">Build 20260808a</div>
   </aside>
+  </div>
+  <!-- Soundboard: host-only floating bar of one-click clips -->
+  <div id="soundBar" class="sound-bar" hidden>
+    <div class="sound-bar-head">
+      <span class="sound-bar-title">🔊 Soundboard</span>
+      <button id="soundBarClose" type="button" class="sound-bar-close" aria-label="Close soundboard">✕</button>
+    </div>
+    <div id="soundBarList" class="sound-bar-list"></div>
   </div>
   <footer class="controls">
     <div id="myColorPop" class="my-colors" hidden></div>
@@ -105,6 +116,6 @@
 </div>
 
 <script src="/assets/mediasoup-client.js?v=20260807e"></script>
-<script src="/js/session.js?v=20260807e"></script>
+<script src="/js/session.js?v=20260808a"></script>
 </body>
 </html>

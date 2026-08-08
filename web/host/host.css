@@ -170,6 +170,20 @@ button, input, select { font: inherit; }
 .btn.primary:hover { background: var(--accent-hover); }
 .btn.danger { background: var(--danger); color: #fff; border-color: transparent; }
 .btn:disabled { opacity: 0.5; cursor: default; }
+.btn.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
+
+.soft { color: var(--muted-fg); font-weight: 400; font-size: 0.85rem; }
+
+.sound-list { color: var(--muted-fg); font-size: 0.9rem; }
+.sound-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.sound-row:last-child { border-bottom: 0; }
+.sound-name { flex: 1; color: var(--fg); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 label { display: block; font-size: 0.9375rem; font-weight: 600; margin-bottom: 0.3rem; }
 .hint { font-size: 0.8125rem; font-weight: 400; color: var(--muted-fg); }

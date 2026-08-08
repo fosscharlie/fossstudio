@@ -27,6 +27,7 @@
     { id: "settings", label: "Settings", subs: [
       { id: "themes", label: "Themes", hostOnly: true },
       { id: "banner", label: "Ad Banner", hostOnly: true },
+      { id: "sounds", label: "Sounds", hostOnly: true },
       { id: "streaming", label: "Streaming", hostOnly: true },
       { id: "account", label: "Account" },
       { id: "twofactor", label: "Two-factor" }
@@ -475,6 +476,63 @@
     updateAdPreview(false);
   };
 
+  // ---------- soundboard clips ----------
+  let pendingSound = null;
+  function renderSounds(list) {
+    $("soundCount").textContent = list.length ? `(${list.length}/20)` : "";
+    const box = $("soundList");
+    if (!list.length) { box.textContent = "No sounds uploaded yet."; return; }
+    box.textContent = "";
+    for (const clip of list) {
+      const row = document.createElement("div");
+      row.className = "sound-row";
+      const name = document.createElement("span");
+      name.className = "sound-name";
+      name.textContent = clip.name;
+      const play = document.createElement("button");
+      play.className = "btn small";
+      play.textContent = "▶ Preview";
+      play.onclick = () => { new Audio(`/api/sounds/${me.uid}/${clip.id}?${Date.now()}`).play().catch(() => {}); };
+      const del = document.createElement("button");
+      del.className = "btn small danger";
+      del.textContent = "Remove";
+      del.onclick = async () => { await apiFetch(`/api/sounds/${clip.id}`, { method: "DELETE" }); loadSounds(); };
+      row.append(name, play, del);
+      box.appendChild(row);
+    }
+  }
+  async function loadSounds() {
+    renderSounds(await apiFetch("/api/sounds").catch(() => []));
+  }
+  $("soundPick").onclick = () => $("soundFile").click();
+  $("soundFile").onchange = () => {
+    pendingSound = $("soundFile").files[0] || null;
+    $("soundFileName").textContent = pendingSound ? pendingSound.name : "";
+    if (pendingSound && !$("soundName").value.trim()) {
+      $("soundName").value = pendingSound.name.replace(/\.[^.]+$/, "").slice(0, 40);
+    }
+    $("soundAdd").disabled = !pendingSound;
+  };
+  $("soundAdd").onclick = async () => {
+    if (!pendingSound) return;
+    $("soundMsg").hidden = true; $("soundErr").hidden = true;
+    const name = $("soundName").value.trim() || pendingSound.name;
+    try {
+      const res = await fetch(`/api/sounds?name=${encodeURIComponent(name)}`, {
+        method: "POST",
+        headers: { "Content-Type": pendingSound.type || "audio/mpeg" },
+        body: pendingSound
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Upload failed.");
+      $("soundMsg").hidden = false;
+      $("soundName").value = ""; $("soundFileName").textContent = "";
+      $("soundFile").value = ""; pendingSound = null; $("soundAdd").disabled = true;
+      loadSounds();
+    } catch (err) {
+      $("soundErr").textContent = err.message; $("soundErr").hidden = false;
+    }
+  };
+
   function updateLogoPreview(has) {
     const el = $("logoPreview");
     if (has) {
@@ -672,6 +730,7 @@
       loadSessions();
       loadRecordings();
       loadSettings();
+      loadSounds();
       setInterval(loadSessions, 10000);   // keep the live badges fresh
       setInterval(loadRecordings, 15000); // pick up processing -> ready
     }

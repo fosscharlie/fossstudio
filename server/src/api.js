@@ -9,7 +9,8 @@ import {
   changePassword, get2faState, setup2fa, confirm2fa, disable2fa
 } from "./auth.js";
 import {
-  getSettings, updateSettings, listSessions, createSession, deleteSession, findSession
+  getSettings, updateSettings, listSessions, createSession, deleteSession, findSession,
+  listSounds, addSound, removeSound, findSound
 } from "./settings.js";
 import { listUsers, createUser, deleteUser, findById, updateUser } from "./users.js";
 import { hashPassword } from "./auth.js";
@@ -60,7 +61,7 @@ api.get("/me", async (req, res) => {
   const payload = isAuthedRequest(req);
   if (!payload) return res.json({ authed: false });
   const user = await findById(payload.uid);
-  res.json({ authed: !!user, role: user?.role, username: user?.username });
+  res.json({ authed: !!user, uid: user?.id, role: user?.role, username: user?.username });
 });
 
 api.post("/password", requireAuth, async (req, res) => {
@@ -378,6 +379,58 @@ api.get("/logo", requireAuth, async (req, res) => {
   const s = await getSettings(req.user.uid);
   if (!s.logo) return res.status(404).end();
   res.sendFile(path.join(config.dataDir, "uploads", path.basename(s.logo)));
+});
+
+// ---------- soundboard clips ----------
+// Short audio the host fires one-click from the in-session soundboard.
+const SOUND_TYPES = {
+  "audio/mpeg": "mp3", "audio/mp3": "mp3", "audio/mp4": "m4a",
+  "audio/x-m4a": "m4a", "audio/aac": "aac", "audio/x-aac": "aac",
+  "audio/ogg": "ogg", "audio/wav": "wav", "audio/x-wav": "wav",
+  "audio/wave": "wav", "audio/flac": "flac", "audio/x-flac": "flac",
+  "audio/webm": "webm"
+};
+
+api.get("/sounds", requireAuth, async (req, res) => res.json(await listSounds(req.user.uid)));
+
+api.post("/sounds", requireAuth,
+  express.raw({ type: Object.keys(SOUND_TYPES), limit: "5mb" }),
+  async (req, res) => {
+    const ext = SOUND_TYPES[req.headers["content-type"]];
+    if (!ext) return res.status(400).json({ error: "Send an MP3, WAV, OGG, AAC, M4A or WebM audio file." });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+      return res.status(400).json({ error: "That file was empty." });
+    }
+    try {
+      const clip = await addSound(req.user.uid, { name: req.query.name, ext });
+      const dir = path.join(config.dataDir, "uploads");
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(path.join(dir, `sound-${req.user.uid}-${clip.id}.${ext}`), req.body);
+      res.json(clip);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+api.delete("/sounds/:id", requireAuth, async (req, res) => {
+  const id = path.basename(req.params.id);
+  const clip = await findSound(req.user.uid, id);
+  if (clip) {
+    await removeSound(req.user.uid, id);
+    await fs.unlink(path.join(config.dataDir, "uploads",
+      `sound-${req.user.uid}-${clip.id}.${clip.ext}`)).catch(() => {});
+  }
+  res.json({ ok: true });
+});
+
+// The host's session page fetches the clip audio to play it. Resolved
+// via the room owner, like the logo — the clip itself isn't sensitive.
+api.get("/sounds/:uid/:id", async (req, res) => {
+  const uid = path.basename(req.params.uid);
+  const id = path.basename(req.params.id);
+  const clip = await findSound(uid, id);
+  if (!clip) return res.status(404).end();
+  res.sendFile(path.join(config.dataDir, "uploads", `sound-${uid}-${clip.id}.${clip.ext}`));
 });
 
 // ---------- recording ----------

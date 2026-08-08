@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio — Host</title>
-<link rel="stylesheet" href="/host/host.css?v=20260807e">
+<link rel="stylesheet" href="/host/host.css?v=20260808a">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -107,6 +107,32 @@
             <button class="btn" id="adRemove">Remove</button>
             <input type="file" id="adFile" accept="image/jpeg,image/png,image/webp" hidden>
           </div>
+        </div>
+      </section>
+
+      <!-- Settings: soundboard clips -->
+      <section id="pane-sounds" class="stack" hidden>
+        <div class="panel">
+          <h2>Soundboard</h2>
+          <p class="hint" style="margin-bottom:0.8rem">Upload short clips — laughs, applause, transition stings — then fire them one-click from the <b>Soundboard</b> button in a session's host controls. Each clip can be played over everyone, or with everyone muted for its length. They're mixed into the recording and the live stream, and saved as a separate track. Up to 20 clips. MP3, WAV, OGG, AAC, M4A or WebM, up to 5 MB each.</p>
+          <div class="field">
+            <label for="soundName">Name</label>
+            <input type="text" id="soundName" maxlength="40" placeholder="e.g. Applause">
+          </div>
+          <div style="display:flex; gap:0.6rem; margin-top:0.4rem; align-items:center; flex-wrap:wrap">
+            <button class="btn" id="soundPick">Choose audio file</button>
+            <span class="soft" id="soundFileName"></span>
+            <input type="file" id="soundFile" accept="audio/*" hidden>
+          </div>
+          <div style="display:flex; gap:0.6rem; align-items:center; margin-top:0.8rem">
+            <button class="btn primary" id="soundAdd" disabled>Add sound</button>
+            <span class="msg ok" id="soundMsg" hidden>✓ Added</span>
+            <span class="msg err" id="soundErr" hidden></span>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Your sounds <span class="soft" id="soundCount"></span></h2>
+          <div id="soundList" class="sound-list">No sounds uploaded yet.</div>
         </div>
       </section>
 
@@ -236,6 +262,6 @@
   </div>
 </div>
 
-<script src="/host/host.js?v=20260807e"></script>
+<script src="/host/host.js?v=20260808a"></script>
 </body>
 </html>

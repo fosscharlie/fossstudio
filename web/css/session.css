@@ -323,6 +323,88 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
 .ctl.off { background: #5a3535; }
 .ctl.leave { background: #7a2e2e; border-color: #7a2e2e; }
 
+/* ---------- Soundboard bar (host) ---------- */
+.sound-bar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(4.6rem + env(safe-area-inset-bottom));
+  z-index: 8;
+  width: min(92vw, 720px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  padding: 0.7rem 0.8rem 0.85rem;
+}
+.sound-bar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+.sound-bar-title { font-weight: 700; font-size: 0.95rem; }
+.sound-bar-close {
+  background: none;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+}
+.sound-bar-close:hover { color: var(--text); background: rgba(255, 255, 255, 0.08); }
+.sound-bar-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  max-height: 40dvh;
+  overflow-y: auto;
+}
+.sb-empty { color: var(--muted); font-size: 0.85rem; padding: 0.4rem 0.2rem; }
+.sb-tile {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.sb-play {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  border: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0.5rem 0.7rem;
+  min-width: 6.5rem;
+  text-align: left;
+}
+.sb-play:hover { background: rgba(255, 255, 255, 0.06); }
+.sb-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-hint { font-size: 0.68rem; color: var(--muted); }
+.sb-solo {
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 0.65rem;
+}
+.sb-solo:hover { background: #f34236; color: #fff; }
+
 :is(button, select, input, a):focus-visible {
   outline: 2px solid var(--accent, #4a7dbd);
   outline-offset: 2px;

@@ -36,6 +36,20 @@ export function activeRecording(roomId) {
   return active.get(roomId) || null;
 }
 
+// A soundboard clip fired mid-recording. Copy the source file now (the
+// host could delete it later) and note when it played; the processor
+// mixes these into combined.mkv and exports them as one separate track.
+export async function logClip(rec, clip, file) {
+  const idx = rec.clips.length;
+  const dest = `clip-${idx}-${clip.id}${path.extname(file)}`;
+  try {
+    await fs.copyFile(file, path.join(recDir(rec.id), "raw", dest));
+    rec.clips.push({ name: clip.name, offsetMs: Date.now() - rec.startedAt, file: dest });
+  } catch (err) {
+    console.error("logClip failed:", err.message);
+  }
+}
+
 export async function logOverlay(rec, kind, adFile) {
   const entry = { kind, offsetMs: Date.now() - rec.startedAt };
   if (adFile) {
@@ -77,6 +91,7 @@ export async function startRecording(room, mode) {
     startedAt: Date.now(),
     peers: new Map(), // peerId -> {name, files:{}, clientStartOffsetMs, done}
     overlays: [],     // {kind, offsetMs, file?} baked into combined.mkv
+    clips: [],        // soundboard clips fired during the take (separate track)
     stopping: false
   };
   await fs.mkdir(path.join(recDir(recId), "raw"), { recursive: true });

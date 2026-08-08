@@ -38,6 +38,36 @@ export async function updateSettings(uid, patch) {
   return updateUserSettings(uid, clean);
 }
 
+// ---------- soundboard clips (per user) ----------
+// The host uploads short audio clips (laughs, applause, stings) in the
+// dashboard and fires them one-click from the in-session soundboard.
+export const MAX_SOUNDS = 20;
+
+export async function listSounds(uid) {
+  const s = await getUserSettings(uid);
+  return Array.isArray(s.sounds) ? s.sounds : [];
+}
+
+export async function findSound(uid, id) {
+  return (await listSounds(uid)).find((c) => c.id === id) || null;
+}
+
+export async function addSound(uid, { name, ext }) {
+  const sounds = await listSounds(uid);
+  if (sounds.length >= MAX_SOUNDS) {
+    throw new Error(`You can keep up to ${MAX_SOUNDS} sounds — remove one first.`);
+  }
+  const id = crypto.randomBytes(4).toString("hex");
+  const clip = { id, name: String(name || "").trim().slice(0, 40) || "Sound", ext };
+  await updateUserSettings(uid, { sounds: [...sounds, clip] });
+  return clip;
+}
+
+export async function removeSound(uid, id) {
+  const sounds = await listSounds(uid);
+  await updateUserSettings(uid, { sounds: sounds.filter((c) => c.id !== id) });
+}
+
 // ---------- sessions (each belongs to a user) ----------
 
 export async function listSessions(user) {

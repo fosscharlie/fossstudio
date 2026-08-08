@@ -2,6 +2,24 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased — soundboard
+
+- **Soundboard**: the host uploads short audio clips (laughs, applause,
+  transition stings) in Settings → Sounds, then fires them one-click from
+  a new **Soundboard** bar in the session's host controls — up to 20 clips
+  (MP3, WAV, OGG, AAC, M4A or WebM, 5 MB each)
+- Each clip plays two ways: **▶ Play over** everyone (laughter under the
+  chat), or **🔇 Mute + play** — every mic is silenced for the clip's
+  length and then restored to exactly how it was (transition stings)
+- Clips are carried on an always-on audio channel the host opens at join,
+  so firing one **never relaunches the live stream** — no blip, no stall
+- Everyone in the session hears clips live; they mix into the YouTube
+  stream automatically
+- Recordings get the clips **mixed into `combined.mkv` and exported as a
+  separate `soundboard.flac` track**, straight from the source files, so
+  the clip level can be remixed in post — works in both browser and
+  server recording modes
+
 ## Unreleased — security hardening
 
 - App container now runs as a non-root user (uid 1000) instead of root

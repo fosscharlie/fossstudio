@@ -154,21 +154,55 @@ export async function processRecording(rec) {
       finalLabel = `[vo${i}]`;
     });
 
-    const amix = audios.length === 0
+    // Soundboard clips fired during the take: place each on a silent
+    // timeline at its offset, mix them into one bus, then split it — one
+    // copy folds into the combined audio, the other becomes a separate
+    // lossless track the host can remix.
+    let clipFilters = "";
+    let clipMixLabel = null, clipOutLabel = null;
+    const clipParts = [];
+    (rec.clips || []).forEach((cl, i) => {
+      const off = Math.max(0, Math.round(cl.offsetMs));
+      const idx = inputIdx.size;
+      args.push("-i", path.join(raw, cl.file));
+      inputIdx.set(`__clip${i}`, idx);
+      clipFilters += `;[${idx}:a]aresample=44100,aformat=channel_layouts=stereo,adelay=${off}|${off}[clipin${i}]`;
+      clipParts.push(`[clipin${i}]`);
+    });
+    if (clipParts.length) {
+      const merged = clipParts.length === 1
+        ? `${clipParts[0]}anull[clipall]`
+        : `${clipParts.join("")}amix=inputs=${clipParts.length}:normalize=0:duration=longest[clipall]`;
+      clipFilters += `;${merged};[clipall]asplit=2[clipmix][clipout]`;
+      clipMixLabel = "[clipmix]";
+      clipOutLabel = "[clipout]";
+    }
+
+    // Combined-audio mix = participants + (the clip bus, if any)
+    const mixLabels = audios.map((p) => `[${p.aIdx}:a]`);
+    if (clipMixLabel) mixLabels.push(clipMixLabel);
+    const amix = mixLabels.length === 0
       ? null
-      : audios.length === 1
-        ? `[${audios[0].aIdx}:a]anull[aout]`
-        : `${audios.map((p) => `[${p.aIdx}:a]`).join("")}amix=inputs=${audios.length}:normalize=0[aout]`;
+      : mixLabels.length === 1
+        ? `${mixLabels[0]}anull[aout]`
+        : `${mixLabels.join("")}amix=inputs=${mixLabels.length}:normalize=0[aout]`;
 
     await ffmpeg([
       ...args,
-      "-filter_complex", [scaled, stack, amix].filter(Boolean).join(";") + overlayFilters,
+      "-filter_complex",
+      [scaled, stack].filter(Boolean).join(";") + clipFilters +
+        (amix ? ";" + amix : "") + overlayFilters,
       "-map", finalLabel, ...(amix ? ["-map", "[aout]"] : []),
       "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
       "-c:a", "aac", "-b:a", "192k",
-      "-y", path.join(out, "combined.mkv")
+      "-y", path.join(out, "combined.mkv"),
+      // Separate soundboard track: clips only, on their timeline
+      ...(clipOutLabel
+        ? ["-map", clipOutLabel, "-c:a", "flac", "-y", path.join(out, "soundboard.flac")]
+        : [])
     ], "combined");
     files.push("combined.mkv");
+    if (clipOutLabel) files.push("soundboard.flac");
   }
 
   return files;

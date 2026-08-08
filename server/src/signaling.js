@@ -11,11 +11,11 @@ import {
 } from "./rooms.js";
 import { iceServers } from "./turn.js";
 import { isAuthedRequest } from "./auth.js";
-import { getSettings, updateSettings, findSession } from "./settings.js";
+import { getSettings, updateSettings, findSession, findSound } from "./settings.js";
 import { notifyUser } from "./push.js";
 import {
   startRecording, stopRecording, activeRecording,
-  addPeerToRecording, uploadCreds, markPeerDone, logOverlay, recDir
+  addPeerToRecording, uploadCreds, markPeerDone, logOverlay, logClip, recDir
 } from "./recording/manager.js";
 import { capturePeer } from "./recording/serverRecorder.js";
 import { startStream, stopStream, isStreaming, refreshStream, showOverlay } from "./streaming.js";
@@ -79,6 +79,9 @@ export function attachSignaling(httpServer) {
               peerId: peer.id,
               role,
               canServerRecord,
+              // The host fires these one-click from the in-session soundboard
+              ownerId: role === "host" ? room.ownerId : undefined,
+              sounds: role === "host" ? (settings.sounds || []) : undefined,
               routerRtpCapabilities: room.router.rtpCapabilities,
               iceServers: iceServers(),
               control: room.control,
@@ -270,6 +273,44 @@ export function attachSignaling(httpServer) {
                 }
                 break;
               }
+              case "playClip": {
+                // Host fired a soundboard clip. Guests already hear it via
+                // the host's always-on "clips" audio producer (and the live
+                // stream mixes it in); here we (a) log it so the recording
+                // processor bakes it in as a separate track, and (b) for a
+                // "mute + play" sting, silence every mic for the clip's
+                // length and restore each person to how they were.
+                const clip = await findSound(room.ownerId, String(data.soundId || ""));
+                if (!clip) return fail("no such sound");
+                const recClip = activeRecording(room.id);
+                if (recClip) {
+                  const file = path.join(config.dataDir, "uploads",
+                    `sound-${room.ownerId}-${clip.id}.${clip.ext}`);
+                  await logClip(recClip, clip, file);
+                }
+                if (data.mute) {
+                  // Snapshot the pre-clip mute state once; back-to-back
+                  // stings just extend the window, never overwrite it with
+                  // the already-all-muted state
+                  if (!room.clipUnmuteTimer) room.clipMuteBefore = { ...c.muted };
+                  for (const p2 of room.peers.values()) {
+                    c.muted[p2.id] = true;
+                    delete c.hands[p2.id];
+                  }
+                  broadcast(room, null, { event: "control", data: c });
+                  const dur = Math.min(30000, Math.max(500, Number(data.durationMs) || 4000));
+                  clearTimeout(room.clipUnmuteTimer);
+                  room.clipUnmuteTimer = setTimeout(() => {
+                    for (const [pid, was] of Object.entries(room.clipMuteBefore || {})) {
+                      if (room.peers.has(pid)) c.muted[pid] = was;
+                    }
+                    room.clipUnmuteTimer = null;
+                    room.clipMuteBefore = null;
+                    broadcast(room, null, { event: "control", data: c });
+                  }, dur + 250);
+                }
+                return reply({});
+              }
               case "stream": {
                 if (data.start) {
                   const settings = await getSettings(room.ownerId);
@@ -379,7 +420,10 @@ export function attachSignaling(httpServer) {
             reply({ producerId: producer.id });
             broadcast(room, peer.id, {
               event: "newProducer",
-              data: { peerId: peer.id, producerId: producer.id, kind: producer.kind }
+              data: {
+                peerId: peer.id, producerId: producer.id, kind: producer.kind,
+                source: producer.appData?.source || producer.kind
+              }
             });
             // Live stream picks up new members (debounced relaunch)
             if (isStreaming(room.id) && peer.producers.size >= 2) refreshStream(room.id);

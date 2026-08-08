@@ -11,7 +11,8 @@ export const USER_SETTINGS_DEFAULTS = {
   bg: null,
   logo: null,
   streamUrl: "rtmp://a.rtmp.youtube.com/live2",
-  streamKey: ""
+  streamKey: "",
+  sounds: []   // soundboard clips: [{ id, name, ext }]
 };
 
 let cache = null;
