@@ -2,15 +2,17 @@
 
 All notable changes to FOSSStudio are documented here.
 
-## Unreleased — recordings look like the screen
+## Unreleased — recordings and stream look like the screen
 
-- The combined recording now **matches the on-screen presentation**: the
-  session **background** (the wallpaper if set, otherwise the background
-  colour) shows behind and between the tiles, there are **gaps** between
-  videos, and each tile has **subtly rounded corners** — instead of the
-  old flat, gapless black grid. Lower-third banners and the title chip are
-  composited as before. (The live stream still uses the flat grid; that's
-  next.)
+- The combined recording **and the live stream** now **match the
+  on-screen presentation**: the session **background** (the wallpaper if
+  set, otherwise the background colour) shows behind and between the
+  tiles, there are **gaps** between videos, and each tile has **subtly
+  rounded corners** — instead of the old flat, gapless black grid.
+  Lower-third banners and the title chip composite as before.
+- Rounded corners use a generated alpha mask + `alphamerge` per tile; on
+  the live stream that's a little extra real-time work, so very large
+  (9–10 person) live grids are worth a CPU sanity-check on the VPS.
 
 ## Unreleased — complete deletion
 

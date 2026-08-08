@@ -35,6 +35,19 @@ function allocPort() {
   return nextPort;
 }
 
+// A one-frame rounded-rectangle alpha mask (white rounded rect on black),
+// generated once per launch and reused for every tile via alphamerge.
+function makeCornerMask(file, w, h, r) {
+  return new Promise((resolve, reject) => {
+    const p = spawn("ffmpeg", ["-nostdin", "-loglevel", "error",
+      "-f", "lavfi", "-i", `color=black:s=${w}x${h}`, "-vf",
+      `format=gray,geq=lum='lte(pow(max(0\\,max(${r}-X\\,X-(W-${r})))\\,2)+pow(max(0\\,max(${r}-Y\\,Y-(H-${r})))\\,2)\\,pow(${r}\\,2))*255'`,
+      "-frames:v", "1", "-y", file]);
+    p.on("error", reject);
+    p.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`mask gen exited ${code}`))));
+  });
+}
+
 export function isStreaming(roomId) {
   return streams.has(roomId);
 }
@@ -87,44 +100,85 @@ async function launch(state) {
   const overlay = state.pendingOverlay || null;
   state.pendingOverlay = null;
 
-  const cols = Math.ceil(Math.sqrt(videos.length));
-  const rows = Math.ceil(videos.length / cols);
-  const cellW = 2 * Math.round(1280 / cols / 2);
-  const cellH = 2 * Math.round(720 / rows / 2);
+  // Presentation matching the on-screen grid: a background (the session
+  // wallpaper if set, else its colour), gaps between tiles, and subtly
+  // rounded corners. Canvas is a fixed 1280x720.
+  const W = 1280, H = 720, GAP = 20, PAD = 24, RAD = 16;
+  const n = videos.length;
+  const cols = Math.ceil(Math.sqrt(n));
+  const nRows = Math.ceil(n / cols);
+  const availW = W - 2 * PAD, availH = H - 2 * PAD;
+  let tileW = Math.min((availW - (cols - 1) * GAP) / cols,
+    ((availH - (nRows - 1) * GAP) / nRows) * 16 / 9);
+  tileW = Math.max(2, 2 * Math.floor(tileW / 2));
+  const tileH = Math.max(2, 2 * Math.floor((tileW * 9 / 16) / 2));
+  const rBase = Math.floor(n / nRows), rExtra = n % nRows;
+  const rowSizes = Array.from({ length: nRows }, (_, r) => rBase + (r < rExtra ? 1 : 0));
+  const blockH = nRows * tileH + (nRows - 1) * GAP;
+  const startY = Math.round(PAD + Math.max(0, (availH - blockH) / 2));
+  const positions = [];
+  rowSizes.forEach((size, r) => {
+    const rowW = size * tileW + (size - 1) * GAP;
+    const x0 = Math.round(PAD + (availW - rowW) / 2);
+    for (let c = 0; c < size; c++) {
+      positions.push({ x: x0 + c * (tileW + GAP), y: startY + r * (tileH + GAP) });
+    }
+  });
+
+  // Rounded-corner alpha mask (tile-sized), generated once for this launch
+  const maskPath = path.join(workDir, "cornermask.png");
+  await makeCornerMask(maskPath, tileW, tileH, RAD);
+
+  // Background + mask inputs come first, then banners — the order fixes
+  // the ffmpeg input indices used in the filter graph
+  let nextIdx = inputs.length;
+  const { getSettings } = await import("./settings.js");
+  const settings = await getSettings(room.ownerId).catch(() => ({}));
+  const bgIdx = nextIdx++;
+  const wall = settings.wallpaper &&
+    path.join(config.dataDir, "uploads", path.basename(settings.wallpaper));
+  const bgArgs = wall && await fs.access(wall).then(() => true, () => false)
+    ? ["-loop", "1", "-framerate", "5", "-i", wall]
+    : ["-f", "lavfi", "-i",
+      `color=c=0x${(settings.bg && /^#[0-9a-fA-F]{6}$/.test(settings.bg)) ? settings.bg.slice(1) : "14161a"}:s=${W}x${H}`];
+  const maskIdx = nextIdx++;
+  const maskArgs = ["-loop", "1", "-framerate", "5", "-i", maskPath];
 
   // Lower-third banners: the host's browser uploads each one as a PNG
-  // (ffmpeg can't draw text) — overlay them onto the tiles like the DOM
+  // (ffmpeg can't draw text) — overlaid on the tile, like the DOM
   const bannerArgs = [];
-  let nextIdx = inputs.length;
   for (const v of videos) {
     const f = path.join(config.dataDir, "banners", room.id, `${v.peerId}.png`);
     if (await fs.access(f).then(() => true, () => false)) {
       v.bnIdx = nextIdx++;
-      // Looped like the ad overlay: an instantly-EOF'd still can stall
-      // the graph when the other inputs are live RTP
       bannerArgs.push("-loop", "1", "-framerate", "5", "-i", f);
     }
   }
-  const bannerW = 2 * Math.round(0.38 * cellW / 2);
-  const scaled = videos.map((v, k) => {
-    const base = `[${v.i}:v]scale=${cellW}:${cellH}:force_original_aspect_ratio=increase,` +
-      `crop=${cellW}:${cellH}:(iw-${cellW})/2:(ih-${cellH})/2,setsar=1,fps=30`;
-    if (v.bnIdx == null) return `${base}[v${k}]`;
-    return `${base}[t${k}];[${v.bnIdx}:v]scale=${bannerW}:-2[bn${k}];` +
-      `[t${k}][bn${k}]overlay=x=0:y=main_h-overlay_h:eof_action=repeat[v${k}]`;
-  }).join(";");
-  // Balanced centred rows, matching the on-screen layout (7 = 3+2+2)
-  const nRows = Math.ceil(videos.length / cols);
-  const rBase = Math.floor(videos.length / nRows), rExtra = videos.length % nRows;
-  const rowSizes = Array.from({ length: nRows }, (_, r) => rBase + (r < rExtra ? 1 : 0));
-  const layout = [];
-  rowSizes.forEach((size, r) => {
-    const xoff = Math.round((cols * cellW - size * cellW) / 2);
-    for (let cix = 0; cix < size; cix++) layout.push(`${xoff + cix * cellW}_${r * cellH}`);
+  const bannerW = 2 * Math.round(0.38 * tileW / 2);
+
+  const gp = [];
+  gp.push(`[${bgIdx}:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1,fps=30[bg]`);
+  gp.push(`[${maskIdx}:v]format=gray,scale=${tileW}:${tileH},setsar=1[mk];` +
+    `[mk]split=${n}${videos.map((_, k) => `[m${k}]`).join("")}`);
+  videos.forEach((v, k) => {
+    let t = `[${v.i}:v]scale=${tileW}:${tileH}:force_original_aspect_ratio=increase,` +
+      `crop=${tileW}:${tileH}:(iw-${tileW})/2:(ih-${tileH})/2,setsar=1,fps=30`;
+    if (v.bnIdx != null) {
+      t += `[tb${k}];[${v.bnIdx}:v]scale=${bannerW}:-2[bn${k}];` +
+        `[tb${k}][bn${k}]overlay=x=0:y=main_h-overlay_h:eof_action=repeat[tt${k}];` +
+        `[tt${k}][m${k}]alphamerge[rt${k}]`;
+    } else {
+      t += `[tt${k}];[tt${k}][m${k}]alphamerge[rt${k}]`;
+    }
+    gp.push(t);
   });
-  const stack = videos.length === 1
-    ? "[v0]copy[vout]"
-    : `${videos.map((v, k) => `[v${k}]`).join("")}xstack=inputs=${videos.length}:layout=${layout.join("|")}:fill=black[vout]`;
+  let prev = "[bg]";
+  videos.forEach((_, k) => {
+    const out = k === n - 1 ? "[vout]" : `[og${k}]`;
+    gp.push(`${prev}[rt${k}]overlay=${positions[k].x}:${positions[k].y}${out}`);
+    prev = out;
+  });
+  const grid = gp.join(";");
   const amix = audios.length === 0
     ? "anullsrc=r=44100:cl=stereo[aout]"
     : audios.length === 1
@@ -178,11 +232,14 @@ async function launch(state) {
       "-analyzeduration", "20M", "-probesize", "20M",
       "-i", x.sdpPath
     ]),
+    ...bgArgs,
+    ...maskArgs,
     ...bannerArgs,
     ...titleArgs,
     ...overlayArgs,
-    "-filter_complex", `${scaled};${stack};${amix}${titleFilter}${overlayFilter}`,
+    "-filter_complex", `${grid};${amix}${titleFilter}${overlayFilter}`,
     "-map", finalLabel, "-map", "[aout]",
+    "-pix_fmt", "yuv420p",
     "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
     "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k", "-g", "60",
     "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
