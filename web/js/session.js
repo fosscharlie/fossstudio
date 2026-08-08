@@ -1160,12 +1160,20 @@
     ctx.createMediaStreamSource(new MediaStream([track])).connect(g).connect(audioSink());
   }
 
-  function sbGroup(label) {
+  // Group symbols (tooltip carries the words)
+  const SB_ICONS = {
+    intros: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg>',
+    sounds: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>'
+  };
+
+  function sbGroup(iconSvg, tip) {
     const group = document.createElement("div");
     group.className = "sb-group";
     const lab = document.createElement("div");
     lab.className = "sb-group-label";
-    lab.textContent = label;
+    lab.innerHTML = iconSvg;
+    lab.dataset.tip = tip;
+    lab.setAttribute("aria-label", tip);
     const row = document.createElement("div");
     row.className = "sb-group-row";
     group.append(lab, row);
@@ -1183,7 +1191,7 @@
       return;
     }
     if (introClips.length) {
-      const { group, row } = sbGroup("Intros — fullscreen, mutes everyone");
+      const { group, row } = sbGroup(SB_ICONS.intros, "Intros — fullscreen, mutes everyone");
       for (const intro of introClips) {
         const btn = document.createElement("button");
         btn.type = "button";
@@ -1201,7 +1209,7 @@
       list.appendChild(group);
     }
     if (soundboardClips.length) {
-      const { group, row } = sbGroup("Sounds");
+      const { group, row } = sbGroup(SB_ICONS.sounds, "Sounds — play over, or mute everyone then play");
       for (const clip of soundboardClips) {
         const tile = document.createElement("div");
         tile.className = "sb-tile";
