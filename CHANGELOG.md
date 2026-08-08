@@ -2,6 +2,15 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased — complete deletion
+
+- **Deleting a host account now purges all of its content** — recordings
+  (and their files on disk), sessions, uploaded media (wallpaper, logo,
+  ad-banner, sounds, intros) and its push subscription — not just the
+  account record. Per-item deletes already removed their files; this
+  closes the gap for account deletion, so nothing is left behind for
+  privacy
+
 ## Unreleased — dashboard previews
 
 - **Preview in the dashboard**: play/stop is a single **toggle icon**

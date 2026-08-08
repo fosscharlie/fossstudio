@@ -40,6 +40,12 @@ For self-hosters assessing the project:
   user; data files holding credentials are stored owner-only (0600).
 - **No third parties**: no CDNs, trackers, or external calls from any
   page; fonts and libraries are self-hosted.
+- **Data deletion**: deleting a recording, sound, intro, wallpaper, logo
+  or ad-banner removes the stored file from disk, not just the database
+  record. Deleting a host account purges everything that account owned —
+  its recordings and their files, sessions, uploaded media and push
+  subscription. (Rotating local backups may retain snapshots until they
+  age out of the last-14 window.)
 - **Secrets** live in the server's `.env` and the data directory —
   never in the repository.
 - **Headers**: `X-Content-Type-Options`, `X-Frame-Options: DENY`,

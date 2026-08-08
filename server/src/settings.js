@@ -133,3 +133,9 @@ export async function deleteSession(user, id) {
   await writeJson("sessions.json", sessions.filter((s) =>
     s.id !== id || (s.ownerId !== user.uid && user.role !== "admin")));
 }
+
+// Remove every session belonging to a user (used when the account is deleted)
+export async function deleteSessionsByOwner(uid) {
+  const sessions = await readJson("sessions.json", []);
+  await writeJson("sessions.json", sessions.filter((s) => s.ownerId !== uid));
+}

@@ -11,6 +11,7 @@ import {
 } from "./auth.js";
 import {
   getSettings, updateSettings, listSessions, createSession, deleteSession, findSession,
+  deleteSessionsByOwner,
   listSounds, addSound, removeSound, findSound,
   listIntros, addIntro, removeIntro, findIntro
 } from "./settings.js";
@@ -194,7 +195,25 @@ api.post("/users/:id/permissions", requireAdmin, async (req, res) => {
 
 api.delete("/users/:id", requireAdmin, async (req, res) => {
   try {
-    await deleteUser(req.params.id);
+    const uid = String(req.params.id);
+    // deleteUser enforces the "can't delete the only admin" rule and
+    // removes the account first; if it throws, nothing below runs.
+    await deleteUser(uid);
+    // Complete deletion for privacy: purge everything the user owned —
+    // recordings (and their files), sessions, uploaded media, push subs.
+    for (const rec of (await listRecordings()).filter((r) => r.ownerId === uid)) {
+      await deleteRecording(rec.id);
+    }
+    await deleteSessionsByOwner(uid);
+    const udir = path.join(config.dataDir, "uploads");
+    try {
+      for (const f of await fs.readdir(udir)) {
+        // wallpaper-/logo-/ad-/sound-/intro- files all embed the owner uid
+        if (f.includes(uid)) await fs.unlink(path.join(udir, f)).catch(() => {});
+      }
+    } catch { /* no uploads dir */ }
+    const { removeUserSubscriptions } = await import("./push.js");
+    await removeUserSubscriptions(uid);
     res.json({ ok: true });
   } catch (err) {
     res.status(400).json({ error: err.message });

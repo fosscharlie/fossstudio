@@ -27,6 +27,13 @@ export async function addSubscription(uid, sub) {
   }
 }
 
+// Drop a user's push subscriptions when their account is deleted
+export async function removeUserSubscriptions(uid) {
+  const subs = await readJson("push-subs.json", []);
+  const kept = subs.filter((s) => s.uid !== uid);
+  if (kept.length !== subs.length) await writeJson("push-subs.json", kept);
+}
+
 export async function notifyUser(uid, title, body) {
   const subs = await readJson("push-subs.json", []);
   const alive = [];
