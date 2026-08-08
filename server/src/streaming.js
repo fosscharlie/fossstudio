@@ -48,6 +48,18 @@ function makeCornerMask(file, w, h, r) {
   });
 }
 
+// Pre-scale an image to the canvas once, so the live graph doesn't
+// re-scale a full-size wallpaper on every frame.
+function prescaleImage(src, dst, w, h) {
+  return new Promise((resolve, reject) => {
+    const p = spawn("ffmpeg", ["-nostdin", "-loglevel", "error", "-i", src, "-vf",
+      `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h}`,
+      "-frames:v", "1", "-y", dst]);
+    p.on("error", reject);
+    p.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`prescale exited ${code}`))));
+  });
+}
+
 export function isStreaming(roomId) {
   return streams.has(roomId);
 }
@@ -137,10 +149,19 @@ async function launch(state) {
   const bgIdx = nextIdx++;
   const wall = settings.wallpaper &&
     path.join(config.dataDir, "uploads", path.basename(settings.wallpaper));
-  const bgArgs = wall && await fs.access(wall).then(() => true, () => false)
-    ? ["-loop", "1", "-framerate", "5", "-i", wall]
-    : ["-f", "lavfi", "-i",
-      `color=c=0x${(settings.bg && /^#[0-9a-fA-F]{6}$/.test(settings.bg)) ? settings.bg.slice(1) : "14161a"}:s=${W}x${H}`];
+  let bgArgs = null;
+  if (wall && await fs.access(wall).then(() => true, () => false)) {
+    // Pre-scale the wallpaper to the canvas once (cheaper than per-frame)
+    const bgPre = path.join(workDir, "bg.png");
+    try {
+      await prescaleImage(wall, bgPre, W, H);
+      bgArgs = ["-loop", "1", "-framerate", "5", "-i", bgPre];
+    } catch { /* fall through to the colour background */ }
+  }
+  if (!bgArgs) {
+    const hex = (settings.bg && /^#[0-9a-fA-F]{6}$/.test(settings.bg)) ? settings.bg.slice(1) : "14161a";
+    bgArgs = ["-f", "lavfi", "-i", `color=c=0x${hex}:s=${W}x${H}`];
+  }
   const maskIdx = nextIdx++;
   const maskArgs = ["-loop", "1", "-framerate", "5", "-i", maskPath];
 
@@ -157,7 +178,7 @@ async function launch(state) {
   const bannerW = 2 * Math.round(0.38 * tileW / 2);
 
   const gp = [];
-  gp.push(`[${bgIdx}:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1,fps=30[bg]`);
+  gp.push(`[${bgIdx}:v]setsar=1,fps=30[bg]`);
   gp.push(`[${maskIdx}:v]format=gray,scale=${tileW}:${tileH},setsar=1[mk];` +
     `[mk]split=${n}${videos.map((_, k) => `[m${k}]`).join("")}`);
   videos.forEach((v, k) => {

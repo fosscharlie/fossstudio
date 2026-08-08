@@ -2,6 +2,18 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased — recording fixes
+
+- **Fix: recordings could run away and never finish.** The new background
+  is an endless looped source; with browser-recorded WebM (which carries
+  no duration metadata) `-shortest` didn't reliably terminate the render,
+  so `combined.mp4` grew without bound (seen as "processing" stuck for
+  hours). The render is now **hard-capped with `-t`** at the real session
+  length, probed from the per-participant FLACs.
+- **Faster wallpaper backgrounds**: the wallpaper is scaled to the canvas
+  **once** instead of being re-scaled on every frame — in both the
+  recording and the live stream.
+
 ## Unreleased — recordings and stream look like the screen
 
 - The combined recording **and the live stream** now **match the

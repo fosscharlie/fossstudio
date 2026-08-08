@@ -24,6 +24,20 @@ async function exists(f) {
   return fs.access(f).then(() => true, () => false);
 }
 
+// Duration of a media file in seconds (0 if unknown). Used to hard-cap
+// the combined render: its background is an endless looped image, and
+// -shortest doesn't reliably terminate that with browser-recorded WebM.
+function probeDuration(file) {
+  return new Promise((resolve) => {
+    const p = spawn("ffprobe", ["-v", "error", "-show_entries", "format=duration",
+      "-of", "default=nk=1:nw=1", file]);
+    let out = "";
+    p.stdout.on("data", (d) => { out += d; });
+    p.on("error", () => resolve(0));
+    p.on("close", () => resolve(parseFloat(out) || 0));
+  });
+}
+
 function safeName(name, used) {
   let base = name.replace(/[^\p{L}\p{N} _-]/gu, "").trim().slice(0, 30) || "guest";
   let candidate = base, i = 2;
@@ -43,6 +57,7 @@ export async function processRecording(rec) {
   // Per participant: which input file carries their video / audio.
   // Server mode: one file has both. Browser mode: two separate files.
   const parts = []; // {name, offsetMs, videoFile, audioFile}
+  let maxEnd = 0;   // latest (offset + duration) across participants, seconds
 
   for (const [peerId, p] of rec.peers) {
     const name = safeName(p.name, used);
@@ -68,6 +83,10 @@ export async function processRecording(rec) {
       await ffmpeg(["-i", part.audioFile, "-map", "0:a:0", "-c:a", "flac", "-y", path.join(out, flac)],
         `flac ${name}`);
       files.push(flac);
+      // FLAC carries a real duration (the source WebM often doesn't) —
+      // use it to cap the combined render's length
+      const dur = await probeDuration(path.join(out, flac));
+      if (dur > 0) maxEnd = Math.max(maxEnd, (part.offsetMs || 0) / 1000 + dur);
     }
     if (part.audioFile || part.videoFile) parts.push(part);
   }
@@ -123,10 +142,16 @@ export async function processRecording(rec) {
       `format=gray,geq=lum='lte(pow(max(0\\,max(${RAD}-X\\,X-(W-${RAD})))\\,2)+pow(max(0\\,max(${RAD}-Y\\,Y-(H-${RAD})))\\,2)\\,pow(${RAD}\\,2))*255'`,
       "-frames:v", "1", "-y", maskPath], "cornermask");
 
-    // Background input: wallpaper (cover) if set, else the session colour
+    // Background input: wallpaper if set, else the session colour. The
+    // wallpaper is pre-scaled to the canvas once here (a single frame) so
+    // the main graph doesn't re-scale a full-size image every frame.
     let bgIdx = inputIdx.size;
     if (rec.wallpaper && await exists(rec.wallpaper)) {
-      args.push("-loop", "1", "-i", rec.wallpaper);
+      const bgPre = path.join(raw, "bg.png");
+      await ffmpeg(["-i", rec.wallpaper, "-vf",
+        `scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}`,
+        "-frames:v", "1", "-y", bgPre], "bg-prescale");
+      args.push("-loop", "1", "-i", bgPre);
     } else {
       const hex = (rec.bg && /^#[0-9a-fA-F]{6}$/.test(rec.bg)) ? rec.bg.slice(1) : "14161a";
       args.push("-f", "lavfi", "-i", `color=c=0x${hex}:s=${W}x${H}`);
@@ -142,7 +167,7 @@ export async function processRecording(rec) {
     const bannerW = 2 * Math.round(0.38 * tileW / 2);
 
     const gp = [];
-    gp.push(`[${bgIdx}:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1[bg]`);
+    gp.push(`[${bgIdx}:v]setsar=1[bg]`);
     gp.push(`[${maskIdx}:v]format=gray,scale=${tileW}:${tileH},setsar=1[mk];` +
       `[mk]split=${n}${videos.map((_, i) => `[m${i}]`).join("")}`);
     videos.forEach((p, i) => {
@@ -260,6 +285,16 @@ export async function processRecording(rec) {
         ? `${mixLabels[0]}anull[aout]`
         : `${mixLabels.join("")}amix=inputs=${mixLabels.length}:normalize=0[aout]`;
 
+    // An intro fired near the very end can run slightly past the last
+    // audio — don't let the hard cap clip it
+    for (const iv of rec.intros || []) {
+      maxEnd = Math.max(maxEnd, (iv.offsetMs || 0) / 1000 + (iv.durationMs || 8000) / 1000);
+    }
+    // Hard duration cap: the background is an endless looped source, and
+    // -shortest doesn't reliably terminate it with browser-recorded WebM.
+    // -t stops the muxer at the real session length no matter what.
+    const capArgs = maxEnd > 0 ? ["-t", (maxEnd + 0.3).toFixed(2)] : [];
+
     await ffmpeg([
       ...args,
       "-filter_complex",
@@ -270,8 +305,7 @@ export async function processRecording(rec) {
       // MP4 (H.264/AAC) so it plays in any browser for preview and is a
       // universal download; +faststart moves the index up front for streaming
       "-movflags", "+faststart",
-      // The background is an endless source (colour/looped wallpaper), so
-      // bound the file to the audio (the real session length)
+      ...capArgs,
       "-shortest",
       "-y", path.join(out, "combined.mp4"),
       // Separate soundboard track: clips only, on their timeline
