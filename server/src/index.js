@@ -24,7 +24,10 @@ app.use((req, res, next) => {
   // socket. frame-ancestors none double-locks against clickjacking.
   res.setHeader("Content-Security-Policy", [
     "default-src 'self'",
-    "script-src 'self'",
+    // wasm-unsafe-eval lets the RNNoise AudioWorklet compile its
+    // WebAssembly (noise suppression). It permits WASM only — NOT JS
+    // eval() — so script-src stays strict against injected scripts.
+    "script-src 'self' 'wasm-unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "media-src 'self' blob:",
