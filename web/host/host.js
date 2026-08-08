@@ -23,7 +23,7 @@
     { id: "recordings", label: "Recordings", hostOnly: true, subs: [
       { id: "library", label: "Library" }
     ] },
-    { id: "media", label: "Media", hostOnly: true, subs: [
+    { id: "media", label: "Effects", hostOnly: true, subs: [
       { id: "sounds", label: "Sounds" },
       { id: "intros", label: "Intros" }
     ] },
@@ -331,12 +331,28 @@
 
   // ---------- recordings ----------
 
-  const STATUS_LABELS = {
-    recording: "● recording now",
-    processing: "⏳ processing…",
-    ready: "✓ ready",
-    failed: "! processing failed"
-  };
+  // Ready recordings need no badge (their files are right there); the
+  // rest show a small icon with a tooltip rather than a word
+  function setStatusBadge(badge, status) {
+    badge.className = "badge";
+    badge.textContent = "";
+    badge.removeAttribute("data-tip");
+    if (status === "ready") { badge.hidden = true; return; }
+    badge.hidden = false;
+    if (status === "processing") {
+      badge.classList.add("status-icon");
+      badge.dataset.tip = "Processing";
+      badge.innerHTML = '<span class="proc-spinner" aria-label="Processing"></span>';
+    } else if (status === "recording") {
+      badge.classList.add("status-icon");
+      badge.dataset.tip = "Recording now";
+      badge.innerHTML = '<span class="rec-live" aria-label="Recording now"></span>';
+    } else if (status === "failed") {
+      badge.classList.add("status-icon", "status-fail");
+      badge.dataset.tip = "Processing failed — the raw files are kept";
+      badge.textContent = "!";
+    }
+  }
 
   async function loadRecordings() {
     const list = $("recordingList");
@@ -362,7 +378,7 @@
       row.querySelector(".title").textContent = r.title || `Session ${r.roomId}`;
       row.querySelector(".meta").textContent =
         `${when}${mins ? ` · ${mins} min` : ""} · ${r.mode === "server" ? "server-side" : "browser-side"}`;
-      row.querySelector(".badge").textContent = STATUS_LABELS[r.status] || r.status;
+      setStatusBadge(row.querySelector(".badge"), r.status);
       const filesEl = row.querySelector(".files");
       for (const f of r.files || []) {
         const url = `/api/recordings/${encodeURIComponent(r.id)}/files/${encodeURIComponent(f)}`;

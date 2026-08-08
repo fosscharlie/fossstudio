@@ -2,7 +2,15 @@
 
 All notable changes to FOSSStudio are documented here.
 
-## Unreleased — recording fixes
+## 1.3.0 — 2026-08-08
+
+Soundboard and fullscreen intro videos fired from the session, an
+**Effects** menu in the dashboard, recordings and streams that match the
+on-screen look (background, gaps, rounded corners), in-dashboard previews,
+complete account deletion, and the earlier security hardening. Headline
+fix: recordings no longer run away during processing.
+
+### recording fixes
 
 - **Fix: recordings could run away and never finish.** The new background
   is an endless looped source; with browser-recorded WebM (which carries
@@ -14,7 +22,7 @@ All notable changes to FOSSStudio are documented here.
   **once** instead of being re-scaled on every frame — in both the
   recording and the live stream.
 
-## Unreleased — recordings and stream look like the screen
+### recordings and stream look like the screen
 
 - The combined recording **and the live stream** now **match the
   on-screen presentation**: the session **background** (the wallpaper if
@@ -26,7 +34,7 @@ All notable changes to FOSSStudio are documented here.
   the live stream that's a little extra real-time work, so very large
   (9–10 person) live grids are worth a CPU sanity-check on the VPS.
 
-## Unreleased — complete deletion
+### complete deletion
 
 - **Deleting a host account now purges all of its content** — recordings
   (and their files on disk), sessions, uploaded media (wallpaper, logo,
@@ -35,7 +43,7 @@ All notable changes to FOSSStudio are documented here.
   closes the gap for account deletion, so nothing is left behind for
   privacy
 
-## Unreleased — dashboard previews
+### dashboard previews
 
 - **Preview in the dashboard**: play/stop is a single **toggle icon**
   button (with a tooltip) that swaps in place — no separate Stop button and
@@ -48,17 +56,20 @@ All notable changes to FOSSStudio are documented here.
   MKV, so it previews in any browser and is a universal download; the
   per-participant FLACs and the `soundboard.flac` are unchanged
 
-## Unreleased — media UI
+### media UI
 
 - **Soundboard moved to the bottom control bar**: a dedicated button sits
   with mute / raise-hand / camera; it opens a **thin strip across the
   bottom of the video area** (Intros and Sounds side by side in one row)
   instead of a tall floating panel. Click the button again or the ✕ to
   close
-- **Sounds and Intros now live under their own "Media" main menu** in the
-  dashboard, out of Settings
+- **Sounds and Intros now live under their own "Effects" main menu** in
+  the dashboard, out of Settings
+- **Recordings list**: ready recordings drop the status word (their files
+  are right there); processing shows a small red spinner, recording a
+  pulsing red dot
 
-## Unreleased — intro videos
+### intro videos
 
 - **Intro videos**: upload short videos in Settings → Intros (up to 5,
   MP4 or WebM, 80 MB each), then fire one from the Soundboard bar. It
@@ -74,7 +85,7 @@ All notable changes to FOSSStudio are documented here.
 - Length and whether the video has an audio track are measured on upload,
   so the stream and recording never mis-handle a silent intro
 
-## Unreleased — soundboard
+### soundboard
 
 - **Soundboard**: the host uploads short audio clips (laughs, applause,
   transition stings) in Settings → Sounds, then fires them one-click from
@@ -92,7 +103,7 @@ All notable changes to FOSSStudio are documented here.
   the clip level can be remixed in post — works in both browser and
   server recording modes
 
-## Unreleased — security hardening
+### security hardening
 
 - App container now runs as a non-root user (uid 1000) instead of root
 - Content-Security-Policy header added (strict script-src 'self'; the
@@ -102,7 +113,7 @@ All notable changes to FOSSStudio are documented here.
 - Docker image rebuilds with OS patches (`apt upgrade` + `--pull` each
   deploy); dependencies on patched node-tar/minimatch
 
-## Unreleased
+### Repo and docs cleanup
 
 - README rewritten for the public: no personal server links, and a
   truthful "Running it" section (prerequisites, ports, no prebuilt
