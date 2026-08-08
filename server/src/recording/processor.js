@@ -224,15 +224,18 @@ export async function processRecording(rec) {
       [scaled, stack].filter(Boolean).join(";") + clipFilters +
         (amix ? ";" + amix : "") + overlayFilters,
       "-map", finalLabel, ...(amix ? ["-map", "[aout]"] : []),
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+      "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
       "-c:a", "aac", "-b:a", "192k",
-      "-y", path.join(out, "combined.mkv"),
+      // MP4 (H.264/AAC) so it plays in any browser for preview and is a
+      // universal download; +faststart moves the index up front for streaming
+      "-movflags", "+faststart",
+      "-y", path.join(out, "combined.mp4"),
       // Separate soundboard track: clips only, on their timeline
       ...(clipOutLabel
         ? ["-map", clipOutLabel, "-c:a", "flac", "-y", path.join(out, "soundboard.flac")]
         : [])
     ], "combined");
-    files.push("combined.mkv");
+    files.push("combined.mp4");
     if (clipOutLabel) files.push("soundboard.flac");
   }
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio — Host</title>
-<link rel="stylesheet" href="/host/host.css?v=20260808b">
+<link rel="stylesheet" href="/host/host.css?v=20260808h">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -288,6 +288,15 @@
   </div>
 </div>
 
-<script src="/host/host.js?v=20260808d"></script>
+<!-- Intro preview: video plays in a centred modal (Esc / ✕ / backdrop to close) -->
+<div id="videoModal" class="video-modal" hidden>
+  <div id="videoModalBackdrop" class="video-modal-backdrop"></div>
+  <div class="video-modal-box">
+    <button id="videoModalClose" type="button" class="video-modal-close" aria-label="Close preview">✕</button>
+    <video id="videoModalPlayer" class="video-modal-player" controls playsinline></video>
+  </div>
+</div>
+
+<script src="/host/host.js?v=20260808h"></script>
 </body>
 </html>

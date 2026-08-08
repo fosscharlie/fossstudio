@@ -28,9 +28,10 @@ dashboard.
   to the grid.
 - **Recording:** browser-side per-person (PCM, best for big sessions) or
   server-side (a host-panel switch, picked per session, locked while
-  recording or live). Output: one combined MKV + a lossless FLAC per
-  participant (plus a `soundboard.flac` when clips were fired), named
-  after the episode. The combined video matches the
+  recording or live). Output: one combined MP4 (H.264/AAC, plays in any
+  browser) + a lossless FLAC per participant (plus a `soundboard.flac`
+  when clips were fired), named after the episode. Recordings can be
+  previewed and downloaded from the dashboard. The combined video matches the
   screen: everyone's tile, their lower-third name banners, the podcast
   logo + episode title block (draggable anywhere by the host), and any
   subscribe/ad overlays you triggered, at the moment you triggered

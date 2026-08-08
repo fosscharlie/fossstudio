@@ -2,6 +2,19 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased — dashboard previews
+
+- **Preview in the dashboard**: sounds and the recording's audio tracks
+  play inline with a **Stop** button (the Preview button disables while
+  playing so it can't stack on itself); intro videos and the combined
+  recording open in a **centred modal** (close with Esc, the ✕, or the
+  backdrop)
+- **Recordings library** now lists each file with Preview / Stop /
+  Download, matching the Media layout, plus the per-recording Delete
+- **Combined recording is now MP4** (H.264/AAC, `+faststart`) instead of
+  MKV, so it previews in any browser and is a universal download; the
+  per-participant FLACs and the `soundboard.flac` are unchanged
+
 ## Unreleased — media UI
 
 - **Soundboard moved to the bottom control bar**: a dedicated button sits
@@ -41,7 +54,7 @@ All notable changes to FOSSStudio are documented here.
   so firing one **never relaunches the live stream** — no blip, no stall
 - Everyone in the session hears clips live; they mix into the YouTube
   stream automatically
-- Recordings get the clips **mixed into `combined.mkv` and exported as a
+- Recordings get the clips **mixed into `combined.mp4` and exported as a
   separate `soundboard.flac` track**, straight from the source files, so
   the clip level can be remixed in post — works in both browser and
   server recording modes

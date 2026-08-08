@@ -365,11 +365,50 @@
       row.querySelector(".badge").textContent = STATUS_LABELS[r.status] || r.status;
       const filesEl = row.querySelector(".files");
       for (const f of r.files || []) {
-        const a = document.createElement("a");
-        a.href = `/api/recordings/${encodeURIComponent(r.id)}/files/${encodeURIComponent(f)}`;
-        a.textContent = f;
-        a.style.marginRight = "0.8rem";
-        filesEl.appendChild(a);
+        const url = `/api/recordings/${encodeURIComponent(r.id)}/files/${encodeURIComponent(f)}`;
+        const isVideo = /\.(mp4|webm|mkv|mov)$/i.test(f);
+        const isAudio = /\.(flac|wav|mp3|ogg|m4a|aac)$/i.test(f);
+        const fileRow = document.createElement("div");
+        fileRow.className = "rec-file";
+        const fname = document.createElement("span");
+        fname.className = "rec-fname";
+        fname.textContent = f;
+        fileRow.appendChild(fname);
+
+        const preview = document.createElement("button");
+        preview.className = "btn small";
+        preview.textContent = "▶ Preview";
+        const stop = document.createElement("button");
+        stop.className = "btn small";
+        stop.textContent = "■ Stop";
+        stop.hidden = true;
+        let audio = null;
+        const reset = () => { preview.disabled = false; stop.hidden = true; audio = null; };
+        if (isVideo) {
+          preview.onclick = () => {
+            preview.disabled = true;
+            openVideoModal(url, () => { preview.disabled = false; });
+          };
+        } else if (isAudio) {
+          preview.onclick = () => {
+            audio = new Audio(url);
+            preview.disabled = true; stop.hidden = false;
+            audio.onended = reset; audio.onerror = reset;
+            audio.play().catch(reset);
+          };
+          stop.onclick = () => { if (audio) audio.pause(); reset(); };
+        } else {
+          preview.hidden = true;
+        }
+        fileRow.append(preview, stop);
+
+        const dl = document.createElement("a");
+        dl.className = "btn small";
+        dl.textContent = "⬇ Download";
+        dl.href = url;
+        dl.setAttribute("download", "");
+        fileRow.appendChild(dl);
+        filesEl.appendChild(fileRow);
       }
       row.appendChild(confirmBtn("del", "Delete recording and its files", async () => {
         await apiFetch(`/api/recordings/${encodeURIComponent(r.id)}`, { method: "DELETE" });
@@ -495,12 +534,26 @@
       const play = document.createElement("button");
       play.className = "btn small";
       play.textContent = "▶ Preview";
-      play.onclick = () => { new Audio(`/api/sounds/${me.uid}/${clip.id}?${Date.now()}`).play().catch(() => {}); };
+      const stop = document.createElement("button");
+      stop.className = "btn small";
+      stop.textContent = "■ Stop";
+      stop.hidden = true;
+      let audio = null;
+      const reset = () => { play.disabled = false; stop.hidden = true; audio = null; };
+      play.onclick = () => {
+        audio = new Audio(`/api/sounds/${me.uid}/${clip.id}?${Date.now()}`);
+        play.disabled = true;       // can't restart it on top of itself
+        stop.hidden = false;
+        audio.onended = reset;
+        audio.onerror = reset;
+        audio.play().catch(reset);
+      };
+      stop.onclick = () => { if (audio) audio.pause(); reset(); };
       const del = document.createElement("button");
       del.className = "btn small danger";
       del.textContent = "Remove";
-      del.onclick = async () => { await apiFetch(`/api/sounds/${clip.id}`, { method: "DELETE" }); loadSounds(); };
-      row.append(name, play, del);
+      del.onclick = async () => { if (audio) audio.pause(); await apiFetch(`/api/sounds/${clip.id}`, { method: "DELETE" }); loadSounds(); };
+      row.append(name, play, stop, del);
       box.appendChild(row);
     }
   }
@@ -536,6 +589,27 @@
     }
   };
 
+  // ---------- video preview modal (intros) ----------
+  let videoModalOnClose = null;
+  function openVideoModal(url, onClose) {
+    videoModalOnClose = onClose || null;
+    const v = $("videoModalPlayer");
+    v.src = url;
+    $("videoModal").hidden = false;
+    v.play().catch(() => {});
+  }
+  function closeVideoModal() {
+    if ($("videoModal").hidden) return;
+    $("videoModal").hidden = true;
+    const v = $("videoModalPlayer");
+    try { v.pause(); v.removeAttribute("src"); v.load(); } catch { /* ignore */ }
+    const cb = videoModalOnClose; videoModalOnClose = null;
+    if (cb) cb();
+  }
+  $("videoModalClose").onclick = closeVideoModal;
+  $("videoModalBackdrop").onclick = closeVideoModal;
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeVideoModal(); });
+
   // ---------- intro videos ----------
   let pendingIntro = null;
   function renderIntros(list) {
@@ -552,7 +626,10 @@
       const play = document.createElement("button");
       play.className = "btn small";
       play.textContent = "▶ Preview";
-      play.onclick = () => window.open(`/api/intros/${me.uid}/${clip.id}`, "_blank", "noopener");
+      play.onclick = () => {
+        play.disabled = true;
+        openVideoModal(`/api/intros/${me.uid}/${clip.id}?${Date.now()}`, () => { play.disabled = false; });
+      };
       const del = document.createElement("button");
       del.className = "btn small danger";
       del.textContent = "Remove";
