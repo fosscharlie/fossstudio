@@ -407,3 +407,5 @@ input[type="email"], input[type="url"] {
   white-space: nowrap;
 }
 a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+a.iconbtn { text-decoration: none; }
+.iconbtn:hover { border-color: var(--muted-fg); }

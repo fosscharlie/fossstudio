@@ -374,40 +374,9 @@
         fname.className = "rec-fname";
         fname.textContent = f;
         fileRow.appendChild(fname);
-
-        const preview = document.createElement("button");
-        preview.className = "btn small";
-        preview.textContent = "▶ Preview";
-        const stop = document.createElement("button");
-        stop.className = "btn small";
-        stop.textContent = "■ Stop";
-        stop.hidden = true;
-        let audio = null;
-        const reset = () => { preview.disabled = false; stop.hidden = true; audio = null; };
-        if (isVideo) {
-          preview.onclick = () => {
-            preview.disabled = true;
-            openVideoModal(url, () => { preview.disabled = false; });
-          };
-        } else if (isAudio) {
-          preview.onclick = () => {
-            audio = new Audio(url);
-            preview.disabled = true; stop.hidden = false;
-            audio.onended = reset; audio.onerror = reset;
-            audio.play().catch(reset);
-          };
-          stop.onclick = () => { if (audio) audio.pause(); reset(); };
-        } else {
-          preview.hidden = true;
-        }
-        fileRow.append(preview, stop);
-
-        const dl = document.createElement("a");
-        dl.className = "btn small";
-        dl.textContent = "⬇ Download";
-        dl.href = url;
-        dl.setAttribute("download", "");
-        fileRow.appendChild(dl);
+        if (isVideo) fileRow.appendChild(videoToggleButton(url));
+        else if (isAudio) fileRow.appendChild(audioToggleButton(url));
+        fileRow.appendChild(downloadLink(url));
         filesEl.appendChild(fileRow);
       }
       row.appendChild(confirmBtn("del", "Delete recording and its files", async () => {
@@ -531,29 +500,12 @@
       const name = document.createElement("span");
       name.className = "sound-name";
       name.textContent = clip.name;
-      const play = document.createElement("button");
-      play.className = "btn small";
-      play.textContent = "▶ Preview";
-      const stop = document.createElement("button");
-      stop.className = "btn small";
-      stop.textContent = "■ Stop";
-      stop.hidden = true;
-      let audio = null;
-      const reset = () => { play.disabled = false; stop.hidden = true; audio = null; };
-      play.onclick = () => {
-        audio = new Audio(`/api/sounds/${me.uid}/${clip.id}?${Date.now()}`);
-        play.disabled = true;       // can't restart it on top of itself
-        stop.hidden = false;
-        audio.onended = reset;
-        audio.onerror = reset;
-        audio.play().catch(reset);
-      };
-      stop.onclick = () => { if (audio) audio.pause(); reset(); };
+      const play = audioToggleButton(`/api/sounds/${me.uid}/${clip.id}`);
       const del = document.createElement("button");
       del.className = "btn small danger";
       del.textContent = "Remove";
-      del.onclick = async () => { if (audio) audio.pause(); await apiFetch(`/api/sounds/${clip.id}`, { method: "DELETE" }); loadSounds(); };
-      row.append(name, play, stop, del);
+      del.onclick = async () => { play.stopPreview(); await apiFetch(`/api/sounds/${clip.id}`, { method: "DELETE" }); loadSounds(); };
+      row.append(name, play, del);
       box.appendChild(row);
     }
   }
@@ -592,6 +544,7 @@
   // ---------- video preview modal (intros) ----------
   let videoModalOnClose = null;
   function openVideoModal(url, onClose) {
+    closeVideoModal();              // revert any button already showing a preview
     videoModalOnClose = onClose || null;
     const v = $("videoModalPlayer");
     v.src = url;
@@ -610,6 +563,65 @@
   $("videoModalBackdrop").onclick = closeVideoModal;
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeVideoModal(); });
 
+  // ---------- preview controls (icons + tooltips) ----------
+  const ICO = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>',
+    stop: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+    download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4M5 20h14"/></svg>'
+  };
+  function iconState(btn, icon, tip) {
+    btn.innerHTML = ICO[icon];
+    btn.dataset.tip = tip;
+    btn.setAttribute("aria-label", tip);
+  }
+
+  // One button that toggles audio in place — no separate stop, no reflow
+  function audioToggleButton(url) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "iconbtn";
+    let audio = null;
+    const toPlay = () => { audio = null; iconState(btn, "play", "Play"); };
+    iconState(btn, "play", "Play");
+    btn.stopPreview = () => { if (audio) audio.pause(); toPlay(); };
+    btn.onclick = () => {
+      if (audio) { audio.pause(); toPlay(); return; }
+      audio = new Audio(url);
+      iconState(btn, "stop", "Stop");
+      audio.onended = toPlay;
+      audio.onerror = toPlay;
+      audio.play().catch(toPlay);
+    };
+    return btn;
+  }
+
+  // One button that toggles the video modal in place
+  function videoToggleButton(url) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "iconbtn";
+    let active = false;
+    iconState(btn, "play", "Play");
+    btn.onclick = () => {
+      if (active) { closeVideoModal(); return; }
+      active = true;
+      iconState(btn, "stop", "Close preview");
+      openVideoModal(url, () => { active = false; iconState(btn, "play", "Play"); });
+    };
+    return btn;
+  }
+
+  function downloadLink(url) {
+    const a = document.createElement("a");
+    a.className = "iconbtn";
+    a.href = url;
+    a.setAttribute("download", "");
+    a.dataset.tip = "Download";
+    a.setAttribute("aria-label", "Download");
+    a.innerHTML = ICO.download;
+    return a;
+  }
+
   // ---------- intro videos ----------
   let pendingIntro = null;
   function renderIntros(list) {
@@ -623,13 +635,7 @@
       const name = document.createElement("span");
       name.className = "sound-name";
       name.textContent = clip.name + (clip.durationMs ? ` · ${(clip.durationMs / 1000).toFixed(1)}s` : "");
-      const play = document.createElement("button");
-      play.className = "btn small";
-      play.textContent = "▶ Preview";
-      play.onclick = () => {
-        play.disabled = true;
-        openVideoModal(`/api/intros/${me.uid}/${clip.id}?${Date.now()}`, () => { play.disabled = false; });
-      };
+      const play = videoToggleButton(`/api/intros/${me.uid}/${clip.id}`);
       const del = document.createElement("button");
       del.className = "btn small danger";
       del.textContent = "Remove";

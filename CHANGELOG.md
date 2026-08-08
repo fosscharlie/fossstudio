@@ -4,13 +4,13 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased — dashboard previews
 
-- **Preview in the dashboard**: sounds and the recording's audio tracks
-  play inline with a **Stop** button (the Preview button disables while
-  playing so it can't stack on itself); intro videos and the combined
-  recording open in a **centred modal** (close with Esc, the ✕, or the
-  backdrop)
-- **Recordings library** now lists each file with Preview / Stop /
-  Download, matching the Media layout, plus the per-recording Delete
+- **Preview in the dashboard**: play/stop is a single **toggle icon**
+  button (with a tooltip) that swaps in place — no separate Stop button and
+  no reflow. Audio (sounds, recording tracks) plays inline; video (intros,
+  the combined recording) opens in a **centred modal** (close with Esc, the
+  ✕, or the backdrop)
+- **Recordings library** lists each file with a play/stop toggle and a
+  download icon, matching the Media layout, plus the per-recording Delete
 - **Combined recording is now MP4** (H.264/AAC, `+faststart`) instead of
   MKV, so it previews in any browser and is a universal download; the
   per-participant FLACs and the `soundboard.flac` are unchanged
