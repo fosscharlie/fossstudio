@@ -2,6 +2,16 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased — recordings look like the screen
+
+- The combined recording now **matches the on-screen presentation**: the
+  session **background** (the wallpaper if set, otherwise the background
+  colour) shows behind and between the tiles, there are **gaps** between
+  videos, and each tile has **subtly rounded corners** — instead of the
+  old flat, gapless black grid. Lower-third banners and the title chip are
+  composited as before. (The live stream still uses the flat grid; that's
+  next.)
+
 ## Unreleased — complete deletion
 
 - **Deleting a host account now purges all of its content** — recordings

@@ -112,6 +112,12 @@ export async function startRecording(room, mode) {
     intros: [],       // fullscreen intro videos, baked into combined.mkv
     stopping: false
   };
+  // Background for the composite: wallpaper if set, else the session colour
+  const { getSettings } = await import("../settings.js");
+  const rs = await getSettings(room.ownerId);
+  rec.bg = rs.bg || null;
+  rec.wallpaper = rs.wallpaper
+    ? path.join(config.dataDir, "uploads", path.basename(rs.wallpaper)) : null;
   await fs.mkdir(path.join(recDir(recId), "raw"), { recursive: true });
   active.set(room.id, rec);
 
