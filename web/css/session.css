@@ -408,14 +408,17 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
 }
 .sb-hint { font-size: 0.62rem; color: var(--muted); white-space: nowrap; }
 .sb-solo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-left: 1px solid var(--line);
   background: none;
   color: var(--muted);
   cursor: pointer;
-  font-size: 0.95rem;
-  padding: 0 0.55rem;
+  padding: 0 0.6rem;
 }
+.sb-solo svg { width: 1.05rem; height: 1.05rem; display: block; }
 .sb-solo:hover { background: #f34236; color: #fff; }
 .sb-intro {
   display: flex;

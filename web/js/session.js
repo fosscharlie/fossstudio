@@ -1219,7 +1219,7 @@
         const solo = document.createElement("button");
         solo.type = "button";
         solo.className = "sb-solo";
-        solo.textContent = "🔇";
+        solo.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>';
         solo.dataset.tip = "Mute everyone, then play";
         solo.setAttribute("aria-label", `Mute everyone and play ${clip.name}`);
         solo.onclick = () => playClip(clip, true);
