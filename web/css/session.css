@@ -438,36 +438,24 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
 }
 .sb-intro:hover { background: #2c3550; }
 
-/* ---------- Intro takeover (in-room) ----------
-   In the session everyone sees the intro in a centred ~60% widescreen
-   box over a dimmed grid. The recording and live stream stay fullscreen
-   (handled server-side) — this is only the in-room view. */
+/* ---------- Fullscreen intro takeover ----------
+   Everyone sees the intro fullscreen in the session; the recording and
+   live stream are fullscreen too (handled server-side). */
 .intro-overlay {
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgba(0, 0, 0, 0.72);
+  background: #000;
   align-items: center;
   justify-content: center;
   opacity: 0;
   transition: opacity 0.4s ease;
 }
 /* Guard display behind :not([hidden]) — a bare `display` would override
-   the hidden attribute and leave the overlay permanently visible */
+   the hidden attribute and leave the black overlay permanently visible */
 .intro-overlay:not([hidden]) { display: flex; }
 .intro-overlay.in { opacity: 1; }
-.intro-video {
-  width: 60vw;
-  max-height: 80vh;
-  aspect-ratio: 16 / 9;
-  object-fit: contain;
-  background: #000;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-}
-@media (max-width: 700px) {
-  .intro-video { width: 88vw; }
-}
+.intro-video { width: 100%; height: 100%; object-fit: contain; background: #000; }
 
 :is(button, select, input, a):focus-visible {
   outline: 2px solid var(--accent, #4a7dbd);

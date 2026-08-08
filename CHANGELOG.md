@@ -11,8 +11,6 @@ All notable changes to FOSSStudio are documented here.
   close
 - **Sounds and Intros now live under their own "Media" main menu** in the
   dashboard, out of Settings
-- **Intro videos play in a centred ~60% box** over the dimmed grid in the
-  session — the recording and live stream still show them fullscreen
 
 ## Unreleased — intro videos
 
