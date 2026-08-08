@@ -1,6 +1,6 @@
 // Email: SMTP settings live in the data dir (admin-managed via the
 // dashboard), with .env values as the initial seed. Plain SMTP with
-// STARTTLS — works with any provider, no lock-in.
+// STARTTLS - works with any provider, no lock-in.
 import net from "node:net";
 import tls from "node:tls";
 import { config } from "./config.js";
@@ -102,13 +102,13 @@ export function renderEmail({ title, paragraphs = [], button = null, footer = ""
 
 function renderPlainText({ title, paragraphs = [], button = null, footer = "" }) {
   return [
-    `FOSSStudio — ${title}`,
+    `FOSSStudio - ${title}`,
     "",
     ...paragraphs,
     ...(button ? ["", `${button.label}: ${button.url}`] : []),
     ...(footer ? ["", footer] : []),
     "",
-    "— Sent by FOSSStudio (fossstudio.org)"
+    "Sent by FOSSStudio (fossstudio.org)"
   ].join("\n");
 }
 
@@ -124,7 +124,7 @@ export async function sendEmail(to, subject, content) {
 
 async function sendMime(to, subject, text, html) {
   const smtp = await getSmtpConfig();
-  if (!isConfigured(smtp)) throw new Error("Email isn't set up yet — add SMTP details in System → Email.");
+  if (!isConfigured(smtp)) throw new Error("Email isn't set up yet - add SMTP details in System → Email.");
   const { host, port, user, pass, from } = smtp;
 
   const read = (sock) => new Promise((resolve) => sock.once("data", (d) => resolve(d.toString())));

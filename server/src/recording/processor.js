@@ -1,5 +1,5 @@
 // Post-processing: per-participant FLAC + one combined grid MKV.
-// Runs after the session ends — speed doesn't matter, so everything is
+// Runs after the session ends - speed doesn't matter, so everything is
 // niced right down to keep live calls smooth.
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
@@ -83,7 +83,7 @@ export async function processRecording(rec) {
       await ffmpeg(["-i", part.audioFile, "-map", "0:a:0", "-c:a", "flac", "-y", path.join(out, flac)],
         `flac ${name}`);
       files.push(flac);
-      // FLAC carries a real duration (the source WebM often doesn't) —
+      // FLAC carries a real duration (the source WebM often doesn't) -
       // use it to cap the combined render's length
       const dur = await probeDuration(path.join(out, flac));
       if (dur > 0) maxEnd = Math.max(maxEnd, (part.offsetMs || 0) / 1000 + dur);
@@ -189,7 +189,7 @@ export async function processRecording(rec) {
       prev = out;
     });
     const grid = gp.join(";");
-    // Episode-title chip, top-centre — same as it floats over the grid
+    // Episode-title chip, top-centre - same as it floats over the grid
     let finalLabel = "[vout]";
     let overlayFilters = "";
     const titleFile = rec.titleFile && path.join(raw, rec.titleFile);
@@ -222,7 +222,7 @@ export async function processRecording(rec) {
     });
 
     // Soundboard clips fired during the take: place each on a silent
-    // timeline at its offset, mix them into one bus, then split it — one
+    // timeline at its offset, mix them into one bus, then split it - one
     // copy folds into the combined audio, the other becomes a separate
     // lossless track the host can remix.
     let clipFilters = "";
@@ -286,7 +286,7 @@ export async function processRecording(rec) {
         : `${mixLabels.join("")}amix=inputs=${mixLabels.length}:normalize=0[aout]`;
 
     // An intro fired near the very end can run slightly past the last
-    // audio — don't let the hard cap clip it
+    // audio - don't let the hard cap clip it
     for (const iv of rec.intros || []) {
       maxEnd = Math.max(maxEnd, (iv.offsetMs || 0) / 1000 + (iv.durationMs || 8000) / 1000);
     }

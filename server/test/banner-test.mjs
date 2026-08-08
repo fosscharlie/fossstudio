@@ -28,7 +28,7 @@ async function join(cam, name, tagline, asHost) {
   return { browser, page };
 }
 
-const host = await join("vcam1.y4m", "Anna", "Host — awesomepodcast.org", true);
+const host = await join("vcam1.y4m", "Anna", "Host - awesomepodcast.org", true);
 const guest = await join("vcam2.y4m", "Dev", "Kernel maintainer", false);
 await new Promise((r) => setTimeout(r, 3000));
 

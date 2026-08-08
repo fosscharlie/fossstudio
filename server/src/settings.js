@@ -55,7 +55,7 @@ export async function findSound(uid, id) {
 export async function addSound(uid, { name, ext }) {
   const sounds = await listSounds(uid);
   if (sounds.length >= MAX_SOUNDS) {
-    throw new Error(`You can keep up to ${MAX_SOUNDS} sounds — remove one first.`);
+    throw new Error(`You can keep up to ${MAX_SOUNDS} sounds - remove one first.`);
   }
   const id = crypto.randomBytes(4).toString("hex");
   const clip = { id, name: String(name || "").trim().slice(0, 40) || "Sound", ext };
@@ -84,7 +84,7 @@ export async function findIntro(uid, id) {
 export async function addIntro(uid, { name, ext, durationMs = 0, hasAudio = true }) {
   const intros = await listIntros(uid);
   if (intros.length >= MAX_INTROS) {
-    throw new Error(`You can keep up to ${MAX_INTROS} intro videos — remove one first.`);
+    throw new Error(`You can keep up to ${MAX_INTROS} intro videos - remove one first.`);
   }
   const id = crypto.randomBytes(4).toString("hex");
   const clip = {

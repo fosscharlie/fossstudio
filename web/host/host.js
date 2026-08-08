@@ -148,7 +148,7 @@
     const sessions = await apiFetch("/api/sessions");
     list.innerHTML = "";
     if (sessions.length === 0) {
-      list.innerHTML = '<p class="hint">No sessions yet — create one above and send the link to your guests.</p>';
+      list.innerHTML = '<p class="hint">No sessions yet - create one above and send the link to your guests.</p>';
       return;
     }
     for (const s of sessions) {
@@ -257,10 +257,10 @@
       $("newUserName").value = "";
       $("newUserEmail").value = "";
       if (r.emailed) {
-        showUserMsg("✓ Invite emailed — they have 7 days to accept.", true);
+        showUserMsg("✓ Invite emailed - they have 7 days to accept.", true);
       } else {
         await navigator.clipboard.writeText(r.inviteUrl).catch(() => {});
-        showUserMsg("Email isn't set up, so the invite link was copied to your clipboard instead — send it to them yourself.", true);
+        showUserMsg("Email isn't set up, so the invite link was copied to your clipboard instead - send it to them yourself.", true);
       }
       loadUsers();
     } catch (err) { showUserMsg(err.message); }
@@ -300,7 +300,7 @@
     $("smtpUser").value = s.user || "";
     $("smtpFrom").value = s.from || "";
     $("smtpAlertTo").value = s.alertTo || "";
-    $("smtpPassHint").textContent = s.hasPass ? "(saved — leave blank to keep)" : "";
+    $("smtpPassHint").textContent = s.hasPass ? "(saved - leave blank to keep)" : "";
   }
 
   $("saveSmtpBtn").onclick = async () => {
@@ -323,7 +323,7 @@
   $("testSmtpBtn").onclick = async () => {
     try {
       const { to } = await apiFetch("/api/smtp/test", { method: "POST" });
-      smtpMsg(`✓ Test email sent to ${to} — check the inbox.`);
+      smtpMsg(`✓ Test email sent to ${to} - check the inbox.`);
     } catch (err) {
       smtpMsg(err.message, false);
     }
@@ -349,7 +349,7 @@
       badge.innerHTML = '<span class="rec-live" aria-label="Recording now"></span>';
     } else if (status === "failed") {
       badge.classList.add("status-icon", "status-fail");
-      badge.dataset.tip = "Processing failed — the raw files are kept";
+      badge.dataset.tip = "Processing failed - the raw files are kept";
       badge.textContent = "!";
     }
   }
@@ -591,7 +591,7 @@
     btn.setAttribute("aria-label", tip);
   }
 
-  // One button that toggles audio in place — no separate stop, no reflow
+  // One button that toggles audio in place - no separate stop, no reflow
   function audioToggleButton(url) {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -801,7 +801,7 @@
 
   $("restartBtn").onclick = async () => {
     await apiFetch("/api/ops/restart", { method: "POST" });
-    sysMsg("Restarting — back in a few seconds…");
+    sysMsg("Restarting - back in a few seconds…");
     setTimeout(() => location.reload(), 6000);
   };
 
@@ -875,8 +875,8 @@
     $("whoami").textContent = `${me.username} (${me.role === "admin" ? "admin" : "host"})`;
     $("accountName").textContent = me.username;
     $("accountRole").textContent = me.role === "admin"
-      ? "Admin — creates and manages hosts, and looks after the system. Hosting shows is what host accounts are for."
-      : "Host — your own sessions, recordings and settings.";
+      ? "Admin - creates and manages hosts, and looks after the system. Hosting shows is what host accounts are for."
+      : "Host - your own sessions, recordings and settings.";
     if (!applyHash()) {
       currentMenu = visibleMenus()[0];
       renderMainMenu();

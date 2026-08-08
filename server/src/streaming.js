@@ -141,7 +141,7 @@ async function launch(state) {
   const maskPath = path.join(workDir, "cornermask.png");
   await makeCornerMask(maskPath, tileW, tileH, RAD);
 
-  // Background + mask inputs come first, then banners — the order fixes
+  // Background + mask inputs come first, then banners - the order fixes
   // the ffmpeg input indices used in the filter graph
   let nextIdx = inputs.length;
   const { getSettings } = await import("./settings.js");
@@ -166,7 +166,7 @@ async function launch(state) {
   const maskArgs = ["-loop", "1", "-framerate", "5", "-i", maskPath];
 
   // Lower-third banners: the host's browser uploads each one as a PNG
-  // (ffmpeg can't draw text) — overlaid on the tile, like the DOM
+  // (ffmpeg can't draw text) - overlaid on the tile, like the DOM
   const bannerArgs = [];
   for (const v of videos) {
     const f = path.join(config.dataDir, "banners", room.id, `${v.peerId}.png`);
@@ -206,7 +206,7 @@ async function launch(state) {
       ? `[${audios[0].i}:a]aresample=44100[aout]`
       : `${audios.map((a) => `[${a.i}:a]`).join("")}amix=inputs=${audios.length}:normalize=0,aresample=44100[aout]`;
 
-  // Episode-title chip, top-centre — same as it floats over the grid
+  // Episode-title chip, top-centre - same as it floats over the grid
   let finalLabel = "[vout]";
   let titleArgs = [];
   let titleFilter = "";
@@ -294,7 +294,7 @@ async function launch(state) {
 }
 
 // Fullscreen intro: one file, looped and paced in realtime, scaled to
-// 720p. No RTP inputs — the participants keep producing, we just don't
+// 720p. No RTP inputs - the participants keep producing, we just don't
 // consume them until we relaunch back to the grid.
 async function launchIntro(state, gen) {
   const cleanup = { transports: [], consumers: [], ffmpeg: null, workDir: null };
@@ -388,7 +388,7 @@ async function teardown(cleanup) {
 export function refreshStream(roomId) {
   const state = streams.get(roomId);
   if (!state || state.stopping) return;
-  // Don't disturb an intro takeover — its own timer relaunches the grid
+  // Don't disturb an intro takeover - its own timer relaunches the grid
   if (state.introFile) return;
   clearTimeout(state.refreshTimer);
   state.refreshTimer = setTimeout(async () => {

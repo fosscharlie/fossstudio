@@ -25,8 +25,8 @@ app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy", [
     "default-src 'self'",
     // wasm-unsafe-eval lets the RNNoise AudioWorklet compile its
-    // WebAssembly (noise suppression). It permits WASM only — NOT JS
-    // eval() — so script-src stays strict against injected scripts.
+    // WebAssembly (noise suppression). It permits WASM only - NOT JS
+    // eval() - so script-src stays strict against injected scripts.
     "script-src 'self' 'wasm-unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
@@ -39,7 +39,7 @@ app.use((req, res, next) => {
     "frame-ancestors 'none'",
     "object-src 'none'"
   ].join("; "));
-  // Pages and the service worker must always come from the server —
+  // Pages and the service worker must always come from the server -
   // a cached copy pins old asset versions and serves stale app code
   if (/^\/(s\/|host\/?$|sw\.js$)|\.html$|^\/$/.test(req.path)) {
     res.setHeader("Cache-Control", "no-store");

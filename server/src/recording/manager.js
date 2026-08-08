@@ -213,7 +213,7 @@ function maybeFinalize(rec) {
     await saveIndex({
       id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, title: rec.title,
       startedAt: rec.startedAt,
-      status: "failed", error: "Processing failed — the raw files are kept.", files: []
+      status: "failed", error: "Processing failed - the raw files are kept.", files: []
     });
   });
 }
@@ -231,7 +231,7 @@ async function finalize(rec) {
     endedAt: Date.now(), status: "ready", files
   });
   const { notifyUser } = await import("../push.js");
-  notifyUser(rec.ownerId, "Recording ready", `Session ${rec.roomId} is processed — ${files.length} files to download.`)
+  notifyUser(rec.ownerId, "Recording ready", `Session ${rec.roomId} is processed - ${files.length} files to download.`)
     .catch(() => {});
 }
 

@@ -80,11 +80,11 @@ api.get("/2fa", requireAuth, async (req, res) => res.json(await get2faState(req.
 api.post("/2fa/setup", requireAuth, async (req, res) => res.json(await setup2fa(req.user.uid)));
 api.post("/2fa/enable", requireAuth, async (req, res) => {
   const ok = await confirm2fa(req.user.uid, req.body.code);
-  ok ? res.json({ ok: true }) : res.status(400).json({ error: "That code isn't right — check your authenticator app." });
+  ok ? res.json({ ok: true }) : res.status(400).json({ error: "That code isn't right - check your authenticator app." });
 });
 api.post("/2fa/disable", requireAuth, async (req, res) => {
   const ok = await disable2fa(req.user.uid, req.body.code);
-  ok ? res.json({ ok: true }) : res.status(400).json({ error: "That code isn't right — check your authenticator app." });
+  ok ? res.json({ ok: true }) : res.status(400).json({ error: "That code isn't right - check your authenticator app." });
 });
 
 // ---------- users (admin only) ----------
@@ -117,7 +117,7 @@ api.post("/users/invite", requireAdmin, async (req, res) => {
         await sendEmail(user.email, "You're invited to host on FOSSStudio", {
           paragraphs: [
             `Hello ${user.username},`,
-            "You've been invited to host shows on FOSSStudio — your own sessions, recordings and branding, all ready to go.",
+            "You've been invited to host shows on FOSSStudio - your own sessions, recordings and branding, all ready to go.",
             "Click the button below to choose your password and get started."
           ],
           button: { label: "Choose your password", url: inviteUrl },
@@ -199,7 +199,7 @@ api.delete("/users/:id", requireAdmin, async (req, res) => {
     // deleteUser enforces the "can't delete the only admin" rule and
     // removes the account first; if it throws, nothing below runs.
     await deleteUser(uid);
-    // Complete deletion for privacy: purge everything the user owned —
+    // Complete deletion for privacy: purge everything the user owned -
     // recordings (and their files), sessions, uploaded media, push subs.
     for (const rec of (await listRecordings()).filter((r) => r.ownerId === uid)) {
       await deleteRecording(rec.id);
@@ -348,7 +348,7 @@ api.post("/sessions", requireAuth, async (req, res) => {
     return res.status(403).json({ error: "Admins manage hosts; sessions belong to host accounts." });
   }
   const title = String(req.body.title || "").trim();
-  if (!title) return res.status(400).json({ error: "Give the episode a title — it names the session and its recordings." });
+  if (!title) return res.status(400).json({ error: "Give the episode a title - it names the session and its recordings." });
   res.json(await createSession(req.user, title));
 });
 
@@ -445,7 +445,7 @@ api.delete("/sounds/:id", requireAuth, async (req, res) => {
 });
 
 // The host's session page fetches the clip audio to play it. Resolved
-// via the room owner, like the logo — the clip itself isn't sensitive.
+// via the room owner, like the logo - the clip itself isn't sensitive.
 api.get("/sounds/:uid/:id", async (req, res) => {
   const uid = path.basename(req.params.uid);
   const id = path.basename(req.params.id);

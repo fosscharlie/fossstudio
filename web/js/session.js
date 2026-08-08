@@ -413,7 +413,7 @@
   // ---------- Theme ----------
 
   function applyTheme(theme) {
-    document.title = theme.title ? `${theme.title} — live` : "FOSSStudio — live";
+    document.title = theme.title ? `${theme.title} - live` : "FOSSStudio - live";
     document.getElementById("bannerTitle").textContent = theme.title || "";
     const logo = document.getElementById("bannerLogo");
     if (theme.logo) {
@@ -503,7 +503,7 @@
     const tile = tiles.get(peerId);
     if (!tile) return;
     // Chrome quirk: a remote track must be attached to a media element
-    // before WebAudio receives data — the muted tile <video> does that.
+    // before WebAudio receives data - the muted tile <video> does that.
     tile.stream.addTrack(track);
     const src = audioCtx.createMediaStreamSource(new MediaStream([track]));
     const gain = audioCtx.createGain();
@@ -540,7 +540,7 @@
       const n = Math.max(1, tiles.size); // self included everywhere
       const cols = mobile ? Math.min(2, n) : Math.ceil(Math.sqrt(n));
       // Rows as even as possible, fuller rows first: 7 people means
-      // 3 + 2 + 2, 8 means 3 + 3 + 2 — never 3 + 3 + 1
+      // 3 + 2 + 2, 8 means 3 + 3 + 2 - never 3 + 3 + 1
       const rows = Math.ceil(n / cols);
       const base = Math.floor(n / rows), extra = n % rows;
       const rowSizes = Array.from({ length: rows }, (_, r) => base + (r < extra ? 1 : 0));
@@ -687,8 +687,8 @@
     applyAutoGain(!!control.autoGain);
     els.hpAutoGain.classList.toggle("active", !!control.autoGain);
     if (isHost) {
-      // Light up "Mute all" (and offer the way back) once everyone —
-      // host included — is muted
+      // Light up "Mute all" (and offer the way back) once everyone -
+      // host included - is muted
       const everyone = [...tiles.keys()];
       const allMuted = everyone.length > 0 && everyone.every((id) => control.muted?.[id]);
       els.hpMuteAllBtn.classList.toggle("active", allMuted);
@@ -731,7 +731,7 @@
     const logoEl = document.getElementById("bannerLogo");
     const hasBlock = titleText || (!logoEl.hidden && logoEl.complete && logoEl.naturalWidth > 0);
     const title = hasBlock ? drawTitlePng(titleText) : null;
-    // Only send when something actually changed — while live, the server
+    // Only send when something actually changed - while live, the server
     // relaunches the stream to pick banners up, which costs a short blip
     const payload = JSON.stringify([images, title]);
     if (payload === lastBannerPayload || !Object.keys(images).length) return;
@@ -902,7 +902,7 @@
       row.innerHTML = `
         <div class="hp-name-line"></div>
         <div class="hp-btns">
-          <button class="hp-btn nr${nrOn ? " active" : ""}" data-tip="${nrOn ? "Noise reduction is on — click to turn off" : "Noise reduction is OFF — click to turn on"}">NR</button>
+          <button class="hp-btn nr${nrOn ? " active" : ""}" data-tip="${nrOn ? "Noise reduction is on - click to turn off" : "Noise reduction is OFF - click to turn on"}">NR</button>
           <button class="hp-btn mute">${muted ? "Unmute" : "Mute"}</button>
           <button class="hp-btn spot">Spot</button>
           ${hand ? '<button class="hp-btn lower" data-tip="Lower their hand">Lower</button>' : ""}
@@ -1016,7 +1016,7 @@
       recorder.ondataavailable = (e) => {
         if (!e.data.size) return;
         const n = seq++;
-        // Chunks must land in order — chain the uploads
+        // Chunks must land in order - chain the uploads
         queue = queue.then(() =>
           fetch(`${base}&kind=${kind}&seq=${n}`, { method: "POST", body: e.data })
         ).catch(() => {});
@@ -1099,7 +1099,7 @@
     clipBus.gain.value = 1;
     const dest = ctx.createMediaStreamDestination();
     // A steady zero source keeps the track producing (silent) samples, so
-    // the producer — and the live mixer — never starve between clips
+    // the producer - and the live mixer - never starve between clips
     const keepalive = ctx.createConstantSource();
     keepalive.offset.value = 0;
     keepalive.connect(dest);
@@ -1186,12 +1186,12 @@
     if (!soundboardClips.length && !introClips.length) {
       const empty = document.createElement("div");
       empty.className = "sb-empty";
-      empty.textContent = "Nothing yet — upload clips in Settings → Sounds and videos in Settings → Intros.";
+      empty.textContent = "Nothing yet - upload clips in Settings → Sounds and videos in Settings → Intros.";
       list.appendChild(empty);
       return;
     }
     if (introClips.length) {
-      const { group, row } = sbGroup(SB_ICONS.intros, "Intros — fullscreen, mutes everyone");
+      const { group, row } = sbGroup(SB_ICONS.intros, "Intros - fullscreen, mutes everyone");
       for (const intro of introClips) {
         const btn = document.createElement("button");
         btn.type = "button";
@@ -1209,7 +1209,7 @@
       list.appendChild(group);
     }
     if (soundboardClips.length) {
-      const { group, row } = sbGroup(SB_ICONS.sounds, "Sounds — play over, or mute everyone then play");
+      const { group, row } = sbGroup(SB_ICONS.sounds, "Sounds - play over, or mute everyone then play");
       for (const clip of soundboardClips) {
         const tile = document.createElement("div");
         tile.className = "sb-tile";
@@ -1365,7 +1365,7 @@
     consumers.set(consumerId, { consumer, peerId });
     if (kind === "audio" && source === "clips") {
       // The host's soundboard channel: play it, but it isn't anyone's mic
-      // — keep it off the tiles and the per-guest volume/meter graph
+      // - keep it off the tiles and the per-guest volume/meter graph
       attachClipAudio(consumer.track);
     } else if (kind === "audio") {
       attachAudio(peerId, consumer.track);
@@ -1391,7 +1391,7 @@
 
   async function join() {
     if (!els.nameInput.value.trim()) {
-      showError("Add a banner title first — that's the big text under your video.");
+      showError("Add a banner title first - that's the big text under your video.");
       els.nameInput.focus();
       return;
     }

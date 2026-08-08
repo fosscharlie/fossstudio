@@ -1,5 +1,5 @@
 // mediasoup setup: one worker process handles all media forwarding.
-// The worker never decodes video — it routes encrypted packets between
+// The worker never decodes video - it routes encrypted packets between
 // peers, which is why a small VPS can handle a 10-person session.
 import * as mediasoup from "mediasoup";
 import { config } from "./config.js";

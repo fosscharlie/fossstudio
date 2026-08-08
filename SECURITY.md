@@ -23,7 +23,7 @@ For self-hosters assessing the project:
 - **Roles**: admins never host; hosts only ever see their own sessions,
   recordings and settings. Host powers in a session are granted from the
   server-side session ownership check, never from client claims.
-- **Session links** must exist in the session registry — arbitrary room
+- **Session links** must exist in the session registry - arbitrary room
   IDs are rejected.
 - **Uploads**: recording chunks are gated by per-peer HMAC tokens;
   wallpaper, ad-banner, soundboard-clip and intro-video uploads are
@@ -42,11 +42,11 @@ For self-hosters assessing the project:
   page; fonts and libraries are self-hosted.
 - **Data deletion**: deleting a recording, sound, intro, wallpaper, logo
   or ad-banner removes the stored file from disk, not just the database
-  record. Deleting a host account purges everything that account owned —
+  record. Deleting a host account purges everything that account owned -
   its recordings and their files, sessions, uploaded media and push
   subscription. (Rotating local backups may retain snapshots until they
   age out of the last-14 window.)
-- **Secrets** live in the server's `.env` and the data directory —
+- **Secrets** live in the server's `.env` and the data directory -
   never in the repository.
 - **Headers**: `X-Content-Type-Options`, `X-Frame-Options: DENY`,
   `Referrer-Policy`, and a restrictive `Permissions-Policy`.

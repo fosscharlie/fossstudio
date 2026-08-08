@@ -88,14 +88,14 @@ export function attachSignaling(httpServer) {
             const name = String(data.name || "").trim().slice(0, NAME_MAX) || "Guest";
             const tagline = String(data.tagline || "").trim().slice(0, 32);
             // Host role needs a dashboard login AND ownership of this
-            // session — never client-claimed. Admins manage the system;
+            // session - never client-claimed. Admins manage the system;
             // they don't host shows.
             const auth = isAuthedRequest(req);
             const canHost = auth && auth.uid === session.ownerId;
             const role = canHost && data.role === "host" ? "host" : "guest";
             peer = addPeer(room, { name, tagline, role, socket });
             room.control.noise[peer.id] = !!data.noiseOn;
-            // Everyone arrives muted — host included, even alone; you
+            // Everyone arrives muted - host included, even alone; you
             // unmute yourself when you're ready to talk
             room.control.muted[peer.id] = true;
             const settings = await getSettings(room.ownerId);
@@ -113,7 +113,7 @@ export function attachSignaling(httpServer) {
               control: room.control,
               streaming: isStreaming(room.id),
               theme: {
-                // The block shows this session's episode title —
+                // The block shows this session's episode title -
                 // one system can run several different podcasts
                 title: session.title === "Untitled session" ? "" : session.title,
                 logo: settings.logo ? `/api/logo/${room.ownerId}` : null,
@@ -293,7 +293,7 @@ export function attachSignaling(httpServer) {
               case "muteAll": {
                 const muted = data.muted !== false; // default: mute
                 for (const p2 of room.peers.values()) {
-                  // Everyone means everyone — the host included
+                  // Everyone means everyone - the host included
                   c.muted[p2.id] = muted;
                   if (muted) delete c.hands[p2.id];
                 }

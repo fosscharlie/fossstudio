@@ -35,7 +35,7 @@ async function load() {
       settings: { ...USER_SETTINGS_DEFAULTS, ...legacySettings }
     }];
     await writeJson("users.json", users);
-    // Old sessions predate ownership — they belong to the admin now
+    // Old sessions predate ownership - they belong to the admin now
     const sessions = await readJson("sessions.json", []);
     if (sessions.some((s) => !s.ownerId)) {
       for (const s of sessions) s.ownerId = s.ownerId || users[0].id;

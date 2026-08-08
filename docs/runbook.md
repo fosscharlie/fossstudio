@@ -1,7 +1,7 @@
 # FOSSStudio Runbook
 
 Plain-language guide for keeping FOSSStudio running. **Almost everything
-lives in the dashboard** — https://YOUR-DOMAIN/host/ →
+lives in the dashboard** - https://YOUR-DOMAIN/host/ →
 System tab. This file is for when the dashboard itself is unreachable.
 
 ## Day-to-day (no terminal needed)
@@ -54,14 +54,14 @@ cd /opt/fossstudio/current && docker compose -p fossstudio restart app
 
 Daily, kept for 14 days: settings, theme, session list, login details,
 recording index. **Not included:** the recording media files themselves
-(they're big) — download the ones you care about from the Recordings tab
+(they're big) - download the ones you care about from the Recordings tab
 and keep them somewhere safe.
 
 ## The moving parts (for context)
 
-- **app** — the studio itself (Node.js). Its data lives in `/opt/fossstudio/data`.
-- **caddy** — handles the domain and HTTPS certificate. Renews itself.
-- **coturn** — helps guests behind strict firewalls connect.
+- **app** - the studio itself (Node.js). Its data lives in `/opt/fossstudio/data`.
+- **caddy** - handles the domain and HTTPS certificate. Renews itself.
+- **coturn** - helps guests behind strict firewalls connect.
 - Deploys land in `/opt/fossstudio/releases/<timestamp>`; the newest 5 are
   kept, and `current` points at the live one. Rollback just points
   `current` at the previous release.
@@ -70,5 +70,5 @@ and keep them somewhere safe.
 
 A GitHub Actions job (in this repo, `.github/workflows/uptime.yml`) pings
 the site every 15 minutes from outside and emails you if it's down. It
-needs SMTP secrets set in the GitHub repo settings — see the workflow
+needs SMTP secrets set in the GitHub repo settings - see the workflow
 file for the exact names.

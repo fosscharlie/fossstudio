@@ -18,11 +18,11 @@ dashboard.
 - **In-session host controls:** spotlight/grid layout, per-guest volume,
   per-session auto level balancing, start/stop recording, go live.
 - **Soundboard:** upload short clips (laughs, applause, stings) in the
-  dashboard, then fire them one-click in-session — played over everyone,
+  dashboard, then fire them one-click in-session - played over everyone,
   or with all mics muted for the clip's length and then restored.
   Carried on an always-on audio channel so a clip never interrupts the
   live stream; mixed into the recording and saved as a separate track.
-- **Intro videos:** upload short videos and fire one from the same bar —
+- **Intro videos:** upload short videos and fire one from the same bar -
   it takes over every screen fullscreen (in the session, the recording
   and on the stream), mutes everyone while it plays, then crossfades back
   to the grid.

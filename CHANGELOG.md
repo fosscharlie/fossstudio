@@ -2,7 +2,7 @@
 
 All notable changes to FOSSStudio are documented here.
 
-## 1.3.0 — 2026-08-08
+## 1.3.0 - 2026-08-08
 
 Soundboard and fullscreen intro videos fired from the session, an
 **Effects** menu in the dashboard, recordings and streams that match the
@@ -19,7 +19,7 @@ fix: recordings no longer run away during processing.
   hours). The render is now **hard-capped with `-t`** at the real session
   length, probed from the per-participant FLACs.
 - **Faster wallpaper backgrounds**: the wallpaper is scaled to the canvas
-  **once** instead of being re-scaled on every frame — in both the
+  **once** instead of being re-scaled on every frame - in both the
   recording and the live stream.
 
 ### recordings and stream look like the screen
@@ -28,17 +28,17 @@ fix: recordings no longer run away during processing.
   on-screen presentation**: the session **background** (the wallpaper if
   set, otherwise the background colour) shows behind and between the
   tiles, there are **gaps** between videos, and each tile has **subtly
-  rounded corners** — instead of the old flat, gapless black grid.
+  rounded corners** - instead of the old flat, gapless black grid.
   Lower-third banners and the title chip composite as before.
 - Rounded corners use a generated alpha mask + `alphamerge` per tile; on
   the live stream that's a little extra real-time work, so very large
-  (9–10 person) live grids are worth a CPU sanity-check on the VPS.
+  (9-10 person) live grids are worth a CPU sanity-check on the VPS.
 
 ### complete deletion
 
-- **Deleting a host account now purges all of its content** — recordings
+- **Deleting a host account now purges all of its content** - recordings
   (and their files on disk), sessions, uploaded media (wallpaper, logo,
-  ad-banner, sounds, intros) and its push subscription — not just the
+  ad-banner, sounds, intros) and its push subscription - not just the
   account record. Per-item deletes already removed their files; this
   closes the gap for account deletion, so nothing is left behind for
   privacy
@@ -46,7 +46,7 @@ fix: recordings no longer run away during processing.
 ### dashboard previews
 
 - **Preview in the dashboard**: play/stop is a single **toggle icon**
-  button (with a tooltip) that swaps in place — no separate Stop button and
+  button (with a tooltip) that swaps in place - no separate Stop button and
   no reflow. Audio (sounds, recording tracks) plays inline; video (intros,
   the combined recording) opens in a **centred modal** (close with Esc, the
   ✕, or the backdrop)
@@ -80,7 +80,7 @@ fix: recordings no longer run away during processing.
   match. The live stream stays a cut (it relaunches to the file), masked
   by the takeover
 - Baked into the recording (full-frame over its window, positioned at its
-  trigger time, with its audio) and shown fullscreen on the live stream —
+  trigger time, with its audio) and shown fullscreen on the live stream -
   the stream cuts to the file at full quality and back
 - Length and whether the video has an audio track are measured on upload,
   so the stream and recording never mis-handle a silent intro
@@ -89,18 +89,18 @@ fix: recordings no longer run away during processing.
 
 - **Soundboard**: the host uploads short audio clips (laughs, applause,
   transition stings) in Settings → Sounds, then fires them one-click from
-  a new **Soundboard** bar in the session's host controls — up to 20 clips
+  a new **Soundboard** bar in the session's host controls - up to 20 clips
   (MP3, WAV, OGG, AAC, M4A or WebM, 5 MB each)
 - Each clip plays two ways: **▶ Play over** everyone (laughter under the
-  chat), or **🔇 Mute + play** — every mic is silenced for the clip's
+  chat), or **🔇 Mute + play** - every mic is silenced for the clip's
   length and then restored to exactly how it was (transition stings)
 - Clips are carried on an always-on audio channel the host opens at join,
-  so firing one **never relaunches the live stream** — no blip, no stall
+  so firing one **never relaunches the live stream** - no blip, no stall
 - Everyone in the session hears clips live; they mix into the YouTube
   stream automatically
 - Recordings get the clips **mixed into `combined.mp4` and exported as a
   separate `soundboard.flac` track**, straight from the source files, so
-  the clip level can be remixed in post — works in both browser and
+  the clip level can be remixed in post - works in both browser and
   server recording modes
 
 ### security hardening
@@ -122,7 +122,7 @@ fix: recordings no longer run away during processing.
   redirect in the Caddyfile is now driven by an optional
   `LEGACY_DOMAIN` env var instead of a hard-coded personal domain
 
-## 1.2.0 — 2026-08-06
+## 1.2.0 - 2026-08-06
 
 A day of host-driven refinement: the session view, host panel and
 recording pipeline all now match what is on screen.
@@ -134,27 +134,27 @@ recording pipeline all now match what is on screen.
   number
 
 - **The browser/server recording switch is available to every host**
-  in the host panel (no admin permission needed any more — the
+  in the host panel (no admin permission needed any more - the
   per-host "allow server-side recording" setting is gone); it locks
   while recording or live
 
 - Video spacing: 50px everywhere on desktop (was 80), a small 20px on
-  tablets and 12px on phones — the videos themselves get bigger
+  tablets and 12px on phones - the videos themselves get bigger
 
 - **Auto level is on by default** for every session
-- The recording light no longer blinks — steady red while recording
+- The recording light no longer blinks - steady red while recording
 - **While recording, guests' controls dim to half automatically** and
-  brighten when the pointer (or finger) moves over them; no button —
+  brighten when the pointer (or finger) moves over them; no button -
   it follows the recording state
 
 - Dim mode no longer fades the logo/title block (it stays at full
-  brightness), and the dim button is host-only — guests don't see it
+  brightness), and the dim button is host-only - guests don't see it
 
-- **Recording light**: a round indicator in everyone's control row —
+- **Recording light**: a round indicator in everyone's control row -
   grey normally, red and blinking while the session records, with a
   hover explanation. The "● REC" text on the logo/title block is gone
 
-- **Accent colour selector removed** — the dashboard is fixed to the
+- **Accent colour selector removed** - the dashboard is fixed to the
   brand yellow; the menu highlight is a solid yellow-navy chip with
   white text
 - Settings submenu order: Themes, Ad Banner, Streaming, Account,
@@ -163,58 +163,58 @@ recording pipeline all now match what is on screen.
 - Settings naming: the "Podcast banner" submenu and its
   "Advertising / support banner" panel are both now "Ad Banner"
 
-- **Everyone joins muted** — the host too, even when alone; unmute
+- **Everyone joins muted** - the host too, even when alone; unmute
   yourself when you're ready to talk
 - Themes pane order: Accent colour, Podcast logo, Background colour,
   Wallpaper
 
 - **Background colour** in Settings → Themes: same palette as the
   accent plus a hex field for any custom colour, shown behind the
-  video grid in sessions — a wallpaper overrides it; with no wallpaper
+  video grid in sessions - a wallpaper overrides it; with no wallpaper
   the colour shows
 
 - **New grid layout**: the host is always top-left; everyone is the
   same size; rows balance and centre themselves (2 side by side; 3 =
-  two up, one centred below; 5 = 3+2; 7 = 3+2+2; 8 = 3+3+2; 9 = 3×3) —
+  two up, one centred below; 5 = 3+2; 7 = 3+2+2; 8 = 3+3+2; 9 = 3×3) -
   identical on screen, in recordings and on the live stream
 - **Fix**: on the host's screen the logo/title block could jump to the
-  middle-right — a stylesheet clash with its drag tooltip
+  middle-right - a stylesheet clash with its drag tooltip
 
 - **Fix**: the logo/title block stretched to the height of a video row
   on the host's screen when a second participant joined
 - The block now **scales down with the viewport** so tablets and
   phones lose less video space to it
-- Video spacing set to **80px** — sides, top, bottom and between
-  tiles — scaling down proportionally on smaller screens
+- Video spacing set to **80px** - sides, top, bottom and between
+  tiles - scaling down proportionally on smaller screens
 
 - Episode title in the logo block never exceeds the 250px logo width:
   one ellipsised line beside a logo, up to three lines when text-only
 
 - **Podcast logo block**: upload a logo in Settings → Themes (about
   250×50) and it appears above the episode title in a compact block
-  floating over the video — text-only when there's no logo — baked
+  floating over the video - text-only when there's no logo - baked
   into recordings and streams the same way. The host can **drag the
   block anywhere** on the video with the mouse; everyone's screen and
   the composited video follow (a live stream applies a new position at
   its next relaunch)
 - The old page-top title bar is gone; the block replaces it
-- **Mute now transmits silence instead of stopping audio packets** —
+- **Mute now transmits silence instead of stopping audio packets** -
   fixes live streams stalling or failing to start when anyone (e.g. a
   join-muted guest) was muted
 - Video grid spacing doubled (16px all round) so the wallpaper shows
   through
 
-- The red muted badge on video tiles is gone — mute state shows in the
+- The red muted badge on video tiles is gone - mute state shows in the
   host panel and on your own mic button only
 
 - **Phones and tablets in portrait**: your own video now sits in the
   grid with everyone else (same size, same place as when held
-  horizontally) instead of a small bottom-corner overlay — so you can
+  horizontally) instead of a small bottom-corner overlay - so you can
   see where you are in the video; the floating title chip shrinks to
   just the REC/LIVE indicator on small screens (the top bar still
   shows the episode title)
 
-- **Guests join muted by default** — mic button starts muted, the tile
+- **Guests join muted by default** - mic button starts muted, the tile
   shows the badge, and the mic only opens when the guest unmutes
   themselves (or the host unmutes them)
 
@@ -226,10 +226,10 @@ recording pipeline all now match what is on screen.
   turn on" / "ALL NOTIFICATIONS"
 
 - Portrait (vertical) camera feeds now crop to the **middle** of the
-  frame instead of the top — in the live grid, the preview, recordings
+  frame instead of the top - in the live grid, the preview, recordings
   and streams alike
 
-- **Speaker row always shows** — tablets and phones that hide their
+- **Speaker row always shows** - tablets and phones that hide their
   audio outputs get a "Default speaker" entry and a working test
   sound; a Bluetooth speaker still appears as a second choice where
   the browser allows switching
@@ -237,26 +237,26 @@ recording pipeline all now match what is on screen.
   sharing one line on every screen size
 
 - Subscribe reminder text is now three lines: "Enjoying the show?" /
-  "Subscribe and Turn on" / "All notifications" — in the session
+  "Subscribe and Turn on" / "All notifications" - in the session
   overlay and the animation baked into recordings and streams
 
-- **Mute all now includes the host** — it mutes every single person in
+- **Mute all now includes the host** - it mutes every single person in
   the session, you included, and Unmute all brings everyone back
 
 - **Episode title, front and centre**: shown in a large chip floating
   over the video (plus a slim bar at the top of the page), and baked
-  into the combined recording and the live stream, top-centre — so the
+  into the combined recording and the live stream, top-centre - so the
   published video is titled like the screen
 - **Recordings are named after the episode** instead of the session
   code; episode titles are now required when creating a session
 - **Better mute indicator**: a red round mic-off badge in the tile's
   corner replaces the 🔇 emoji
 - **Subscribe overlay bell** is now a proper drawn bell that rings
-  (fast decaying swing) — in the session overlay and in the video baked
+  (fast decaying swing) - in the session overlay and in the video baked
   into recordings and streams
 - Session pages and the service worker are served with no-store
   caching and force a worker update on load, and the host panel shows
-  a small build number — ending stale-code confusion for good
+  a small build number - ending stale-code confusion for good
 
 - Dashboard main-menu highlight is now a solid accent chip with white
   text (the translucent accent wash made the label hard to read)
@@ -267,10 +267,10 @@ recording pipeline all now match what is on screen.
   fixed-width banner without truncating (recordings/streams match)
 
 - **Session banner shows the episode title** you typed when creating the
-  session — the per-host "podcast name" setting is gone, so one system
+  session - the per-host "podcast name" setting is gone, so one system
   can run several different podcasts side by side
 - **Accent colour is now the dashboard's own** (menus, buttons and
-  highlights, applied and saved the moment you click a swatch — no save
+  highlights, applied and saved the moment you click a swatch - no save
   button); the session view no longer follows it
 - **Mute all is now a real toggle**: it lights up and flips to "Unmute
   all" once every guest is muted, and clicking it again unmutes them
@@ -288,15 +288,15 @@ recording pipeline all now match what is on screen.
   *Podcast banner* (the advertising/support banner upload, moved out of
   Streaming)
 - **Compact host panel**: guests sit in boxed cards, two per row, with
-  the name centred — ten guests fit without scrolling (verified by an
+  the name centred - ten guests fit without scrolling (verified by an
   automated ten-guest test); Mute all / Subscribe / Ad share one line;
   your own card is marked with a small person icon (hover: "This is
   you") instead of "(you)" text
 - **Modern subscribe overlay**: floating rounded card with a red
-  SUBSCRIBE button and bell — same look in the session, the recording
+  SUBSCRIBE button and bell - same look in the session, the recording
   and the live stream
 - The browser/server recording switch lives in the host panel and
-  **locks while recording or live** — the capture pipeline can't change
+  **locks while recording or live** - the capture pipeline can't change
   mid-take
 - Session pages now cache-bust their scripts and styles on every
   release, so browsers can't keep serving a stale session view
@@ -304,7 +304,7 @@ recording pipeline all now match what is on screen.
 - **Overlays**: host-panel buttons play a subscribe/notification-bell
   animation or show an uploaded advertising banner (Settings →
   Streaming). They appear instantly in everyone's session view (no need
-  to be live — test any time), are **baked into recordings** at the
+  to be live - test any time), are **baked into recordings** at the
   moment you pressed them, and composite onto the live stream when live
 - Host panel rows: name on its own line (fits 24-char names), buttons
   beneath; hosts can **lower a raised hand**
@@ -313,7 +313,7 @@ recording pipeline all now match what is on screen.
 - Mute lights turn red; colour picker spacing fixed
 
 - Portrait phone cameras crop like everyone else's tile, keeping the
-  **top** of the frame — in the live grid, recordings and streams alike
+  **top** of the frame - in the live grid, recordings and streams alike
 - Banners are a fixed size: long text truncates instead of growing the
   banner; title capped at 24 letters, subtitle at 32 (limits shown on
   the join screen)
@@ -324,11 +324,11 @@ recording pipeline all now match what is on screen.
 - **Live sound meters** for every participant in the host panel, so the
   host can see who's making noise
 
-- The host panel is a fixed sidebar, always open for the host — the
+- The host panel is a fixed sidebar, always open for the host - the
   video grid sizes itself around it; a **dim** button fades all controls
   (and brightens them on hover) instead of open/close
 - Guests can pick their **own banner colour** from the palette when the
-  host enables it — a palette button appears in everyone's controls
+  host enables it - a palette button appears in everyone's controls
 
 - Host panel: your own volume slider, per-guest **Mute/Unmute**, and a
   **Mute everyone** button; muted guests show a 🔇 on their tile, and
@@ -343,11 +343,11 @@ recording pipeline all now match what is on screen.
 - Host panel restyled to the Lightmorphic house look, with a close
   button; session controls swapped emoji for modern line icons
 - Host panel simplified: every row (including your own) has Spotlight
-  and Mute buttons — the separate layout buttons are gone; toggling the
+  and Mute buttons - the separate layout buttons are gone; toggling the
   active Spotlight returns to the grid
 
 - **Fix**: joining with noise suppression crashed some Chromium-based
-  browsers (seen in Brave Origin) — session audio is now routed to the
+  browsers (seen in Brave Origin) - session audio is now routed to the
   chosen speaker via an audio element instead of the AudioContext call
   that triggered the crash
 - Crash safety: if a join attempt never finishes (e.g. the tab crashed
@@ -357,12 +357,12 @@ recording pipeline all now match what is on screen.
   required to join) and **Banner subtitle** (optional), no placeholder
   clutter; title and subtitle sit side by side on desktop
 - Tooltips follow the house style everywhere: lozenge-shaped, matching
-  the background with an outlined edge — replacing browser-native ones
+  the background with an outlined edge - replacing browser-native ones
 
-## 1.1.0 — 2026-08-06
+## 1.1.0 - 2026-08-06
 
 - **Lower thirds**: the small name pill became a full-width two-line
-  banner on every tile — name plus an optional smaller line for a
+  banner on every tile - name plus an optional smaller line for a
   website, job or company, entered on the preview screen and remembered
   for next time
 - **Bigger camera check**: the join card is wider on desktop with the
@@ -374,7 +374,7 @@ recording pipeline all now match what is on screen.
 - Website: full redesign with real product screenshots, per-feature
   accent colours, uniform spacing, and a Lightmorphic sponsorship
 
-## 1.0.0 — 2026-08-06
+## 1.0.0 - 2026-08-06
 
 First production release, live at [app.fossstudio.org](https://app.fossstudio.org).
 

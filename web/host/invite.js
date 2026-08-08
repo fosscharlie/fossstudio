@@ -19,7 +19,7 @@ document.getElementById("inviteForm").onsubmit = async (e) => {
   err.hidden = true;
   const pw = document.getElementById("password").value;
   if (pw !== document.getElementById("password2").value) {
-    err.textContent = "Those two don't match — try again.";
+    err.textContent = "Those two don't match - try again.";
     err.hidden = false;
     return;
   }
