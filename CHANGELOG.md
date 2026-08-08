@@ -2,6 +2,13 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased
+
+- Dashboard: a main-menu item with a single section (Sessions, Recordings,
+  Hosts) no longer shows a one-button submenu - the menu item alone opens
+  the pane, and the layout drops the empty submenu column. Menus with two
+  or more sections (Effects, Settings, System) are unchanged.
+
 ## 1.3.0 - 2026-08-08
 
 Soundboard and fullscreen intro videos fired from the session, an
