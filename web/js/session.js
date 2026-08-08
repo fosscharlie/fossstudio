@@ -24,7 +24,7 @@
     hpMuteAllBtn: $("hpMuteAllBtn"), hpSubBtn: $("hpSubBtn"), hpAdBtn: $("hpAdBtn"),
     hpBannerSwatches: $("hpBannerSwatches"), hpBannerHex: $("hpBannerHex"),
     hpBannerMulti: $("hpBannerMulti"), hpBannerChoice: $("hpBannerChoice"),
-    hpSoundBtn: $("hpSoundBtn"), soundBar: $("soundBar"),
+    soundboardBtn: $("soundboardBtn"), soundBar: $("soundBar"),
     soundBarList: $("soundBarList"), soundBarClose: $("soundBarClose"),
     introOverlay: $("introOverlay"), introVideo: $("introVideo"),
     myColorBtn: $("myColorBtn"), myColorPop: $("myColorPop")
@@ -40,9 +40,10 @@
     dim: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg>',
     hand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V6a1.5 1.5 0 0 1 3 0v4V4.5a1.5 1.5 0 0 1 3 0V10V6a1.5 1.5 0 0 1 3 0v5.5l1.6-2.2a1.5 1.5 0 0 1 2.5 1.6L17.5 17a6 6 0 0 1-5.6 4H11a6 6 0 0 1-6-6v-4z"/></svg>',
     leave: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M15 16l4-4-4-4M19 12H9"/></svg>',
-    recDot: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>'
+    recDot: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>',
+    soundboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17V5l11-2v12"/><circle cx="6" cy="17" r="3"/><circle cx="17" cy="15" r="3"/></svg>'
   };
-  for (const [id, icon] of [["muteBtn", "mic"], ["camBtn", "cam"], ["dimBtn", "dim"], ["leaveBtn", "leave"], ["myColorBtn", "palette"], ["handBtn", "hand"], ["recLight", "recDot"]]) {
+  for (const [id, icon] of [["muteBtn", "mic"], ["camBtn", "cam"], ["dimBtn", "dim"], ["leaveBtn", "leave"], ["myColorBtn", "palette"], ["handBtn", "hand"], ["recLight", "recDot"], ["soundboardBtn", "soundboard"]]) {
     document.getElementById(id).innerHTML = ICONS[icon];
   }
 
@@ -1260,14 +1261,14 @@
     introHideTimer = setTimeout(done, (durationMs || 8000) + 800);
   }
 
-  els.hpSoundBtn.onclick = () => {
+  els.soundboardBtn.onclick = () => {
     const show = els.soundBar.hidden;
     els.soundBar.hidden = !show;
-    els.hpSoundBtn.classList.toggle("active", show);
+    els.soundboardBtn.classList.toggle("active", show);
   };
   els.soundBarClose.onclick = () => {
     els.soundBar.hidden = true;
-    els.hpSoundBtn.classList.remove("active");
+    els.soundboardBtn.classList.remove("active");
   };
 
   // Panel sound meters: read each analyser ~8x a second
@@ -1404,6 +1405,7 @@
       applyTheme(info.theme);
       els.hostPanel.hidden = !isHost; // sidebar is always open for the host
       els.dimBtn.hidden = !isHost;    // dimming is a host tool
+      els.soundboardBtn.hidden = !isHost; // soundboard is a host tool
       document.body.classList.toggle("is-guest", !isHost);
       if (isHost) enableTitleDrag();
 

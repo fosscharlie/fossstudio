@@ -23,12 +23,14 @@
     { id: "recordings", label: "Recordings", hostOnly: true, subs: [
       { id: "library", label: "Library" }
     ] },
+    { id: "media", label: "Media", hostOnly: true, subs: [
+      { id: "sounds", label: "Sounds" },
+      { id: "intros", label: "Intros" }
+    ] },
     { id: "users", label: "Hosts", adminOnly: true, subs: [{ id: "users", label: "Manage hosts" }] },
     { id: "settings", label: "Settings", subs: [
       { id: "themes", label: "Themes", hostOnly: true },
       { id: "banner", label: "Ad Banner", hostOnly: true },
-      { id: "sounds", label: "Sounds", hostOnly: true },
-      { id: "intros", label: "Intros", hostOnly: true },
       { id: "streaming", label: "Streaming", hostOnly: true },
       { id: "account", label: "Account" },
       { id: "twofactor", label: "Two-factor" }

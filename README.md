@@ -23,9 +23,9 @@ dashboard.
   Carried on an always-on audio channel so a clip never interrupts the
   live stream; mixed into the recording and saved as a separate track.
 - **Intro videos:** upload short videos and fire one from the same bar —
-  it takes over every screen fullscreen, mutes everyone while it plays,
-  then returns to the grid. Baked into the recording and shown fullscreen
-  on the stream.
+  it plays in a centred box over the dimmed grid for everyone (and
+  fullscreen in the recording and on the stream), mutes everyone while it
+  plays, then crossfades back to the grid.
 - **Recording:** browser-side per-person (PCM, best for big sessions) or
   server-side (a host-panel switch, picked per session, locked while
   recording or live). Output: one combined MKV + a lossless FLAC per

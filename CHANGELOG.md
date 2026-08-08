@@ -2,6 +2,18 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased — media UI
+
+- **Soundboard moved to the bottom control bar**: a dedicated button sits
+  with mute / raise-hand / camera; it opens a **thin strip across the
+  bottom of the video area** (Intros and Sounds side by side in one row)
+  instead of a tall floating panel. Click the button again or the ✕ to
+  close
+- **Sounds and Intros now live under their own "Media" main menu** in the
+  dashboard, out of Settings
+- **Intro videos play in a centred ~60% box** over the dimmed grid in the
+  session — the recording and live stream still show them fullscreen
+
 ## Unreleased — intro videos
 
 - **Intro videos**: upload short videos in Settings → Intros (up to 5,
