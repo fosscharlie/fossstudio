@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Recordings list redesigned: each recording is a card with its title and
+  date, the status and delete button pinned top-right (no longer floating
+  mid-row), and its files in a two-column grid of chips.
 - Dashboard: a main-menu item with a single section (Sessions, Recordings,
   Hosts) no longer shows a one-button submenu - the menu item alone opens
   the pane, and the layout drops the empty submenu column. Menus with two
