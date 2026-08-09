@@ -64,9 +64,14 @@ export function isStreaming(roomId) {
   return streams.has(roomId);
 }
 
+// When the stream started, for the host's elapsed timer (rejoin-safe)
+export function streamingSince(roomId) {
+  return streams.get(roomId)?.startedAt || null;
+}
+
 export async function startStream(room, rtmpUrl) {
   if (streams.has(room.id)) throw new Error("already streaming");
-  const state = { room, rtmpUrl, generation: 0, stopping: false };
+  const state = { room, rtmpUrl, generation: 0, stopping: false, startedAt: Date.now() };
   streams.set(room.id, state);
   await launch(state);
   return state;

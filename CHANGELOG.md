@@ -4,6 +4,11 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- The host's Stop recording and End stream buttons now show a running
+  elapsed timer (e.g. "Stop recording - 12:34") so you always know how
+  long the take or the live stream has been going. The clock stops and
+  resets when you stop, and survives a host reload mid-take (the true
+  start time comes from the server).
 - All audio output is now true mono: microphones are one channel, but
   captures arrived as stereo with the voice only in the left speaker.
   The per-person FLACs, the combined MP4, the soundboard track and the

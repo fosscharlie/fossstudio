@@ -19,7 +19,7 @@ import {
 } from "./recording/manager.js";
 import { capturePeer } from "./recording/serverRecorder.js";
 import {
-  startStream, stopStream, isStreaming, refreshStream, showOverlay, playIntroOnStream
+  startStream, stopStream, isStreaming, streamingSince, refreshStream, showOverlay, playIntroOnStream
 } from "./streaming.js";
 
 const ROOM_ID_RE = /^[a-zA-Z0-9_-]{4,32}$/;
@@ -117,6 +117,8 @@ export function attachSignaling(httpServer) {
               iceServers: iceServers(),
               control: room.control,
               streaming: isStreaming(room.id),
+              streamingSince: streamingSince(room.id),
+              recordingSince: activeRecording(room.id)?.startedAt || null,
               theme: {
                 // The pinned theme: identical for everyone until the
                 // room empties, however the settings change meanwhile

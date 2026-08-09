@@ -984,9 +984,29 @@
   let recorders = [];
   let recUpload = null;
   let recording = false;
+  // Elapsed timers on the host's record/stream buttons. Start times come
+  // from the server where possible, so a host who reloads mid-take still
+  // sees the true elapsed time.
+  let recStartAt = null, liveStartAt = null;
+  const fmtElapsed = (ms) => {
+    const t = Math.max(0, Math.floor(ms / 1000));
+    const p = (n) => String(n).padStart(2, "0");
+    const h = Math.floor(t / 3600);
+    return `${h ? `${h}:` : ""}${p(Math.floor((t % 3600) / 60))}:${p(t % 60)}`;
+  };
+  setInterval(() => {
+    if (!isHost) return;
+    if (recording && recStartAt) {
+      els.hpRecordBtn.textContent = `■ Stop recording · ${fmtElapsed(Date.now() - recStartAt)}`;
+    }
+    if (live && liveStartAt) {
+      els.hpStreamBtn.textContent = `■ End stream · ${fmtElapsed(Date.now() - liveStartAt)}`;
+    }
+  }, 1000);
 
   function setRecIndicator(on) {
     recording = on;
+    recStartAt = on ? (recStartAt || Date.now()) : null;
     const light = document.getElementById("recLight");
     light.classList.toggle("on", on);
     document.body.classList.toggle("rec-dim", on);
@@ -994,7 +1014,9 @@
       ? "Recording light - this session is being recorded"
       : "Recording light - lights up red when recording";
     if (isHost) {
-      els.hpRecordBtn.textContent = on ? "■ Stop recording" : "● Start recording";
+      els.hpRecordBtn.textContent = on
+        ? `■ Stop recording · ${fmtElapsed(Date.now() - recStartAt)}`
+        : "● Start recording";
       els.hpRecordBtn.classList.toggle("rec-on", on);
       updateServerRecLock();
       if (on) scheduleBannerSnapshots();
@@ -1355,8 +1377,11 @@
   let live = false;
   function setLiveIndicator(on) {
     live = on;
+    liveStartAt = on ? (liveStartAt || Date.now()) : null;
     els.banner.classList.toggle("live", on);
-    els.hpStreamBtn.textContent = on ? "■ End stream" : "📡 Go live";
+    els.hpStreamBtn.textContent = on
+      ? `■ End stream · ${fmtElapsed(Date.now() - liveStartAt)}`
+      : "📡 Go live";
     els.hpStreamBtn.classList.toggle("rec-on", on);
     updateServerRecLock();
     if (on) scheduleBannerSnapshots();
@@ -1527,6 +1552,11 @@
       eventHandlers.streaming = ({ live: isLive }) => setLiveIndicator(isLive);
       eventHandlers.overlay = playDomOverlay;
       eventHandlers.intro = playDomIntro;
+      // Server start times pre-seed the button timers, so a host who
+      // reloads mid-take sees true elapsed, not zero - and a stale
+      // local value never leaks into a new take
+      recStartAt = info.recordingSince || null;
+      liveStartAt = info.streamingSince || null;
       if (info.streaming) setLiveIndicator(true);
 
       joined = true;
