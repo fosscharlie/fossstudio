@@ -285,7 +285,7 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   color: var(--banner-fg, #ffffff);
 }
 .tile .name {
-  font-size: clamp(0.45rem, 2.76cqw, 1.32rem);
+  font-size: clamp(0.63rem, 3.86cqw, 1.85rem);
   font-weight: 700;
   line-height: 1.3;
   overflow: hidden;
@@ -293,7 +293,7 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   white-space: nowrap;
 }
 .tile .tagline {
-  font-size: clamp(0.35rem, 1.74cqw, 0.9rem);
+  font-size: clamp(0.49rem, 2.44cqw, 1.26rem);
   opacity: 0.82;
   line-height: 1.3;
   overflow: hidden;

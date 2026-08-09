@@ -864,9 +864,9 @@
     // Mirrors the .lower-third CSS: S px per cqw, tile = 100cqw = 100*S px
     const S = 20;
     const padX = 1.5 * S, padT = 0.7 * S, padB = 0.8 * S, r = 1 * S;
-    const nameFont = `700 ${2.76 * S}px Manrope, sans-serif`;
-    const tagFont = `400 ${1.74 * S}px Manrope, sans-serif`;
-    const nameLh = 2.76 * S * 1.3, tagLh = 1.74 * S * 1.3;
+    const nameFont = `700 ${3.86 * S}px Manrope, sans-serif`;
+    const tagFont = `400 ${2.44 * S}px Manrope, sans-serif`;
+    const nameLh = 3.86 * S * 1.3, tagLh = 2.44 * S * 1.3;
     const H = Math.round(padT + nameLh + (tagline ? tagLh : 0) + padB);
     const c = document.createElement("canvas");
     // Hug the text like the CSS fit-content banner, capped at 92cqw
