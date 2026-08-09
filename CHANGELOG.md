@@ -4,6 +4,10 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Leaner install: the app image is now a two-stage Docker build - the
+  C++ toolchain that compiles the media engine never ships, and npm is
+  removed from the running container (nothing installs at runtime, so a
+  package manager in production is pure attack surface).
 - Name banners slimmed right down: text at 60% of its old size, less
   vertical padding, and the banner now hugs its text - just a touch
   wider than the words - instead of always spanning 38% of the tile.
