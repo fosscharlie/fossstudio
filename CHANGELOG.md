@@ -4,6 +4,13 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Fixed: anyone who joined (or rejoined) while a recording was already
+  running was never captured - their tile went black in the combined
+  video and they got no audio track, even though everyone saw and heard
+  them live. The "start recording" signal could arrive a moment before
+  the client was ready to listen and was silently dropped; such early
+  events are now queued and replayed. New regression test covers a
+  mid-recording joiner.
 - The host's Stop recording and End stream buttons now show a running
   elapsed timer (e.g. "Stop recording - 12:34") so you always know how
   long the take or the live stream has been going. The clock stops and

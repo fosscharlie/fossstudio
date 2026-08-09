@@ -377,6 +377,13 @@
   let reqId = 0;
   const pending = new Map();
   const eventHandlers = {};
+  const earlyEvents = []; // events that arrived before handlers existed
+  function drainEarlyEvents() {
+    while (earlyEvents.length) {
+      const msg = earlyEvents.shift();
+      try { eventHandlers[msg.event]?.(msg.data); } catch (e) { console.error(e); }
+    }
+  }
 
   function connectWs() {
     return new Promise((resolve, reject) => {
@@ -393,6 +400,12 @@
           msg.ok ? p.resolve(msg.data) : p.reject(new Error(msg.error));
         } else if (msg.event && eventHandlers[msg.event]) {
           eventHandlers[msg.event](msg.data);
+        } else if (msg.event) {
+          // Events can land between the join reply and handler
+          // registration (e.g. recordingStarted for a mid-recording
+          // joiner). Queue them; join() replays once it's wired up.
+          // Dropping them silently cost a guest their whole track once.
+          earlyEvents.push(msg);
         }
       };
       ws.onclose = () => { if (joined) leaveToPreview("The connection dropped. Rejoin when you're ready."); };
@@ -1558,6 +1571,9 @@
       recStartAt = info.recordingSince || null;
       liveStartAt = info.streamingSince || null;
       if (info.streaming) setLiveIndicator(true);
+      // Replay anything that arrived while we were wiring up - a
+      // recordingStarted for a mid-recording join must not be lost
+      drainEarlyEvents();
 
       joined = true;
       try { localStorage.removeItem(JOINING_KEY); } catch { /* ignore */ }
@@ -1615,6 +1631,7 @@
       eventHandlers.control = (c) => applyControl(c);
       eventHandlers.overlay = playDomOverlay;
       eventHandlers.intro = playDomIntro;
+      drainEarlyEvents();
       joined = true;
       els.session.hidden = false;
       applyLayout();
@@ -1631,6 +1648,7 @@
 
   function leaveToPreview(message) {
     joined = false;
+    earlyEvents.length = 0; // never replay a dead connection's events
     if (recorders.length) stopSelfRecording();
     try { ws && ws.close(); } catch { /* ignore */ }
     for (const { consumer } of consumers.values()) consumer.close();
