@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Account: you can now rename your account (your login name) from
+  Settings -> Account - handy when repurposing it for a different podcast.
+  The session is keyed on the account id, so a rename never logs you out.
 - Recordings list redesigned: each recording is a card with its title and
   date, the status and delete button pinned top-right (no longer floating
   mid-row), and its files in a two-column grid of chips.

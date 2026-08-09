@@ -769,6 +769,24 @@
     msg.hidden = false;
   };
 
+  $("saveUsernameBtn").onclick = async () => {
+    const ok = $("usernameMsg"), err = $("usernameErr");
+    ok.hidden = true; err.hidden = true;
+    try {
+      const res = await apiFetch("/api/username", {
+        method: "POST",
+        body: JSON.stringify({ username: $("accountUsername").value })
+      });
+      me.username = res.username;
+      $("accountUsername").value = res.username;
+      $("accountName").textContent = res.username;
+      $("whoami").textContent = `${me.username} (${me.role === "admin" ? "admin" : "host"})`;
+      ok.hidden = false;
+    } catch (e) {
+      err.textContent = e.message; err.hidden = false;
+    }
+  };
+
   async function load2fa() {
     const { enabled } = await apiFetch("/api/2fa");
     $("tfaOff").hidden = enabled;
@@ -890,6 +908,7 @@
     if (!me.authed) { location.href = "/host/login.html"; return; }
     $("whoami").textContent = `${me.username} (${me.role === "admin" ? "admin" : "host"})`;
     $("accountName").textContent = me.username;
+    $("accountUsername").value = me.username;
     $("accountRole").textContent = me.role === "admin"
       ? "Admin - creates and manages hosts, and looks after the system. Hosting shows is what host accounts are for."
       : "Host - your own sessions, recordings and settings.";

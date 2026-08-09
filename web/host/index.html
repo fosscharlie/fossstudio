@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio - Host</title>
-<link rel="stylesheet" href="/host/host.css?v=20260808o">
+<link rel="stylesheet" href="/host/host.css?v=20260808p">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -170,6 +170,17 @@
           <p class="hint" id="accountRole"></p>
         </div>
         <div class="panel">
+          <h2>Account name</h2>
+          <p class="hint" style="margin-bottom:0.6rem">The name for this account - it's also what you sign in with. Rename it any time, e.g. if you switch to a different podcast. Lowercase letters, numbers, - or _, 2 to 24 characters.</p>
+          <div class="field">
+            <label for="accountUsername">Name</label>
+            <input type="text" id="accountUsername" maxlength="24" autocomplete="off" spellcheck="false">
+          </div>
+          <button class="btn primary" id="saveUsernameBtn">Change name</button>
+          <span class="msg ok" id="usernameMsg" hidden>✓ Saved</span>
+          <span class="msg err" id="usernameErr" hidden></span>
+        </div>
+        <div class="panel">
           <h2>Change your password</h2>
           <div class="field">
             <label for="newPassword">New password</label>
@@ -297,6 +308,6 @@
   </div>
 </div>
 
-<script src="/host/host.js?v=20260808o"></script>
+<script src="/host/host.js?v=20260808p"></script>
 </body>
 </html>

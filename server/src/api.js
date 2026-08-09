@@ -15,7 +15,7 @@ import {
   listSounds, addSound, removeSound, findSound,
   listIntros, addIntro, removeIntro, findIntro
 } from "./settings.js";
-import { listUsers, createUser, deleteUser, findById, updateUser } from "./users.js";
+import { listUsers, createUser, deleteUser, findById, updateUser, findByUsername } from "./users.js";
 import { hashPassword } from "./auth.js";
 import { getRoom } from "./rooms.js";
 import {
@@ -65,6 +65,21 @@ api.get("/me", async (req, res) => {
   if (!payload) return res.json({ authed: false });
   const user = await findById(payload.uid);
   res.json({ authed: !!user, uid: user?.id, role: user?.role, username: user?.username });
+});
+
+// Rename your own account (the login name). The session cookie is keyed on
+// the user id, not the name, so a rename never logs you out.
+api.post("/username", requireAuth, async (req, res) => {
+  const name = String(req.body.username || "").trim().toLowerCase();
+  if (!/^[a-z0-9_-]{2,24}$/.test(name)) {
+    return res.status(400).json({ error: "Names are 2-24 characters: lowercase letters, numbers, - or _." });
+  }
+  const existing = await findByUsername(name);
+  if (existing && existing.id !== req.user.uid) {
+    return res.status(400).json({ error: "That name is taken." });
+  }
+  await updateUser(req.user.uid, { username: name });
+  res.json({ ok: true, username: name });
 });
 
 api.post("/password", requireAuth, async (req, res) => {
