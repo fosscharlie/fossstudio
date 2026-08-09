@@ -20,6 +20,9 @@ All notable changes to FOSSStudio are documented here.
   Hosts) no longer shows a one-button submenu - the menu item alone opens
   the pane, and the layout drops the empty submenu column. Menus with two
   or more sections (Effects, Settings, System) are unchanged.
+- Settings: trimmed the background-colour picker to 11 swatches (one
+  representative shade per hue, down from 19) and moved the hex code field
+  next to the swatches instead of below them.
 
 ## 1.3.0 - 2026-08-08
 

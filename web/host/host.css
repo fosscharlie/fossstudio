@@ -283,6 +283,9 @@ input[type="email"], input[type="url"] {
 
 /* ---------- Accent swatches ---------- */
 
+.bg-picker { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
+.hex-field { display: flex; align-items: center; gap: 0.6rem; }
+.hex-field input { max-width: 8rem; }
 .swatches { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .swatch {
   width: 1.9rem;

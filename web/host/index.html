@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio - Host</title>
-<link rel="stylesheet" href="/host/host.css?v=20260808p">
+<link rel="stylesheet" href="/host/host.css?v=20260809a">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -78,10 +78,12 @@
         <div class="panel">
           <h2>Background colour</h2>
           <p class="hint" style="margin-bottom:0.5rem">Shown behind the video grid in sessions. A wallpaper overrides it - with no wallpaper set, this colour shows. Click a colour (or type a hex code) and it's saved straight away.</p>
-          <div class="swatches" id="bgSwatches"></div>
-          <div style="display:flex; gap:0.6rem; align-items:center; margin-top:0.8rem">
-            <input type="text" id="bgHex" placeholder="#14161a" maxlength="7" spellcheck="false" style="max-width:8rem" aria-label="Background colour hex code">
-            <span class="msg ok" id="bgMsg" hidden>✓ Saved</span>
+          <div class="bg-picker">
+            <div class="swatches" id="bgSwatches"></div>
+            <div class="hex-field">
+              <input type="text" id="bgHex" placeholder="#14161a" maxlength="7" spellcheck="false" aria-label="Background colour hex code">
+              <span class="msg ok" id="bgMsg" hidden>✓ Saved</span>
+            </div>
           </div>
         </div>
         <div class="panel">
@@ -308,6 +310,6 @@
   </div>
 </div>
 
-<script src="/host/host.js?v=20260808p"></script>
+<script src="/host/host.js?v=20260809a"></script>
 </body>
 </html>
