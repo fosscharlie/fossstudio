@@ -11,6 +11,7 @@ import {
 } from "./auth.js";
 import {
   getSettings, updateSettings, listSessions, createSession, deleteSession, findSession,
+  renameSession,
   deleteSessionsByOwner,
   listSounds, addSound, removeSound, findSound,
   listIntros, addIntro, removeIntro, findIntro
@@ -367,9 +368,28 @@ api.post("/sessions", requireAuth, async (req, res) => {
   res.json(await createSession(req.user, title));
 });
 
+// Rename a session (the episode title). A live room keeps its pinned
+// title until it empties; the new name shows from the next gathering.
+api.post("/sessions/:id/title", requireAuth, async (req, res) => {
+  const title = String(req.body.title || "").trim();
+  if (!title) return res.status(400).json({ error: "Give the episode a title - it names the session and its recordings." });
+  const session = await renameSession(req.user, req.params.id, title);
+  if (!session) return res.status(404).json({ error: "No such session." });
+  res.json(session);
+});
+
 api.delete("/sessions/:id", requireAuth, async (req, res) => {
   await deleteSession(req.user, req.params.id);
   res.json({ ok: true });
+});
+
+// Pinned per-room theme assets (copies frozen at the room's first join).
+// Link-gated like the session itself: the room id is the session id.
+api.get("/room-theme/:roomId/:kind", async (req, res) => {
+  if (!["logo", "wallpaper"].includes(req.params.kind)) return res.status(404).end();
+  const p = getRoom(req.params.roomId)?.theme?.[`${req.params.kind}Path`];
+  if (!p) return res.status(404).end();
+  res.sendFile(p);
 });
 
 // Podcast logo (part of the theme): shown above the episode title on
@@ -441,7 +461,16 @@ api.post("/sounds", requireAuth,
       const clip = await addSound(req.user.uid, { name: req.query.name, ext });
       const dir = path.join(config.dataDir, "uploads");
       await fs.mkdir(dir, { recursive: true });
-      await fs.writeFile(path.join(dir, `sound-${req.user.uid}-${clip.id}.${ext}`), req.body);
+      const dst = path.join(dir, `sound-${req.user.uid}-${clip.id}.${ext}`);
+      // Level to speech loudness so a clip never blasts over the guests
+      const tmp = path.join(dir, `sound-tmp-${req.user.uid}-${Date.now()}.${ext}`);
+      await fs.writeFile(tmp, req.body);
+      try {
+        await normalizeLoudness(tmp, dst, { ext });
+        await fs.unlink(tmp).catch(() => {});
+      } catch {
+        await fs.rename(tmp, dst); // unlevelled beats a failed upload
+      }
       res.json(clip);
     } catch (err) {
       res.status(400).json({ error: err.message });
@@ -472,6 +501,22 @@ api.get("/sounds/:uid/:id", async (req, res) => {
 // ---------- intro videos ----------
 // Fullscreen takeovers the host fires between segments.
 const VIDEO_TYPES = { "video/mp4": "mp4", "video/webm": "webm" };
+
+// Level a clip's audio to speech loudness (EBU R128, -16 LUFS) once at
+// upload, so intros and soundboard clips never blast over the guests -
+// in the session, on the stream and in the recording alike.
+const AUDIO_CODECS = { mp3: "libmp3lame", wav: "pcm_s16le", ogg: "libvorbis", aac: "aac", m4a: "aac", mp4: "aac", webm: "libopus" };
+function normalizeLoudness(src, dst, { copyVideo = false, ext } = {}) {
+  return new Promise((resolve, reject) => {
+    const p = spawn("ffmpeg", ["-nostdin", "-loglevel", "error", "-i", src,
+      ...(copyVideo ? ["-c:v", "copy"] : []),
+      "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
+      ...(AUDIO_CODECS[ext] ? ["-c:a", AUDIO_CODECS[ext]] : []),
+      "-y", dst]);
+    p.on("error", reject);
+    p.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`loudnorm exited ${code}`))));
+  });
+}
 
 // Probe length + whether there's an audio track, so the stream and the
 // recording know the window and never render a missing [0:a].
@@ -511,7 +556,18 @@ api.post("/intros", requireAuth,
       await fs.writeFile(tmp, req.body);
       const { durationMs, hasAudio } = await probeMedia(tmp);
       const clip = await addIntro(req.user.uid, { name: req.query.name, ext, durationMs, hasAudio });
-      await fs.rename(tmp, path.join(dir, `intro-${req.user.uid}-${clip.id}.${ext}`));
+      const dst = path.join(dir, `intro-${req.user.uid}-${clip.id}.${ext}`);
+      if (hasAudio) {
+        // Level the soundtrack to speech loudness; keep the video as-is
+        try {
+          await normalizeLoudness(tmp, dst, { copyVideo: true, ext });
+          await fs.unlink(tmp).catch(() => {});
+        } catch {
+          await fs.rename(tmp, dst); // unlevelled beats a failed upload
+        }
+      } else {
+        await fs.rename(tmp, dst);
+      }
       res.json(clip);
     } catch (err) {
       await fs.unlink(tmp).catch(() => {});
@@ -590,6 +646,29 @@ api.get("/recordings/:id/files/:file", requireAuth, async (req, res) => {
   res.download(path.join(recDir(id), "out", file), file, (err) => {
     if (err && !res.headersSent) res.status(404).json({ error: "file not found" });
   });
+});
+
+// One-click bundles: every file, or just the audio (the FLACs), zipped
+// on the fly - nothing is written to disk
+api.get("/recordings/:id/zip", requireAuth, async (req, res) => {
+  const id = path.basename(req.params.id);
+  const rec = await recAccess(req, id);
+  if (!rec) return res.status(404).json({ error: "not found" });
+  const audioOnly = req.query.audio === "1";
+  const dir = path.join(recDir(id), "out");
+  const files = (await fs.readdir(dir).catch(() => []))
+    .filter((f) => !audioOnly || /\.(flac|wav|mp3|ogg|m4a|aac)$/i.test(f));
+  if (files.length === 0) return res.status(404).json({ error: "no files" });
+  const stem = (rec.title || `session-${rec.roomId}`)
+    .replace(/[^a-zA-Z0-9 _-]/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || id;
+  res.setHeader("Content-Type", "application/zip");
+  res.setHeader("Content-Disposition",
+    `attachment; filename="${stem}${audioOnly ? "-audio" : ""}.zip"`);
+  const zip = spawn("zip", ["-q", "-j", "-0", "-", ...files.map((f) => path.join(dir, f))]);
+  zip.stdout.pipe(res);
+  zip.on("error", () => { if (!res.headersSent) res.status(500).end(); else res.end(); });
+  zip.on("close", (code) => { if (code !== 0) res.end(); });
+  req.on("close", () => zip.kill("SIGKILL"));
 });
 
 // Delete a single file within a recording (one FLAC or the MP4)

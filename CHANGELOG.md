@@ -4,6 +4,27 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Sessions can be renamed: a pencil icon on each dashboard session row
+  edits the episode title in place (Enter saves, Escape cancels).
+- The theme is now pinned for the whole life of a session: wallpaper,
+  background colour, logo and episode title are frozen the moment the
+  first person joins, so everyone - including people who leave and come
+  back, the recording and the live stream - sees the same thing even if
+  the settings (or the session name) change meanwhile. New settings
+  apply from the next gathering, once the room has fully emptied.
+- Recordings: each card now has a bottom action row with two one-click
+  bundles - download all audio (the FLACs, zipped) and download all
+  files (everything, zipped) - and the whole-recording delete moved down
+  there too, in line with the per-file deletes.
+- Soundboard clips and intro videos are auto-levelled to speech loudness
+  (EBU R128, -16 LUFS) when uploaded, so a hot music file no longer
+  blasts over the guests - in the session, on the stream and in the
+  recording alike. Already-uploaded clips can be re-uploaded to get the
+  same treatment.
+- Fixed: a zoomed camera froze for everyone whenever that guest switched
+  to another tab (browsers suspend the drawing loop in hidden tabs; the
+  zoom now draws on a worker clock that keeps ticking).
+
 - OBS clean feed: every session now has a view-only output link
   (session link + `?output=1`) that skips the join screen and shows
   nothing but the show - the live grid, name banners, title block,

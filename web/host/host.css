@@ -240,6 +240,16 @@ input[type="email"], input[type="url"] {
 .session-row .title { font-weight: 600; }
 .session-row .meta { font-size: 0.8125rem; color: var(--muted-fg); }
 .session-row .spacer { margin-left: auto; }
+.session-row .title-edit {
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  background: var(--input-bg, rgba(0, 0, 0, 0.25));
+  border: 1px solid var(--accent, #fbc711);
+  border-radius: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  min-width: 16rem;
+}
 .badge {
   display: inline-block;
   font-size: 0.75rem;
@@ -452,6 +462,13 @@ input[type="email"], input[type="url"] {
   gap: 0.5rem;
 }
 @media (max-width: 640px) { .files { grid-template-columns: 1fr; } }
+.rec-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
 .rec-file {
   display: flex;
   align-items: center;

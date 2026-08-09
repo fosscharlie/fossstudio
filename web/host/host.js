@@ -117,7 +117,8 @@
     key: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="M11 12L21 2M16 7l3 3"/></svg>',
     gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a7.97 7.97 0 0 0 .1-3l2-1.2-2-3.4-2.2.7a8 8 0 0 0-2.6-1.5L14.3 4h-4l-.4 2.6a8 8 0 0 0-2.6 1.5l-2.2-.7-2 3.4 2 1.2a7.97 7.97 0 0 0 .1 3l-2 1.2 2 3.4 2.2-.7a8 8 0 0 0 2.6 1.5l.4 2.6h4l.4-2.6a8 8 0 0 0 2.6-1.5l2.2.7 2-3.4z"/></svg>',
     tick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5L20 7"/></svg>',
-    obs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10.5" r="3"/></svg>'
+    obs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10.5" r="3"/></svg>',
+    pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>'
   };
 
   function iconBtn(icon, label, onClick) {
@@ -172,6 +173,35 @@
       row.querySelector(".meta").textContent =
         `${link} · created ${new Date(s.createdAt).toLocaleDateString()}`;
 
+      const edit = iconBtn("pencil", "Rename the episode", () => {
+        if (row.querySelector(".title-edit")) return;
+        const titleEl = row.querySelector(".title");
+        const input = document.createElement("input");
+        input.className = "title-edit";
+        input.maxLength = 80;
+        input.value = s.title;
+        titleEl.replaceWith(input);
+        input.focus();
+        input.select();
+        let finished = false;
+        const done = async (save) => {
+          if (finished) return;
+          finished = true;
+          const t = input.value.trim();
+          if (save && t && t !== s.title) {
+            await apiFetch(`/api/sessions/${s.id}/title`, {
+              method: "POST",
+              body: JSON.stringify({ title: t })
+            }).catch(() => {});
+          }
+          loadSessions();
+        };
+        input.onkeydown = (e) => {
+          if (e.key === "Enter") done(true);
+          if (e.key === "Escape") done(false);
+        };
+        input.onblur = () => done(true);
+      });
       const copy = iconBtn("copy", "Copy guest link", async () => {
         await navigator.clipboard.writeText(link);
         copy.classList.add("done");
@@ -191,7 +221,7 @@
         await apiFetch(`/api/sessions/${s.id}`, { method: "DELETE" });
         loadSessions();
       });
-      row.append(copy, obs, open, del);
+      row.append(edit, copy, obs, open, del);
       list.appendChild(row);
     }
   }
@@ -414,13 +444,32 @@
         }));
         filesEl.appendChild(fileRow);
       }
-      // Delete sits in the header's top-right, next to the status - not
-      // floating vertically centred beside a tall file list
-      card.querySelector(".rec-head-actions").appendChild(
+      // Bottom action row under the files: the two zip downloads, then
+      // the whole-recording delete in line with the per-file deletes
+      const actions = document.createElement("div");
+      actions.className = "rec-actions";
+      const zipBase = `/api/recordings/${encodeURIComponent(r.id)}/zip`;
+      const hasAudio = (r.files || []).some((f) => /\.(flac|wav|mp3|ogg|m4a|aac)$/i.test(f));
+      if (hasAudio) {
+        const dlAudio = downloadLink(`${zipBase}?audio=1`);
+        dlAudio.innerHTML = ICO.downloadAudio;
+        dlAudio.dataset.tip = "Download all audio (the FLACs, zipped)";
+        dlAudio.setAttribute("aria-label", "Download all audio");
+        actions.appendChild(dlAudio);
+      }
+      if ((r.files || []).length) {
+        const dlAll = downloadLink(zipBase);
+        dlAll.innerHTML = ICO.downloadAll;
+        dlAll.dataset.tip = "Download all files (zipped)";
+        dlAll.setAttribute("aria-label", "Download all files");
+        actions.appendChild(dlAll);
+      }
+      actions.appendChild(
         confirmBtn("del", "Delete recording and its files", async () => {
           await apiFetch(`/api/recordings/${encodeURIComponent(r.id)}`, { method: "DELETE" });
           loadRecordings();
         }));
+      card.appendChild(actions);
       list.appendChild(card);
     }
   }
@@ -604,7 +653,9 @@
   const ICO = {
     play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>',
     stop: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
-    download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4M5 20h14"/></svg>'
+    download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4M5 20h14"/></svg>',
+    downloadAudio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 15V4l9-2v10"/><circle cx="5.5" cy="15" r="2.5"/><circle cx="14.5" cy="12" r="2.5"/><path d="M19 15v6M16.5 18.5L19 21l2.5-2.5"/></svg>',
+    downloadAll: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8a2 2 0 0 1 2 2v8M4 7h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM8 11v6M5.5 14.5L8 17l2.5-2.5"/></svg>'
   };
   function iconState(btn, icon, tip) {
     btn.innerHTML = ICO[icon];

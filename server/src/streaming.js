@@ -144,11 +144,10 @@ async function launch(state) {
   // Background + mask inputs come first, then banners - the order fixes
   // the ffmpeg input indices used in the filter graph
   let nextIdx = inputs.length;
-  const { getSettings } = await import("./settings.js");
-  const settings = await getSettings(room.ownerId).catch(() => ({}));
+  // The room's pinned theme, so the stream matches what everyone sees
+  // even if settings changed mid-session
   const bgIdx = nextIdx++;
-  const wall = settings.wallpaper &&
-    path.join(config.dataDir, "uploads", path.basename(settings.wallpaper));
+  const wall = room.theme?.wallpaperPath;
   let bgArgs = null;
   if (wall && await fs.access(wall).then(() => true, () => false)) {
     // Pre-scale the wallpaper to the canvas once (cheaper than per-frame)
@@ -159,7 +158,8 @@ async function launch(state) {
     } catch { /* fall through to the colour background */ }
   }
   if (!bgArgs) {
-    const hex = (settings.bg && /^#[0-9a-fA-F]{6}$/.test(settings.bg)) ? settings.bg.slice(1) : "14161a";
+    const bg = room.theme?.bg;
+    const hex = (bg && /^#[0-9a-fA-F]{6}$/.test(bg)) ? bg.slice(1) : "14161a";
     bgArgs = ["-f", "lavfi", "-i", `color=c=0x${hex}:s=${W}x${H}`];
   }
   const maskIdx = nextIdx++;

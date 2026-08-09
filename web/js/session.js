@@ -163,10 +163,14 @@
           (video.videoWidth - sw) / 2, (video.videoHeight - sh) / 2, sw, sh,
           0, 0, canvas.width, canvas.height);
       }
-      zoom.raf = requestAnimationFrame(draw);
     };
     zoom.canvas = canvas;
     zoom.rawVideo = video;
+    // Drawn on a worker's clock, not requestAnimationFrame: rAF stops in
+    // hidden tabs, which froze your camera whenever you checked another
+    // tab mid-session. Worker timers keep ticking in the background.
+    zoom.ticker = new Worker("/assets/tick-worker.js");
+    zoom.ticker.onmessage = draw;
     zoom.canvasTrack = canvas.captureStream(30).getVideoTracks()[0];
     els.previewVideo.srcObject = new MediaStream([zoom.canvasTrack]);
     draw();
@@ -174,7 +178,8 @@
 
   function stopDigitalZoom() {
     if (!zoom.canvas) return;
-    cancelAnimationFrame(zoom.raf);
+    zoom.ticker?.terminate();
+    zoom.ticker = null;
     zoom.canvasTrack?.stop();
     zoom.rawVideo?.remove();
     zoom.canvas = null;

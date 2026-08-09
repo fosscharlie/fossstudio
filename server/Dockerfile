@@ -7,7 +7,7 @@ FROM node:20-bookworm-slim
 # on top of whatever the pulled base already carries.
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y --no-install-recommends python3 make g++ ffmpeg ca-certificates \
+    && apt-get install -y --no-install-recommends python3 make g++ ffmpeg zip ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

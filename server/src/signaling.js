@@ -7,7 +7,7 @@ import fs from "node:fs/promises";
 import { config } from "./config.js";
 import { createWebRtcTransport } from "./media.js";
 import {
-  getOrCreateRoom, addPeer, removePeer, peerSummary, broadcast
+  getOrCreateRoom, addPeer, removePeer, peerSummary, broadcast, pinTheme
 } from "./rooms.js";
 import { iceServers } from "./turn.js";
 import { isAuthedRequest } from "./auth.js";
@@ -84,7 +84,8 @@ export function attachSignaling(httpServer) {
             if (!session) return fail("This session link doesn't exist.");
             room = await getOrCreateRoom(roomId);
             room.ownerId = session.ownerId;
-            room.title = session.title === "Untitled session" ? "" : session.title;
+            // First join pins the theme for the room's whole life
+            if (!room.theme) await pinTheme(room, session, await getSettings(room.ownerId));
             const name = String(data.name || "").trim().slice(0, NAME_MAX) || "Guest";
             const tagline = String(data.tagline || "").trim().slice(0, 32);
             // Host role needs a dashboard login AND ownership of this
@@ -117,12 +118,12 @@ export function attachSignaling(httpServer) {
               control: room.control,
               streaming: isStreaming(room.id),
               theme: {
-                // The block shows this session's episode title -
-                // one system can run several different podcasts
-                title: session.title === "Untitled session" ? "" : session.title,
-                logo: settings.logo ? `/api/logo/${room.ownerId}` : null,
-                bg: settings.bg || null,
-                wallpaper: settings.wallpaper ? `/api/wallpaper/${room.ownerId}` : null
+                // The pinned theme: identical for everyone until the
+                // room empties, however the settings change meanwhile
+                title: room.title,
+                logo: room.theme.logoUrl,
+                bg: room.theme.bg,
+                wallpaper: room.theme.wallpaperUrl
               },
               peers: [...room.peers.values()]
                 .filter((p) => p.id !== peer.id && p.role !== "viewer")

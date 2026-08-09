@@ -128,6 +128,16 @@ export async function createSession(user, title) {
 }
 
 
+export async function renameSession(user, id, title) {
+  const sessions = await readJson("sessions.json", []);
+  const session = sessions.find((s) =>
+    s.id === id && (s.ownerId === user.uid || user.role === "admin"));
+  if (!session) return null;
+  session.title = String(title || "").trim().slice(0, 80) || "Untitled session";
+  await writeJson("sessions.json", sessions);
+  return session;
+}
+
 export async function deleteSession(user, id) {
   const sessions = await readJson("sessions.json", []);
   await writeJson("sessions.json", sessions.filter((s) =>

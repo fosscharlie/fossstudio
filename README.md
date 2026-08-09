@@ -18,11 +18,13 @@ dashboard.
 - **In-session host controls:** spotlight/grid layout, per-guest volume,
   per-session auto level balancing, start/stop recording, go live.
 - **Soundboard:** upload short clips (laughs, applause, stings) in the
-  dashboard, then fire them one-click in-session - played over everyone,
+  dashboard - auto-levelled to speech loudness so nothing blasts - then
+  fire them one-click in-session - played over everyone,
   or with all mics muted for the clip's length and then restored.
   Carried on an always-on audio channel so a clip never interrupts the
   live stream; mixed into the recording and saved as a separate track.
-- **Intro videos:** upload short videos and fire one from the same bar -
+- **Intro videos:** upload short videos (soundtracks auto-levelled to
+  speech loudness) and fire one from the same bar -
   it takes over every screen fullscreen (in the session, the recording
   and on the stream), mutes everyone while it plays, then crossfades back
   to the grid.
@@ -31,7 +33,8 @@ dashboard.
   recording or live). Output: one combined MP4 (H.264/AAC, plays in any
   browser) + a lossless FLAC per participant (plus a `soundboard.flac`
   when clips were fired), named after the episode. Recordings can be
-  previewed and downloaded from the dashboard. The combined video matches the
+  previewed and downloaded from the dashboard - per file, or zipped
+  bundles of all audio or all files in one click. The combined video matches the
   screen: everyone's tile, their lower-third name banners, the podcast
   logo + episode title block (draggable anywhere by the host), and any
   subscribe/ad overlays you triggered, at the moment you triggered
@@ -43,6 +46,11 @@ dashboard.
   Browser Source and stream the show from OBS to any platform. The feed
   is invisible to everyone in the session and can never appear in the
   recording. Copy it from the session row in the dashboard.
+- **One look per show:** the theme (wallpaper, background colour, logo,
+  episode title) is pinned the moment the first person joins and holds
+  until the session empties - everyone, the recording and the stream see
+  the same thing, even if settings change or the session is renamed
+  mid-show.
 - **Noise suppression:** RNNoise in the guest's browser (WASM worklet).
 - **Email:** SMTP configured in the dashboard; all outgoing mail uses a
   branded HTML template with a plain-text fallback.

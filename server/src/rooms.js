@@ -44,6 +44,33 @@ export function getRoom(roomId) {
   return rooms.get(roomId);
 }
 
+// Freeze the theme for the life of the room: title, colour, and private
+// copies of the logo/wallpaper files. Settings changed mid-session (or a
+// renamed session) only show once the room has emptied and re-formed -
+// everyone in a session always sees the same thing. The copies live in
+// the room's banners dir, which is already deleted when the room dies.
+export async function pinTheme(room, session, settings) {
+  room.title = session.title === "Untitled session" ? "" : session.title;
+  const theme = {
+    bg: settings.bg || null,
+    logoUrl: null, logoPath: null,
+    wallpaperUrl: null, wallpaperPath: null
+  };
+  const dir = path.join(config.dataDir, "banners", room.id);
+  await fs.mkdir(dir, { recursive: true });
+  for (const [kind, file] of [["logo", settings.logo], ["wallpaper", settings.wallpaper]]) {
+    if (!file) continue;
+    const src = path.join(config.dataDir, "uploads", path.basename(file));
+    const dst = path.join(dir, `theme-${kind}${path.extname(file)}`);
+    try {
+      await fs.copyFile(src, dst);
+      theme[`${kind}Path`] = dst;
+      theme[`${kind}Url`] = `/api/room-theme/${room.id}/${kind}`;
+    } catch { /* source vanished: theme falls back to the colour */ }
+  }
+  room.theme = theme;
+}
+
 export function addPeer(room, { name, tagline, role, socket }) {
   // Viewers (OBS clean feeds) have their own small pool so they can
   // never crowd out a person - and people never crowd them out
