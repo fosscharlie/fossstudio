@@ -80,7 +80,10 @@ export async function processRecording(rec) {
     // Lossless FLAC per participant
     if (part.audioFile) {
       const flac = `${name}.flac`;
-      await ffmpeg(["-i", part.audioFile, "-map", "0:a:0", "-c:a", "flac", "-y", path.join(out, flac)],
+      // Mono: mics are one channel, but the capture arrives as stereo
+      // with the voice in the left - keep just that channel
+      await ffmpeg(["-i", part.audioFile, "-map", "0:a:0", "-af", "pan=mono|c0=c0",
+        "-c:a", "flac", "-y", path.join(out, flac)],
         `flac ${name}`);
       files.push(flac);
       // FLAC carries a real duration (the source WebM often doesn't) -
@@ -236,7 +239,7 @@ export async function processRecording(rec) {
       const idx = inputIdx.size;
       args.push("-i", path.join(raw, cl.file));
       inputIdx.set(`__clip${i}`, idx);
-      clipFilters += `;[${idx}:a]aresample=44100,aformat=channel_layouts=stereo,adelay=${off}|${off}[clipin${i}]`;
+      clipFilters += `;[${idx}:a]aresample=44100,aformat=channel_layouts=mono,adelay=${off}[clipin${i}]`;
       clipParts.push(`[clipin${i}]`);
     });
     if (clipParts.length) {
@@ -272,14 +275,17 @@ export async function processRecording(rec) {
         `${finalLabel}[introv${i}]overlay=0:0:enable='between(t,${t0},${t1})':eof_action=pass[vintro${i}]`;
       finalLabel = `[vintro${i}]`;
       if (iv.hasAudio !== false) {
-        clipFilters += `;[${idx}:a]aresample=44100,aformat=channel_layouts=stereo,` +
-          `afade=t=in:st=0:d=${XF},afade=t=out:st=${fo}:d=${XF},adelay=${off}|${off}[introa${i}]`;
+        clipFilters += `;[${idx}:a]aresample=44100,aformat=channel_layouts=mono,` +
+          `afade=t=in:st=0:d=${XF},afade=t=out:st=${fo}:d=${XF},adelay=${off}[introa${i}]`;
         introAudioLabels.push(`[introa${i}]`);
       }
     });
 
-    // Combined-audio mix = participants + the clip bus + intro audio
-    const mixLabels = audios.map((p) => `[${p.aIdx}:a]`);
+    // Combined-audio mix = participants + the clip bus + intro audio.
+    // Everything is folded to mono first (voices arrive as stereo with
+    // the sound only in the left channel), so the mix and the MP4 are mono.
+    audios.forEach((p, i) => { clipFilters += `;[${p.aIdx}:a]pan=mono|c0=c0[pmono${i}]`; });
+    const mixLabels = audios.map((_, i) => `[pmono${i}]`);
     if (clipMixLabel) mixLabels.push(clipMixLabel);
     mixLabels.push(...introAudioLabels);
     const amix = mixLabels.length === 0

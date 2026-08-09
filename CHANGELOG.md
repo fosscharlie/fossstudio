@@ -4,6 +4,11 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- All audio output is now true mono: microphones are one channel, but
+  captures arrived as stereo with the voice only in the left speaker.
+  The per-person FLACs, the combined MP4, the soundboard track and the
+  live stream all fold to mono (voices keep full level; clip and intro
+  music is downmixed properly), so playback is centred everywhere.
 - Leaner install: the app image is now a two-stage Docker build - the
   C++ toolchain that compiles the media engine never ships, and npm is
   removed from the running container (nothing installs at runtime, so a

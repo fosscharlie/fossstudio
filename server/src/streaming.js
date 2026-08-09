@@ -203,11 +203,14 @@ async function launch(state) {
     prev = out;
   });
   const grid = gp.join(";");
+  // Mono out: voices arrive as stereo with sound only in the left
+  // channel, so fold every input to its left channel before mixing
   const amix = audios.length === 0
-    ? "anullsrc=r=44100:cl=stereo[aout]"
+    ? "anullsrc=r=44100:cl=mono[aout]"
     : audios.length === 1
-      ? `[${audios[0].i}:a]aresample=44100[aout]`
-      : `${audios.map((a) => `[${a.i}:a]`).join("")}amix=inputs=${audios.length}:normalize=0,aresample=44100[aout]`;
+      ? `[${audios[0].i}:a]pan=mono|c0=c0,aresample=44100[aout]`
+      : `${audios.map((a, k) => `[${a.i}:a]pan=mono|c0=c0[sa${k}];`).join("")}` +
+        `${audios.map((_, k) => `[sa${k}]`).join("")}amix=inputs=${audios.length}:normalize=0,aresample=44100[aout]`;
 
   // Episode-title chip, top-centre - same as it floats over the grid
   let finalLabel = "[vout]";
@@ -308,8 +311,11 @@ async function launchIntro(state, gen) {
   // Silent intros still need an audio track for the AAC/RTMP output
   const audioIn = state.introHasAudio
     ? []
-    : ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo"];
-  const aLabel = state.introHasAudio ? "[0:a]aresample=44100[aout]" : "[1:a]anull[aout]";
+    : ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono"];
+  // Mono like the grid stream, so the channel count never flips mid-stream
+  const aLabel = state.introHasAudio
+    ? "[0:a]aformat=channel_layouts=mono,aresample=44100[aout]"
+    : "[1:a]anull[aout]";
   const ffArgs = [
     "-nostdin", "-loglevel", "warning",
     "-re", "-stream_loop", "-1", "-i", state.introFile,
