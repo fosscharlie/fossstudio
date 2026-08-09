@@ -20,7 +20,7 @@ import { hashPassword } from "./auth.js";
 import { getRoom } from "./rooms.js";
 import {
   verifyUploadToken, appendChunk, markPeerDone,
-  listRecordings, deleteRecording, recDir
+  listRecordings, deleteRecording, deleteRecordingFile, recDir
 } from "./recording/manager.js";
 import {
   recentLogs, makeBackup, listBackups, backupPath,
@@ -575,6 +575,14 @@ api.get("/recordings/:id/files/:file", requireAuth, async (req, res) => {
   res.download(path.join(recDir(id), "out", file), file, (err) => {
     if (err && !res.headersSent) res.status(404).json({ error: "file not found" });
   });
+});
+
+// Delete a single file within a recording (one FLAC or the MP4)
+api.delete("/recordings/:id/files/:file", requireAuth, async (req, res) => {
+  const id = path.basename(req.params.id);
+  if (!await recAccess(req, id)) return res.status(404).json({ error: "not found" });
+  await deleteRecordingFile(id, path.basename(req.params.file));
+  res.json({ ok: true });
 });
 
 api.delete("/recordings/:id", requireAuth, async (req, res) => {

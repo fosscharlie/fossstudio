@@ -7,6 +7,12 @@ All notable changes to FOSSStudio are documented here.
 - Recordings list redesigned: each recording is a card with its title and
   date, the status and delete button pinned top-right (no longer floating
   mid-row), and its files in a two-column grid of chips.
+- Recordings: each file (a FLAC or the combined MP4) can now be deleted on
+  its own, not just the whole recording.
+- Delete controls are consistent everywhere - a trash icon that swaps to a
+  tick on first click and deletes on the second (the session-delete style):
+  now also on each recording file and on Sounds/Intros (was a "Remove"
+  text button).
 - Dashboard: a main-menu item with a single section (Sessions, Recordings,
   Hosts) no longer shows a one-button submenu - the menu item alone opens
   the pane, and the layout drops the empty submenu column. Menus with two

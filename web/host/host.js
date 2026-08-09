@@ -401,6 +401,10 @@
         if (isVideo) fileRow.appendChild(videoToggleButton(url));
         else if (isAudio) fileRow.appendChild(audioToggleButton(url));
         fileRow.appendChild(downloadLink(url));
+        fileRow.appendChild(confirmBtn("del", "Delete this file", async () => {
+          await apiFetch(url, { method: "DELETE" });
+          loadRecordings();
+        }));
         filesEl.appendChild(fileRow);
       }
       // Delete sits in the header's top-right, next to the status - not
@@ -528,10 +532,11 @@
       name.className = "sound-name";
       name.textContent = clip.name;
       const play = audioToggleButton(`/api/sounds/${me.uid}/${clip.id}`);
-      const del = document.createElement("button");
-      del.className = "btn small danger";
-      del.textContent = "Remove";
-      del.onclick = async () => { play.stopPreview(); await apiFetch(`/api/sounds/${clip.id}`, { method: "DELETE" }); loadSounds(); };
+      const del = confirmBtn("del", "Delete sound", async () => {
+        play.stopPreview();
+        await apiFetch(`/api/sounds/${clip.id}`, { method: "DELETE" });
+        loadSounds();
+      });
       row.append(name, play, del);
       box.appendChild(row);
     }
@@ -663,10 +668,10 @@
       name.className = "sound-name";
       name.textContent = clip.name + (clip.durationMs ? ` · ${(clip.durationMs / 1000).toFixed(1)}s` : "");
       const play = videoToggleButton(`/api/intros/${me.uid}/${clip.id}`);
-      const del = document.createElement("button");
-      del.className = "btn small danger";
-      del.textContent = "Remove";
-      del.onclick = async () => { await apiFetch(`/api/intros/${clip.id}`, { method: "DELETE" }); loadIntros(); };
+      const del = confirmBtn("del", "Delete intro", async () => {
+        await apiFetch(`/api/intros/${clip.id}`, { method: "DELETE" });
+        loadIntros();
+      });
       row.append(name, play, del);
       box.appendChild(row);
     }

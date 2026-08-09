@@ -240,3 +240,16 @@ export async function deleteRecording(id) {
   await writeJson("recordings.json", list.filter((r) => r.id !== id));
   await fs.rm(recDir(id), { recursive: true, force: true });
 }
+
+// Remove a single output file (one FLAC or the combined MP4) from a
+// recording, leaving the rest. Returns false if it wasn't one of its files.
+export async function deleteRecordingFile(id, file) {
+  const safe = path.basename(file);
+  const list = await readJson("recordings.json", []);
+  const rec = list.find((r) => r.id === id);
+  if (!rec || !(rec.files || []).includes(safe)) return false;
+  await fs.rm(path.join(recDir(id), "out", safe), { force: true });
+  rec.files = rec.files.filter((f) => f !== safe);
+  await writeJson("recordings.json", list);
+  return true;
+}
