@@ -368,23 +368,26 @@
       return;
     }
     for (const r of recs) {
-      const row = document.createElement("div");
-      row.className = "session-row";
+      const card = document.createElement("div");
+      card.className = "rec-card";
       const when = new Date(r.startedAt).toLocaleString();
       const mins = r.endedAt ? Math.max(1, Math.round((r.endedAt - r.startedAt) / 60000)) : null;
-      row.innerHTML = `
-        <div>
-          <div class="title"></div>
-          <div class="meta"></div>
-          <div class="files"></div>
+      card.innerHTML = `
+        <div class="rec-head">
+          <div class="rec-head-text">
+            <div class="title"></div>
+            <div class="meta"></div>
+          </div>
+          <div class="rec-head-actions">
+            <span class="badge"></span>
+          </div>
         </div>
-        <span class="badge"></span>
-        <span class="spacer"></span>`;
-      row.querySelector(".title").textContent = r.title || `Session ${r.roomId}`;
-      row.querySelector(".meta").textContent =
+        <div class="files"></div>`;
+      card.querySelector(".title").textContent = r.title || `Session ${r.roomId}`;
+      card.querySelector(".meta").textContent =
         `${when}${mins ? ` · ${mins} min` : ""} · ${r.mode === "server" ? "server-side" : "browser-side"}`;
-      setStatusBadge(row.querySelector(".badge"), r.status);
-      const filesEl = row.querySelector(".files");
+      setStatusBadge(card.querySelector(".badge"), r.status);
+      const filesEl = card.querySelector(".files");
       for (const f of r.files || []) {
         const url = `/api/recordings/${encodeURIComponent(r.id)}/files/${encodeURIComponent(f)}`;
         const isVideo = /\.(mp4|webm|mkv|mov)$/i.test(f);
@@ -400,11 +403,14 @@
         fileRow.appendChild(downloadLink(url));
         filesEl.appendChild(fileRow);
       }
-      row.appendChild(confirmBtn("del", "Delete recording and its files", async () => {
-        await apiFetch(`/api/recordings/${encodeURIComponent(r.id)}`, { method: "DELETE" });
-        loadRecordings();
-      }));
-      list.appendChild(row);
+      // Delete sits in the header's top-right, next to the status - not
+      // floating vertically centred beside a tall file list
+      card.querySelector(".rec-head-actions").appendChild(
+        confirmBtn("del", "Delete recording and its files", async () => {
+          await apiFetch(`/api/recordings/${encodeURIComponent(r.id)}`, { method: "DELETE" });
+          loadRecordings();
+        }));
+      list.appendChild(card);
     }
   }
 

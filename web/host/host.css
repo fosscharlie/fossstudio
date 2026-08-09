@@ -423,18 +423,44 @@ input[type="email"], input[type="url"] {
 }
 .video-modal-close:hover { opacity: 0.85; }
 
-/* ---------- Recording file rows ---------- */
-.files { margin-top: 0.5rem; }
+/* ---------- Recording cards ---------- */
+.rec-card {
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+}
+.rec-card:first-child { border-top: 0; padding-top: 0.25rem; }
+.rec-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.rec-head-text { min-width: 0; }
+.rec-head-text .title { font-weight: 600; }
+.rec-head-text .meta { font-size: 0.8125rem; color: var(--muted-fg); }
+/* Status + delete pinned top-right, not floating beside the file list */
+.rec-head-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 0.5rem; }
+
+/* Files in two columns, each a self-contained chip */
+.files {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+@media (max-width: 640px) { .files { grid-template-columns: 1fr; } }
 .rec-file {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0;
-  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--muted);
 }
 .rec-fname {
   flex: 1;
-  min-width: 8rem;
+  min-width: 0;
   font-size: 0.85rem;
   color: var(--fg);
   overflow: hidden;
