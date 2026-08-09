@@ -4,6 +4,10 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Name banners slimmed right down: text at 60% of its old size, less
+  vertical padding, and the banner now hugs its text - just a touch
+  wider than the words - instead of always spanning 38% of the tile.
+  The recording and stream composites match.
 - Sessions can be renamed: a pencil icon on each dashboard session row
   edits the episode title in place (Enter saves, Escape cancels).
 - The theme is now pinned for the whole life of a session: wallpaper,

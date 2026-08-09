@@ -861,14 +861,24 @@
   // Mirrors .lower-third: sizes are the CSS cqw values × S pixels each,
   // so the PNG scaled to 38% of a tile lands exactly like the DOM one
   function drawBannerPng(name, tagline, bg, fg) {
+    // Mirrors the .lower-third CSS: S px per cqw, tile = 100cqw = 100*S px
     const S = 20;
-    const W = 38 * S;
-    const padX = 2.4 * S, padT = 1.2 * S, padB = 1.4 * S, r = 1.5 * S;
-    const nameLh = 4.6 * S * 1.3, tagLh = 2.9 * S * 1.3;
+    const padX = 1.5 * S, padT = 0.7 * S, padB = 0.8 * S, r = 1 * S;
+    const nameFont = `700 ${2.76 * S}px Manrope, sans-serif`;
+    const tagFont = `400 ${1.74 * S}px Manrope, sans-serif`;
+    const nameLh = 2.76 * S * 1.3, tagLh = 1.74 * S * 1.3;
     const H = Math.round(padT + nameLh + (tagline ? tagLh : 0) + padB);
     const c = document.createElement("canvas");
-    c.width = W; c.height = H;
+    // Hug the text like the CSS fit-content banner, capped at 92cqw
     const x = c.getContext("2d");
+    x.font = nameFont;
+    let textW = x.measureText(name).width;
+    if (tagline) {
+      x.font = tagFont;
+      textW = Math.max(textW, x.measureText(tagline).width);
+    }
+    const W = Math.round(Math.min(92 * S, textW + 2 * padX));
+    c.width = W; c.height = H; // resizing resets the context state
     x.beginPath();
     x.moveTo(0, 0);
     x.lineTo(W - r, 0);
@@ -880,11 +890,11 @@
     x.fill();
     x.fillStyle = fg;
     x.textBaseline = "middle";
-    x.font = `700 ${4.6 * S}px Manrope, sans-serif`;
+    x.font = nameFont;
     x.fillText(ellipsize(x, name, W - 2 * padX), padX, padT + nameLh / 2);
     if (tagline) {
       x.globalAlpha = 0.82;
-      x.font = `400 ${2.9 * S}px Manrope, sans-serif`;
+      x.font = tagFont;
       x.fillText(ellipsize(x, tagline, W - 2 * padX), padX, padT + nameLh + tagLh / 2);
       x.globalAlpha = 1;
     }

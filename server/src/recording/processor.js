@@ -164,7 +164,10 @@ export async function processRecording(rec) {
     // The host uploads each on-screen lower-third as a PNG (ffmpeg can't
     // draw text); overlay it bottom-left of the tile, like the DOM does
     for (const p of videos) { if (p.bannerFile) p.bnIdx = addInput(p.bannerFile, 0); }
-    const bannerW = 2 * Math.round(0.38 * tileW / 2);
+    // Banner PNGs are drawn at 20px per cqw (tile = 2000px design width)
+    // and now hug their text, so scale each by its own width, not a fixed
+    // fraction of the tile
+    const bannerScale = `scale=w=trunc(iw*${tileW}/4000)*2:h=-2`;
 
     const gp = [];
     gp.push(`[${bgIdx}:v]setsar=1[bg]`);
@@ -174,7 +177,7 @@ export async function processRecording(rec) {
       let t = `[${p.vIdx}:v]scale=${tileW}:${tileH}:force_original_aspect_ratio=increase,` +
         `crop=${tileW}:${tileH}:(iw-${tileW})/2:(ih-${tileH})/2,setsar=1`;
       if (p.bnIdx != null) {
-        t += `[tb${i}];[${p.bnIdx}:v]scale=${bannerW}:-2[bn${i}];` +
+        t += `[tb${i}];[${p.bnIdx}:v]${bannerScale}[bn${i}];` +
           `[tb${i}][bn${i}]overlay=x=0:y=main_h-overlay_h:eof_action=repeat[tt${i}];` +
           `[tt${i}][m${i}]alphamerge[rt${i}]`;
       } else {

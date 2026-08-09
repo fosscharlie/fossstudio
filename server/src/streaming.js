@@ -175,7 +175,10 @@ async function launch(state) {
       bannerArgs.push("-loop", "1", "-framerate", "5", "-i", f);
     }
   }
-  const bannerW = 2 * Math.round(0.38 * tileW / 2);
+  // Banner PNGs are drawn at 20px per cqw (tile = 2000px design width)
+  // and now hug their text, so scale each by its own width, not a fixed
+  // fraction of the tile
+  const bannerScale = `scale=w=trunc(iw*${tileW}/4000)*2:h=-2`;
 
   const gp = [];
   gp.push(`[${bgIdx}:v]setsar=1,fps=30[bg]`);
@@ -185,7 +188,7 @@ async function launch(state) {
     let t = `[${v.i}:v]scale=${tileW}:${tileH}:force_original_aspect_ratio=increase,` +
       `crop=${tileW}:${tileH}:(iw-${tileW})/2:(ih-${tileH})/2,setsar=1,fps=30`;
     if (v.bnIdx != null) {
-      t += `[tb${k}];[${v.bnIdx}:v]scale=${bannerW}:-2[bn${k}];` +
+      t += `[tb${k}];[${v.bnIdx}:v]${bannerScale}[bn${k}];` +
         `[tb${k}][bn${k}]overlay=x=0:y=main_h-overlay_h:eof_action=repeat[tt${k}];` +
         `[tt${k}][m${k}]alphamerge[rt${k}]`;
     } else {

@@ -276,15 +276,16 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   position: absolute;
   left: 0;
   bottom: 0;
-  /* Fixed size: longer text truncates instead of growing the banner */
-  width: 38cqw;
-  padding: 1.2cqw 2.4cqw 1.4cqw;
-  border-top-right-radius: 1.5cqw;
+  /* Hug the text: just a touch wider than the words, never past the tile */
+  width: fit-content;
+  max-width: 92cqw;
+  padding: 0.7cqw 1.5cqw 0.8cqw;
+  border-top-right-radius: 1cqw;
   background: var(--banner-c, #1e2127);
   color: var(--banner-fg, #ffffff);
 }
 .tile .name {
-  font-size: clamp(0.7rem, 4.6cqw, 2.2rem);
+  font-size: clamp(0.45rem, 2.76cqw, 1.32rem);
   font-weight: 700;
   line-height: 1.3;
   overflow: hidden;
@@ -292,7 +293,7 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   white-space: nowrap;
 }
 .tile .tagline {
-  font-size: clamp(0.5rem, 2.9cqw, 1.5rem);
+  font-size: clamp(0.35rem, 1.74cqw, 0.9rem);
   opacity: 0.82;
   line-height: 1.3;
   overflow: hidden;
