@@ -121,7 +121,10 @@ export async function startRecording(room, mode) {
   await fs.mkdir(path.join(recDir(recId), "raw"), { recursive: true });
   active.set(room.id, rec);
 
-  for (const peer of room.peers.values()) addPeerToRecording(rec, peer);
+  for (const peer of room.peers.values()) {
+    if (peer.role === "viewer") continue; // OBS clean feeds aren't in the show
+    addPeerToRecording(rec, peer);
+  }
 
   // Banners the host uploaded earlier (e.g. already live) apply here too
   const bdir = path.join(config.dataDir, "banners", room.id);

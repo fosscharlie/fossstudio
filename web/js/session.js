@@ -6,6 +6,10 @@
 
   const roomId = location.pathname.split("/")[2];
   const wantHost = new URLSearchParams(location.search).get("as") === "host";
+  // Clean-feed mode for OBS: no join screen, no controls, receive-only.
+  // Load the session link with ?output=1 as an OBS Browser Source and
+  // stream the show from OBS to anywhere.
+  const outputMode = new URLSearchParams(location.search).get("output") === "1";
   const $ = (id) => document.getElementById(id);
 
   const els = {
@@ -1529,6 +1533,57 @@
     }
   }
 
+  // The OBS clean feed: join invisibly as a receive-only viewer, render
+  // the same grid/banners/overlays a guest sees, and hide every control.
+  // OBS's browser source autoplays with audio, so no click is needed.
+  async function joinOutput() {
+    document.body.classList.add("output-mode");
+    els.preview.hidden = true;
+    try {
+      await connectWs();
+      const info = await request("join", { name: "Clean feed", role: "viewer" });
+      selfId = info.peerId;
+      applyControl(info.control);
+      applyTheme(info.theme);
+      device = new mediasoupClient.Device();
+      await device.load({ routerRtpCapabilities: info.routerRtpCapabilities });
+      const params = await request("createTransport", { direction: "recv" });
+      recvTransport = device.createRecvTransport({ ...params, iceServers: info.iceServers });
+      recvTransport.on("connect", ({ dtlsParameters }, cb, eb) => {
+        request("connectTransport", { transportId: recvTransport.id, dtlsParameters })
+          .then(cb).catch(eb);
+      });
+      for (const p of info.peers) {
+        makeTile(p.id, p.name, false, p.tagline, p.role === "host");
+        for (const prod of p.producers) await consumeProducer(p.id, prod.id, prod.source);
+      }
+      eventHandlers.peerJoined = (p) => makeTile(p.id, p.name, false, p.tagline, p.role === "host");
+      eventHandlers.peerLeft = ({ peerId }) => removeTile(peerId);
+      eventHandlers.newProducer = ({ peerId, producerId, source }) =>
+        consumeProducer(peerId, producerId, source).catch(console.error);
+      eventHandlers.producerClosed = ({ producerId }) => {
+        for (const [cid, c] of consumers) {
+          if (c.consumer.producerId === producerId) dropConsumer(cid);
+        }
+      };
+      eventHandlers.consumerClosed = ({ consumerId }) => dropConsumer(consumerId);
+      eventHandlers.control = (c) => applyControl(c);
+      eventHandlers.overlay = playDomOverlay;
+      eventHandlers.intro = playDomIntro;
+      joined = true;
+      els.session.hidden = false;
+      applyLayout();
+      // A normal browser tab (unlike OBS) blocks audio until a click
+      const kick = () => { if (audioCtx?.state === "suspended") audioCtx.resume(); };
+      kick();
+      document.addEventListener("click", kick);
+    } catch (err) {
+      console.error("clean feed join failed:", err.message);
+      try { ws && ws.close(); } catch { /* ignore */ }
+      setTimeout(joinOutput, 3000);
+    }
+  }
+
   function leaveToPreview(message) {
     joined = false;
     if (recorders.length) stopSelfRecording();
@@ -1542,6 +1597,12 @@
     masterDest = null;
     els.session.hidden = true;
     els.hostPanel.hidden = true;
+    // The clean feed runs unattended inside OBS: reconnect, never show
+    // the join screen
+    if (outputMode) {
+      setTimeout(joinOutput, 3000);
+      return;
+    }
     document.body.classList.remove("dim-ui");
     els.dimBtn.classList.remove("dim-on");
     els.preview.hidden = false;
@@ -1613,5 +1674,5 @@
       .catch(() => {});
   }
 
-  initPreview();
+  outputMode ? joinOutput() : initPreview();
 })();

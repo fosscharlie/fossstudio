@@ -35,6 +35,7 @@ function sdpFor(audioPort, videoPort, audioConsumer, videoConsumer) {
 export async function startServerCapture(rec, room) {
   rec.captures = [];
   for (const peer of room.peers.values()) {
+    if (peer.role === "viewer") continue; // OBS clean feeds aren't in the show
     await capturePeer(rec, room, peer).catch((e) =>
       console.error(`server capture failed for ${peer.name}:`, e.message));
   }

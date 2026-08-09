@@ -116,7 +116,8 @@
     del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>',
     key: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="M11 12L21 2M16 7l3 3"/></svg>',
     gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a7.97 7.97 0 0 0 .1-3l2-1.2-2-3.4-2.2.7a8 8 0 0 0-2.6-1.5L14.3 4h-4l-.4 2.6a8 8 0 0 0-2.6 1.5l-2.2-.7-2 3.4 2 1.2a7.97 7.97 0 0 0 .1 3l-2 1.2 2 3.4 2.2-.7a8 8 0 0 0 2.6 1.5l.4 2.6h4l.4-2.6a8 8 0 0 0 2.6-1.5l2.2.7 2-3.4z"/></svg>',
-    tick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5L20 7"/></svg>'
+    tick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5L20 7"/></svg>',
+    obs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10.5" r="3"/></svg>'
   };
 
   function iconBtn(icon, label, onClick) {
@@ -177,6 +178,12 @@
         copy.innerHTML = ICONS.tick;
         setTimeout(() => { copy.classList.remove("done"); copy.innerHTML = ICONS.copy; }, 1500);
       });
+      const obs = iconBtn("obs", "Copy OBS clean-feed link - add it as a Browser Source and stream from OBS to anywhere", async () => {
+        await navigator.clipboard.writeText(`${link}?output=1`);
+        obs.classList.add("done");
+        obs.innerHTML = ICONS.tick;
+        setTimeout(() => { obs.classList.remove("done"); obs.innerHTML = ICONS.obs; }, 1500);
+      });
       const open = iconBtn("open", "Open studio as host", () => {
         window.open(`/s/${s.id}?as=host`, "_blank");
       });
@@ -184,7 +191,7 @@
         await apiFetch(`/api/sessions/${s.id}`, { method: "DELETE" });
         loadSessions();
       });
-      row.append(copy, open, del);
+      row.append(copy, obs, open, del);
       list.appendChild(row);
     }
   }

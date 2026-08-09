@@ -4,6 +4,16 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- OBS clean feed: every session now has a view-only output link
+  (session link + `?output=1`) that skips the join screen and shows
+  nothing but the show - the live grid, name banners, title block,
+  overlays and intros, with all audio. Add it to OBS as a Browser
+  Source and stream from OBS to any platform. Clean-feed viewers are
+  invisible: no tile, no notification, never in the recording, and they
+  don't use up guest slots (up to 4 feeds alongside the usual 10
+  people). If the connection drops the feed reconnects by itself. A new
+  camera-screen icon on each dashboard session row copies the link.
+
 - Account: you can now rename your account (your login name) from
   Settings -> Account - handy when repurposing it for a different podcast.
   The session is keyed on the account id, so a rename never logs you out.

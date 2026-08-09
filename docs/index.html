@@ -23,7 +23,7 @@
   "name": "FOSSStudio",
   "operatingSystem": "Linux",
   "applicationCategory": "MultimediaApplication",
-  "description": "Self-hosted video podcast studio: no-account guest links, up to 10 participants, lossless FLAC recordings, combined MP4, RNNoise noise suppression, YouTube RTMP streaming, multi-host support.",
+  "description": "Self-hosted video podcast studio: no-account guest links, up to 10 participants, lossless FLAC recordings, combined MP4, RNNoise noise suppression, YouTube RTMP streaming, an OBS clean-feed link for streaming anywhere, multi-host support.",
   "url": "https://fossstudio.org",
   "downloadUrl": "https://github.com/fosscharlie/fossstudio",
   "license": "https://www.gnu.org/licenses/gpl-3.0.html",
@@ -53,6 +53,7 @@
     --orange: #fe9700;
     --purple: #9b26ae;
     --cyan: #00bcd3;
+  --indigo: #3d51b4;
     --red: #f34236;
     --gap: 2rem;
   }
@@ -386,6 +387,7 @@
     <div class="card" style="--c:var(--red)"><span class="dot">●</span><h3>Lossless recording</h3><p>Browser-side per-person capture in raw PCM, converted to FLAC on the server, plus a combined video that matches the screen: every tile, name banners and overlays included.</p></div>
     <div class="card" style="--c:var(--orange)"><span class="dot">🔊</span><h3>Soundboard &amp; intros</h3><p>Fire clips one-click: laughs and applause over the chat, or stings that mute everyone and bring them back. Plus fullscreen intro videos that take over every screen. All baked into the recording and the stream.</p></div>
     <div class="card" style="--c:var(--pink)"><span class="dot">📡</span><h3>YouTube live</h3><p>Server-composited 720p grid over RTMP, name banners and all. The grid rebuilds itself when someone joins or leaves.</p></div>
+    <div class="card" style="--c:var(--indigo)"><span class="dot">🎬</span><h3>OBS clean feed</h3><p>Every session has a view-only link with no join screen and no buttons: add it to OBS as a Browser Source and stream the show to any platform, with full audio. Invisible to your guests and never in the recording.</p></div>
     <div class="card" style="--c:var(--blue)"><span class="dot">👥</span><h3>Up to 10 people</h3><p>A forwarding media engine (mediasoup) means a 2-core VPS handles a full grid comfortably.</p></div>
     <div class="card" style="--c:var(--teal)"><span class="dot">🗂</span><h3>No database</h3><p>Flat JSON files in one folder. Back it up, export it as a zip, restore it with a click.</p></div>
     <div class="card" style="--c:var(--green)"><span class="dot">🛡</span><h3>Privacy by default</h3><p>No CDNs, no trackers, no cookies for guests, no external calls. Even the font is self-hosted.</p></div>

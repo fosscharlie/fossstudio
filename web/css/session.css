@@ -770,3 +770,9 @@ body.dim-ui .host-panel:hover { opacity: 1; }
   z-index: 60;
   pointer-events: none;
 }
+
+/* OBS clean feed (?output=1): nothing on screen but the show itself */
+body.output-mode .controls { display: none; }
+body.output-mode #hostPanel { display: none; }
+body.output-mode [data-tip]::after,
+body.output-mode [data-tip]::before { display: none; }

@@ -38,6 +38,11 @@ dashboard.
   them.
 - **Streaming:** server-composited RTMP out to YouTube, with the same
   lower-third banners and overlays as the session view.
+- **OBS clean feed:** every session also has a view-only output link
+  (`?output=1`) with no join screen and no controls - add it as an OBS
+  Browser Source and stream the show from OBS to any platform. The feed
+  is invisible to everyone in the session and can never appear in the
+  recording. Copy it from the session row in the dashboard.
 - **Noise suppression:** RNNoise in the guest's browser (WASM worklet).
 - **Email:** SMTP configured in the dashboard; all outgoing mail uses a
   branded HTML template with a plain-text fallback.

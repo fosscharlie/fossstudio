@@ -92,7 +92,11 @@ export function attachSignaling(httpServer) {
             // they don't host shows.
             const auth = isAuthedRequest(req);
             const canHost = auth && auth.uid === session.ownerId;
-            const role = canHost && data.role === "host" ? "host" : "guest";
+            // "viewer" is the OBS clean-feed connection: receive-only,
+            // invisible to everyone else. Anyone with the session link
+            // may open one (same trust level as joining as a guest).
+            const role = canHost && data.role === "host" ? "host"
+              : data.role === "viewer" ? "viewer" : "guest";
             peer = addPeer(room, { name, tagline, role, socket });
             room.control.noise[peer.id] = !!data.noiseOn;
             // Everyone arrives muted - host included, even alone; you
@@ -121,9 +125,12 @@ export function attachSignaling(httpServer) {
                 wallpaper: settings.wallpaper ? `/api/wallpaper/${room.ownerId}` : null
               },
               peers: [...room.peers.values()]
-                .filter((p) => p.id !== peer.id)
+                .filter((p) => p.id !== peer.id && p.role !== "viewer")
                 .map(peerSummary)
             });
+            // Viewers are invisible: no tile, no banner colour, no
+            // notification - the rest of the room never knows
+            if (role === "viewer") break;
             broadcast(room, peer.id, { event: "peerJoined", data: peerSummary(peer) });
             // Multi-colour banners: latecomers get the next palette colour
             if (room.control.bannerMulti) {
@@ -132,7 +139,8 @@ export function attachSignaling(httpServer) {
             }
             // Everyone refreshes control state (noise/colour for the newcomer)
             broadcast(room, peer.id, { event: "control", data: room.control });
-            if (role === "guest" && room.peers.size === 1) {
+            const people = [...room.peers.values()].filter((p) => p.role !== "viewer");
+            if (role === "guest" && people.length === 1) {
               notifyUser(room.ownerId, "Guest waiting", `${name} just joined session ${room.id}.`).catch(() => {});
             }
             // Someone joining mid-recording starts recording too
@@ -437,6 +445,7 @@ export function attachSignaling(httpServer) {
 
           case "produce": {
             if (!peer) return fail("not joined");
+            if (peer.role === "viewer") return fail("view-only connection");
             const transport = peer.transports.get(data.transportId);
             if (!transport) return fail("no such transport");
             const producer = await transport.produce({
@@ -536,13 +545,19 @@ export function attachSignaling(httpServer) {
 
     socket.on("close", () => {
       if (!peer) return;
+      if (peer.role === "viewer") {
+        // Invisible on the way out too: no peerLeft, no stream relaunch
+        removePeer(room, peer.id);
+        return;
+      }
       const rec = activeRecording(room.id);
       if (rec) markPeerDone(rec.id, peer.id);
       removePeer(room, peer.id);
       broadcast(room, null, { event: "peerLeft", data: { peerId: peer.id } });
       if (isStreaming(room.id)) refreshStream(room.id);
-      // Last one out stops the tape
-      if (rec && room.peers.size === 0) {
+      // Last one out stops the tape (lingering viewers don't count)
+      const left = [...room.peers.values()].filter((p) => p.role !== "viewer").length;
+      if (rec && left === 0) {
         stopRecording(room).catch((e) => console.error("auto-stop failed:", e.message));
       }
     });

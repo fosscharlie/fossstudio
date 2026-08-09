@@ -7,6 +7,7 @@ import { createRouter } from "./media.js";
 import { config } from "./config.js";
 
 export const MAX_GUESTS = 10;
+export const MAX_VIEWERS = 4; // receive-only OBS/clean-feed connections
 
 const rooms = new Map();
 
@@ -44,7 +45,13 @@ export function getRoom(roomId) {
 }
 
 export function addPeer(room, { name, tagline, role, socket }) {
-  if (room.peers.size >= MAX_GUESTS) {
+  // Viewers (OBS clean feeds) have their own small pool so they can
+  // never crowd out a person - and people never crowd them out
+  const viewers = [...room.peers.values()].filter((p) => p.role === "viewer").length;
+  const full = role === "viewer"
+    ? viewers >= MAX_VIEWERS
+    : room.peers.size - viewers >= MAX_GUESTS;
+  if (full) {
     throw Object.assign(new Error("session full"), { code: "ROOM_FULL" });
   }
   const peer = {

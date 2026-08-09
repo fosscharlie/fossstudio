@@ -24,7 +24,11 @@ For self-hosters assessing the project:
   recordings and settings. Host powers in a session are granted from the
   server-side session ownership check, never from client claims.
 - **Session links** must exist in the session registry - arbitrary room
-  IDs are rejected.
+  IDs are rejected. The OBS clean feed (`?output=1`) carries the same
+  trust as the link itself: anyone holding the link could join and
+  listen as a guest anyway, so the view-only feed grants nothing extra.
+  Feed connections are receive-only at the server (they cannot publish
+  media), are capped separately from guests, and never enter recordings.
 - **Uploads**: recording chunks are gated by per-peer HMAC tokens;
   wallpaper, ad-banner, soundboard-clip and intro-video uploads are
   login-gated, content-type and size limited, and written under
