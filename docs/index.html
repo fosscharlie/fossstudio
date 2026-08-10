@@ -218,27 +218,28 @@
   .card h3 { font-size: 1.05rem; font-weight: 800; margin-bottom: 0.35rem; }
   .card p { font-size: 0.92rem; color: var(--muted); }
 
-  /* ---------- sponsor ---------- */
-  .sponsor {
-    display: flex;
+  /* ---------- Lightmorphic badge ---------- */
+  .lightmorphic-badge {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
+    gap: 8px;
     width: fit-content;
     margin: 0 auto;
-    padding: 1rem 1.4rem;
-    background: linear-gradient(135deg, #171a21, #1a1c14);
+    background: var(--panel-2);
     border: 1px solid var(--line);
-    border-radius: 18px;
+    border-radius: 999px;
+    padding: 8px 16px 8px 10px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 4px 12px rgba(0,0,0,0.25);
     text-decoration: none;
-    color: var(--text);
-    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--muted);
+    transition: background 150ms ease, border-color 150ms ease;
   }
-  .sponsor:hover { border-color: var(--yellow); }
-  .sponsor img { height: 34px; width: auto; }
-  .sponsor .linkicon { width: 1rem; height: 1rem; color: var(--muted); }
-  .sponsor span { color: var(--muted); font-weight: 500; }
+  .lightmorphic-badge:hover { background: #232838; border-color: var(--muted); }
+  .lightmorphic-badge img { display: block; height: 25px; width: auto; }
+  .lightmorphic-badge .external-link-icon { display: block; width: 12px; height: 12px; opacity: 0.6; color: var(--muted); }
+  .lightmorphic-badge .external-link-icon svg { width: 100%; height: 100%; }
 
   /* ---------- steps ---------- */
   .steps { display: grid; gap: var(--gap); max-width: 46rem; counter-reset: step; }
@@ -340,10 +341,16 @@
 </section>
 
 <section class="wrap">
-  <a class="sponsor" href="https://lightmorphic.co.uk" target="_blank" rel="noopener">
+  <a class="lightmorphic-badge" href="https://lightmorphic.co.uk" target="_blank" rel="noopener noreferrer" translate="no">
     <span>Created by</span>
-    <img src="lightmorphic.webp" alt="Lightmorphic" width="250" height="50">
-    <svg class="linkicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h6v6M21 3l-9 9M9 21H5a2 2 0 0 1-2-2V7"/></svg>
+    <img src="lightmorphic-dark-tb-250x50-sq.webp" alt="Lightmorphic" width="125" height="25" loading="lazy">
+    <span class="external-link-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <path d="M15 3h6v6"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+    </span>
   </a>
 </section>
 
@@ -419,10 +426,16 @@ docker compose up -d --build</code></pre>
 
 <footer>
   <div class="wrap">
-    <a class="sponsor" href="https://lightmorphic.co.uk" target="_blank" rel="noopener">
+    <a class="lightmorphic-badge" href="https://lightmorphic.co.uk" target="_blank" rel="noopener noreferrer" translate="no">
       <span>Created by</span>
-      <img src="lightmorphic.webp" alt="Lightmorphic" width="250" height="50">
-      <svg class="linkicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h6v6M21 3l-9 9M9 21H5a2 2 0 0 1-2-2V7"/></svg>
+      <img src="lightmorphic-dark-tb-250x50-sq.webp" alt="Lightmorphic" width="125" height="25" loading="lazy">
+      <span class="external-link-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <path d="M15 3h6v6"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      </span>
     </a>
     <div>FOSSStudio · <a href="https://github.com/fosscharlie/fossstudio">GitHub</a> · free software under the <a href="https://github.com/fosscharlie/fossstudio/blob/main/LICENSE">GNU GPL v3</a> · built for podcasters who want to own their stack</div>
   </div>
