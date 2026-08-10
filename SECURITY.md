@@ -42,6 +42,14 @@ For self-hosters assessing the project:
   nosniff and Referrer-Policy are set on every response.
 - **Least privilege**: the application container runs as a non-root
   user; data files holding credentials are stored owner-only (0600).
+  Deployment is a dedicated SSH key, used nowhere else, that is itself
+  forced-command restricted server-side to a fixed set of deploy
+  actions (upload a release, switch to it, start it, health-check,
+  prune old releases, roll back) - the key cannot open a shell or run
+  any other command, even though the account it logs into is root.
+  File uploads through it (the release itself) are confined to the
+  releases directory by `rrsync`; the key also has no PTY, agent
+  forwarding, or port forwarding.
 - **No third parties**: no CDNs, trackers, or external calls from any
   page; fonts and libraries are self-hosted.
 - **Data deletion**: deleting a recording, sound, intro, wallpaper, logo

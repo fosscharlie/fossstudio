@@ -2,6 +2,16 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased
+
+- Deploy hardening: GitHub access moved to a dedicated, repo-scoped SSH
+  deploy key (no more shared credential). VPS deploy access moved to
+  its own dedicated key, forced-command restricted server-side to
+  exactly the deploy actions `deploy.sh`/`rollback.sh` need - upload,
+  activate, start, health-check, prune, roll back - with no shell
+  access even though the account is root. Verified end-to-end with a
+  real deploy through the restricted key.
+
 ## 1.4.0 - 2026-08-10
 
 OBS clean-feed links for streaming anywhere, a pinned per-session theme,
