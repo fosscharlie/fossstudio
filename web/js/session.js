@@ -1010,10 +1010,10 @@
   setInterval(() => {
     if (!isHost) return;
     if (recording && recStartAt) {
-      els.hpRecordBtn.textContent = `■ Stop recording · ${fmtElapsed(Date.now() - recStartAt)}`;
+      els.hpRecordBtn.textContent = `■ ${fmtElapsed(Date.now() - recStartAt)}`;
     }
     if (live && liveStartAt) {
-      els.hpStreamBtn.textContent = `■ End stream · ${fmtElapsed(Date.now() - liveStartAt)}`;
+      els.hpStreamBtn.textContent = `■ ${fmtElapsed(Date.now() - liveStartAt)}`;
     }
   }, 1000);
 
@@ -1027,9 +1027,12 @@
       ? "Recording light - this session is being recorded"
       : "Recording light - lights up red when recording";
     if (isHost) {
+      // Fixed-width labels: the button must never grow and shove its
+      // neighbours around when the timer appears
       els.hpRecordBtn.textContent = on
-        ? `■ Stop recording · ${fmtElapsed(Date.now() - recStartAt)}`
-        : "● Start recording";
+        ? `■ ${fmtElapsed(Date.now() - recStartAt)}`
+        : "● Record";
+      els.hpRecordBtn.dataset.tip = on ? "Stop the recording" : "Start recording";
       els.hpRecordBtn.classList.toggle("rec-on", on);
       updateServerRecLock();
       if (on) scheduleBannerSnapshots();
@@ -1393,8 +1396,9 @@
     liveStartAt = on ? (liveStartAt || Date.now()) : null;
     els.banner.classList.toggle("live", on);
     els.hpStreamBtn.textContent = on
-      ? `■ End stream · ${fmtElapsed(Date.now() - liveStartAt)}`
+      ? `■ ${fmtElapsed(Date.now() - liveStartAt)}`
       : "📡 Go live";
+    els.hpStreamBtn.dataset.tip = on ? "End the stream" : "Go live to your stream destination";
     els.hpStreamBtn.classList.toggle("rec-on", on);
     updateServerRecLock();
     if (on) scheduleBannerSnapshots();
