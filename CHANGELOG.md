@@ -2,7 +2,14 @@
 
 All notable changes to FOSSStudio are documented here.
 
-## Unreleased
+## 1.4.0 - 2026-08-10
+
+OBS clean-feed links for streaming anywhere, a pinned per-session theme,
+session renaming, true-mono audio, zip download bundles, auto-levelled
+clips, elapsed timers on record/go-live, and two important fixes:
+mid-recording joiners are no longer lost from recordings, and zoomed
+cameras no longer freeze in background tabs. The app image is also a
+much leaner two-stage Docker build.
 
 - Fixed: anyone who joined (or rejoined) while a recording was already
   running was never captured - their tile went black in the combined
@@ -50,7 +57,6 @@ All notable changes to FOSSStudio are documented here.
 - Fixed: a zoomed camera froze for everyone whenever that guest switched
   to another tab (browsers suspend the drawing loop in hidden tabs; the
   zoom now draws on a worker clock that keeps ticking).
-
 - OBS clean feed: every session now has a view-only output link
   (session link + `?output=1`) that skips the join screen and shows
   nothing but the show - the live grid, name banners, title block,
@@ -60,7 +66,6 @@ All notable changes to FOSSStudio are documented here.
   don't use up guest slots (up to 4 feeds alongside the usual 10
   people). If the connection drops the feed reconnects by itself. A new
   camera-screen icon on each dashboard session row copies the link.
-
 - Account: you can now rename your account (your login name) from
   Settings -> Account - handy when repurposing it for a different podcast.
   The session is keyed on the account id, so a rename never logs you out.
