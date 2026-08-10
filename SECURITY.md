@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Please report vulnerabilities privately via
-[GitHub's private vulnerability reporting](https://github.com/fosscharlie/fossstudio/security/advisories/new)
+[GitHub's private vulnerability reporting](https://github.com/lightmorphic/fossstudio/security/advisories/new)
 on this repository. You'll get a response as soon as possible, normally
 within a few days. Please don't open public issues for security problems
 before they're fixed.
