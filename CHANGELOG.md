@@ -4,6 +4,10 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Bumped the app image from Node 20 to Node 22. mediasoup 3.24 (the
+  version this project already runs) declares Node >=22 as its own
+  minimum - Node 20 happened to still work, but was already outside
+  what upstream tests against and supports.
 - Firefox: added a compatibility test that runs the core flows (join,
   camera/mic, WebRTC call, RNNoise noise suppression, speaker-selector
   graceful degradation, browser-side recording and processing) through

@@ -3,7 +3,7 @@
 # shipped. The runtime carries just Node, ffmpeg (recording/streaming)
 # and zip (recording bundles) - no compilers, no npm.
 
-FROM node:20-bookworm-slim AS build
+FROM node:22-bookworm-slim AS build
 RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -11,7 +11,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 # Patch the base OS packages, then add only what we need. Rebuilding
 # with --pull keeps this current; the apt upgrade clears fixable CVEs
