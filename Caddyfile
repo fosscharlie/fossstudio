@@ -1,3 +1,8 @@
+# Extra sites served by this Caddy instance (other apps sharing the same
+# host drop their own .caddy site files in the mounted sites folder; the
+# glob is harmless when the folder is empty).
+import /etc/caddy/sites/*.caddy
+
 {$DOMAIN} {
 	encode zstd gzip
 	header Strict-Transport-Security "max-age=31536000"

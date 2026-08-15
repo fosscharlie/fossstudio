@@ -93,7 +93,10 @@ from this repo.
 docker compose up -d --build
 ```
 
-Caddy fetches HTTPS certificates for your domain automatically. To
+Caddy fetches HTTPS certificates for your domain automatically. If
+other apps on the same host need to share ports 80/443, point
+`CADDY_SITES_PATH` at a folder of extra `.caddy` site files and the
+bundled Caddy serves those too. To
 deploy updates from a dev machine instead of building on the server:
 `FOSSSTUDIO_HOST=root@<ip> scripts/deploy.sh` (release folders with
 instant rollback via `scripts/rollback.sh`).

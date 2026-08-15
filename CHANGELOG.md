@@ -4,6 +4,11 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Caddy can now serve extra sites alongside FOSSStudio: the Caddyfile
+  imports any `.caddy` files from a mounted sites folder (default
+  `./caddy-sites`, override with `CADDY_SITES_PATH`). Lets other apps
+  on the same host share ports 80/443 without their own reverse proxy.
+  A no-op when the folder is empty, so existing setups are unaffected.
 - Deploy hardening: GitHub access moved to a dedicated, repo-scoped SSH
   deploy key (no more shared credential). VPS deploy access moved to
   its own dedicated key, forced-command restricted server-side to
