@@ -4,6 +4,14 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Firefox: added a compatibility test that runs the core flows (join,
+  camera/mic, WebRTC call, RNNoise noise suppression, speaker-selector
+  graceful degradation, browser-side recording and processing) through
+  a real Firefox engine rather than assuming Chrome-family coverage is
+  enough. Confirmed clean: no console errors anywhere in the app, and a
+  Firefox-recorded session processes to a correct mono `combined.mp4` /
+  `combined.flac` / per-person FLAC exactly like Chrome. Speaker
+  selection already degraded correctly for browsers without `setSinkId`.
 - Deploys now wait (up to 3 minutes) for any in-flight recording render
   to finish before restarting the app - a new `/render-status` endpoint
   reports whether one is running, and `scripts/deploy.sh` checks it
