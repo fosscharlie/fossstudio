@@ -4,6 +4,11 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Recordings now include a `combined.flac`: every participant's voice
+  (plus any soundboard clips and intro audio) mixed into one lossless
+  file - the same mix as `combined.mp4`'s audio track, but full
+  quality instead of AAC. Downloads and the "download all audio" zip
+  bundle pick it up automatically.
 - Caddy can now serve extra sites alongside FOSSStudio: the Caddyfile
   imports any `.caddy` files from a mounted sites folder (default
   `./caddy-sites`, override with `CADDY_SITES_PATH`). Lets other apps

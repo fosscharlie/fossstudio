@@ -288,11 +288,14 @@ export async function processRecording(rec) {
     const mixLabels = audios.map((_, i) => `[pmono${i}]`);
     if (clipMixLabel) mixLabels.push(clipMixLabel);
     mixLabels.push(...introAudioLabels);
+    // Split the final mix: one copy feeds the MP4's AAC track, the other
+    // becomes a standalone lossless combined.flac - everyone's voice
+    // (plus clips/intro audio) merged into one file, full quality.
     const amix = mixLabels.length === 0
       ? null
       : mixLabels.length === 1
-        ? `${mixLabels[0]}anull[aout]`
-        : `${mixLabels.join("")}amix=inputs=${mixLabels.length}:normalize=0[aout]`;
+        ? `${mixLabels[0]}asplit=2[aout][aoutflac]`
+        : `${mixLabels.join("")}amix=inputs=${mixLabels.length}:normalize=0[aoutmix];[aoutmix]asplit=2[aout][aoutflac]`;
 
     // An intro fired near the very end can run slightly past the last
     // audio - don't let the hard cap clip it
@@ -317,12 +320,18 @@ export async function processRecording(rec) {
       ...capArgs,
       "-shortest",
       "-y", path.join(out, "combined.mp4"),
+      // Lossless mixdown: everyone (plus clips/intro audio), one file,
+      // full quality - the same mix as the MP4's audio track
+      ...(amix
+        ? ["-map", "[aoutflac]", "-c:a", "flac", ...capArgs, "-shortest", "-y", path.join(out, "combined.flac")]
+        : []),
       // Separate soundboard track: clips only, on their timeline
       ...(clipOutLabel
         ? ["-map", clipOutLabel, "-c:a", "flac", "-y", path.join(out, "soundboard.flac")]
         : [])
     ], "combined");
     files.push("combined.mp4");
+    if (amix) files.push("combined.flac");
     if (clipOutLabel) files.push("soundboard.flac");
   }
 

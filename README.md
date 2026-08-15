@@ -31,8 +31,9 @@ dashboard.
 - **Recording:** browser-side per-person (PCM, best for big sessions) or
   server-side (a host-panel switch, picked per session, locked while
   recording or live). Output: one combined MP4 (H.264/AAC, plays in any
-  browser) + a lossless FLAC per participant (plus a `soundboard.flac`
-  when clips were fired), named after the episode. Recordings can be
+  browser), a lossless `combined.flac` mixdown of everyone, and a
+  lossless FLAC per participant (plus a `soundboard.flac` when clips
+  were fired), named after the episode. Recordings can be
   previewed and downloaded from the dashboard - per file, or zipped
   bundles of all audio or all files in one click. The combined video matches the
   screen: everyone's tile, their lower-third name banners, the podcast

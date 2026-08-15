@@ -81,8 +81,10 @@ for (let i = 0; i < 60; i++) {
 }
 check(`recording processed (status: ${rec?.status})`, rec?.status === "ready");
 const flacs = (rec?.files || []).filter((f) => f.endsWith(".flac"));
-check(`two FLACs present (${flacs.join(", ")})`, flacs.length === 2);
+const perPerson = flacs.filter((f) => f !== "combined.flac");
+check(`two per-person FLACs present (${perPerson.join(", ")})`, perPerson.length === 2);
 check("combined.mp4 present", (rec?.files || []).includes("combined.mp4"));
+check("combined.flac (lossless mixdown) present", flacs.includes("combined.flac"));
 check(`recording named after the episode (${rec?.title})`, rec?.title === "Automated test");
 
 // The host's browser should have uploaded a lower-third PNG per person
