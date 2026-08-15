@@ -4,6 +4,14 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Deploys now wait (up to 3 minutes) for any in-flight recording render
+  to finish before restarting the app - a new `/render-status` endpoint
+  reports whether one is running, and `scripts/deploy.sh` checks it
+  before recreating the container. Belt-and-braces alongside the
+  auto-resume above: this avoids the interruption happening at all in
+  the common case, deploy time permitting; if a render is still going
+  after 3 minutes, or the check is unreachable, the deploy proceeds
+  anyway and the resume mechanism covers it either way.
 - Reliability: a recording interrupted mid-render (the server process
   dying before it finishes - a deploy recreating the container is
   exactly what did this once, and cost a real show its combined video)

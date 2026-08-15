@@ -24,6 +24,13 @@ import { startServerCapture, stopServerCapture } from "./serverRecorder.js";
 import { processRecording } from "./processor.js";
 
 const active = new Map(); // roomId -> rec
+let renderCount = 0; // how many finalize() calls are running right now
+
+// So a deploy can check "is anything rendering?" before it recreates
+// the container - see /api/ops/render-status and scripts/deploy.sh.
+export function activeRenderCount() {
+  return renderCount;
+}
 
 export function recDir(recId) {
   return path.join(config.dataDir, "recordings", recId);
@@ -267,21 +274,26 @@ function maybeFinalize(rec) {
 }
 
 async function finalize(rec) {
-  await saveIndex({
-    id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, title: rec.title,
-    startedAt: rec.startedAt,
-    endedAt: Date.now(), status: "processing", files: []
-  });
-  const files = await processRecording(rec);
-  await saveIndex({
-    id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, title: rec.title,
-    startedAt: rec.startedAt,
-    endedAt: Date.now(), status: "ready", files
-  });
-  await clearSnapshot(rec.id);
-  const { notifyUser } = await import("../push.js");
-  notifyUser(rec.ownerId, "Recording ready", `Session ${rec.roomId} is processed - ${files.length} files to download.`)
-    .catch(() => {});
+  renderCount++;
+  try {
+    await saveIndex({
+      id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, title: rec.title,
+      startedAt: rec.startedAt,
+      endedAt: Date.now(), status: "processing", files: []
+    });
+    const files = await processRecording(rec);
+    await saveIndex({
+      id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, title: rec.title,
+      startedAt: rec.startedAt,
+      endedAt: Date.now(), status: "ready", files
+    });
+    await clearSnapshot(rec.id);
+    const { notifyUser } = await import("../push.js");
+    notifyUser(rec.ownerId, "Recording ready", `Session ${rec.roomId} is processed - ${files.length} files to download.`)
+      .catch(() => {});
+  } finally {
+    renderCount--;
+  }
 }
 
 // Called once at server startup. A snapshot on disk with the recording

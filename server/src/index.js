@@ -8,7 +8,7 @@ import { api } from "./api.js";
 import { isAuthedRequest } from "./auth.js";
 import { scheduleDailyBackups, sendAlertEmail } from "./ops.js";
 import { initPush } from "./push.js";
-import { resumeOrphanedRecordings } from "./recording/manager.js";
+import { resumeOrphanedRecordings, activeRenderCount } from "./recording/manager.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -58,6 +58,15 @@ app.get(["/host", "/host/"], (req, res) => {
 
 app.get("/healthz", (req, res) => {
   res.json({ ok: true, uptime: Math.round(process.uptime()) });
+});
+
+// A deploy checks this before recreating the container: recreating it
+// mid-render kills the ffmpeg process (that cost a real show its
+// combined video once) - the deploy script waits a bit if this is
+// nonzero. No details beyond a count; same posture as /healthz, and
+// kept at top level (not under /api) for the same reason.
+app.get("/render-status", (req, res) => {
+  res.json({ rendering: activeRenderCount() });
 });
 
 // Session links guests receive: https://<domain>/s/<room-id>

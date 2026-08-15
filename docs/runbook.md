@@ -65,6 +65,11 @@ and keep them somewhere safe.
 - Deploys land in `/opt/fossstudio/releases/<timestamp>`; the newest 5 are
   kept, and `current` points at the live one. Rollback just points
   `current` at the previous release.
+- A deploy waits for any recording that's actively rendering to finish
+  before restarting the app (up to 3 minutes), and if a render does get
+  interrupted anyway, the server picks it back up and finishes it
+  automatically the next time it starts - so a recording can't be lost
+  to deploy timing.
 
 ## Uptime check
 
