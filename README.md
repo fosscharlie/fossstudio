@@ -111,6 +111,7 @@ node test/host-controls-test.mjs <url> <password>
 node test/recording-test.mjs <url> <password> browser|server
 node test/streaming-test.mjs             # local only (file: destination)
 node test/audio-energy-test.mjs          # noise suppression audio flows
+node test/resume-orphaned-recording-test.mjs  # crash mid-render, self-heals on restart
 ```
 
 Day-to-day operations are dashboard buttons; see the

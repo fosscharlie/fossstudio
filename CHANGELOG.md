@@ -4,6 +4,14 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Reliability: a recording interrupted mid-render (the server process
+  dying before it finishes - a deploy recreating the container is
+  exactly what did this once, and cost a real show its combined video)
+  used to be stuck on "processing" forever with no active render behind
+  it. The server now snapshots an in-progress recording's state to disk
+  as it goes, and automatically resumes and finishes any interrupted
+  one the moment it next starts up - no manual recovery needed. An
+  alert email goes out when this happens so it's never silent.
 - Recordings now include a `combined.flac`: every participant's voice
   (plus any soundboard clips and intro audio) mixed into one lossless
   file - the same mix as `combined.mp4`'s audio track, but full

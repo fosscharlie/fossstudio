@@ -5,8 +5,16 @@
 // Server mode (small sessions): the SFU pipes each participant's RTP
 // to ffmpeg locally, so browsers do nothing extra.
 //
-// Either way, processing afterwards produces out/combined.mkv plus one
-// lossless FLAC per participant.
+// Either way, processing afterwards produces out/combined.mp4 plus one
+// lossless FLAC per participant (and a combined.flac mixdown).
+//
+// A JSON snapshot of the in-progress `rec` is written to disk on every
+// meaningful change and cleared once processing finishes (success or
+// failure). If the process dies mid-render - a deploy recreating the
+// container is exactly what did this once - the snapshot survives and
+// resumeOrphanedRecordings() (called at startup) picks it back up and
+// finishes the job, instead of the recording being stuck on
+// "processing" forever with no active render behind it.
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -36,15 +44,43 @@ export function activeRecording(roomId) {
   return active.get(roomId) || null;
 }
 
+function snapshotPath(recId) {
+  return path.join(recDir(recId), "rec.json");
+}
+
+// Best-effort: a missed snapshot costs a little resume fidelity on the
+// rare crash, never a live recording. Never let it throw.
+async function saveSnapshot(rec) {
+  try {
+    const snap = {
+      id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode,
+      title: rec.title, titlePos: rec.titlePos, startedAt: rec.startedAt,
+      bg: rec.bg, wallpaper: rec.wallpaper, titleFile: rec.titleFile,
+      peers: Object.fromEntries(rec.peers),
+      overlays: rec.overlays, clips: rec.clips, intros: rec.intros
+    };
+    // writeJson: atomic (temp file + rename) and owner-only (0600), same
+    // as every other file under the data directory.
+    await writeJson(path.join("recordings", rec.id, "rec.json"), snap);
+  } catch (err) {
+    console.error("recording snapshot failed:", err.message);
+  }
+}
+
+async function clearSnapshot(recId) {
+  await fs.unlink(snapshotPath(recId)).catch(() => {});
+}
+
 // A soundboard clip fired mid-recording. Copy the source file now (the
 // host could delete it later) and note when it played; the processor
-// mixes these into combined.mkv and exports them as one separate track.
+// mixes these into combined.mp4 and exports them as one separate track.
 export async function logClip(rec, clip, file) {
   const idx = rec.clips.length;
   const dest = `clip-${idx}-${clip.id}${path.extname(file)}`;
   try {
     await fs.copyFile(file, path.join(recDir(rec.id), "raw", dest));
     rec.clips.push({ name: clip.name, offsetMs: Date.now() - rec.startedAt, file: dest });
+    await saveSnapshot(rec);
   } catch (err) {
     console.error("logClip failed:", err.message);
   }
@@ -62,6 +98,7 @@ export async function logIntro(rec, intro, file, durationMs) {
       offsetMs: Date.now() - rec.startedAt, file: dest, durationMs,
       hasAudio: intro.hasAudio !== false
     });
+    await saveSnapshot(rec);
   } catch (err) {
     console.error("logIntro failed:", err.message);
   }
@@ -78,6 +115,7 @@ export async function logOverlay(rec, kind, adFile) {
     entry.file = name;
   }
   rec.overlays.push(entry);
+  await saveSnapshot(rec);
 }
 
 export function uploadCreds(rec, peerId) {
@@ -107,9 +145,9 @@ export async function startRecording(room, mode) {
     titlePos: room.control?.titlePos || { x: 0.5, y: 0 },
     startedAt: Date.now(),
     peers: new Map(), // peerId -> {name, files:{}, clientStartOffsetMs, done}
-    overlays: [],     // {kind, offsetMs, file?} baked into combined.mkv
+    overlays: [],     // {kind, offsetMs, file?} baked into combined.mp4
     clips: [],        // soundboard clips fired during the take (separate track)
-    intros: [],       // fullscreen intro videos, baked into combined.mkv
+    intros: [],       // fullscreen intro videos, baked into combined.mp4
     stopping: false
   };
   // Background for the composite: the room's pinned theme, so the video
@@ -144,6 +182,7 @@ export async function startRecording(room, mode) {
 
   if (mode === "server") await startServerCapture(rec, room);
 
+  await saveSnapshot(rec);
   await saveIndex({
     id: recId, roomId: room.id, ownerId: rec.ownerId, mode, startedAt: rec.startedAt,
     status: "recording", title: rec.title, files: []
@@ -160,6 +199,7 @@ export function addPeerToRecording(rec, peer) {
     done: rec.mode === "server", // server mode needs no client uploads
     files: {}
   });
+  saveSnapshot(rec).catch(() => {});
   return {
     recId: rec.id,
     peerId: peer.id,
@@ -176,6 +216,7 @@ export async function appendChunk(recId, peerId, kind, seq, buf) {
   const safe = `${peerId}-${kind}.webm`;
   p.files[kind] = safe;
   await fs.appendFile(path.join(recDir(recId), "raw", safe), buf);
+  saveSnapshot(rec).catch(() => {});
 }
 
 export function markPeerDone(recId, peerId) {
@@ -183,6 +224,7 @@ export function markPeerDone(recId, peerId) {
   if (!rec) return;
   const p = rec.peers.get(peerId);
   if (p) p.done = true;
+  saveSnapshot(rec).catch(() => {});
   maybeFinalize(rec);
 }
 
@@ -196,6 +238,7 @@ export async function stopRecording(room) {
   }
   // Browser mode: clients get the stop event and send their final
   // chunks + done marker; finalize fires when all are in (or timeout).
+  await saveSnapshot(rec);
   rec.stopTimeout = setTimeout(() => {
     for (const p of rec.peers.values()) p.done = true;
     maybeFinalize(rec);
@@ -216,6 +259,10 @@ function maybeFinalize(rec) {
       startedAt: rec.startedAt,
       status: "failed", error: "Processing failed - the raw files are kept.", files: []
     });
+    // A genuine ffmpeg failure isn't retried automatically on the next
+    // restart (that would just repeat the same failure forever) - the
+    // raw files are kept for a manual look, same as always.
+    await clearSnapshot(rec.id);
   });
 }
 
@@ -231,9 +278,47 @@ async function finalize(rec) {
     startedAt: rec.startedAt,
     endedAt: Date.now(), status: "ready", files
   });
+  await clearSnapshot(rec.id);
   const { notifyUser } = await import("../push.js");
   notifyUser(rec.ownerId, "Recording ready", `Session ${rec.roomId} is processed - ${files.length} files to download.`)
     .catch(() => {});
+}
+
+// Called once at server startup. A snapshot on disk with the recording
+// still marked "processing" in the index means the process died before
+// finalize() finished (a deploy recreating the container mid-render is
+// exactly what happened once) - there is no active render behind it to
+// wait for, so pick the snapshot back up and finish the job now.
+// Returns how many were found, for a startup log line / alert.
+export async function resumeOrphanedRecordings() {
+  const dir = path.join(config.dataDir, "recordings");
+  const ids = await fs.readdir(dir).catch(() => []);
+  const index = await readJson("recordings.json", []);
+  let resumed = 0;
+  for (const id of ids) {
+    const snap = await readJson(path.join("recordings", id, "rec.json"), null);
+    if (!snap) continue;
+    const entry = index.find((r) => r.id === id);
+    if (entry?.status !== "processing") {
+      // Stale snapshot with no matching stuck entry (shouldn't normally
+      // happen) - clear it rather than leave dead weight behind.
+      await clearSnapshot(id);
+      continue;
+    }
+    const rec = { ...snap, peers: new Map(Object.entries(snap.peers || {})) };
+    console.log(`resuming orphaned recording ${id} (interrupted mid-render)`);
+    resumed++;
+    finalize(rec).catch(async (err) => {
+      console.error(`resume of ${id} failed:`, err.message);
+      await saveIndex({
+        id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode, title: rec.title,
+        startedAt: rec.startedAt,
+        status: "failed", error: "Processing failed - the raw files are kept.", files: []
+      });
+      await clearSnapshot(rec.id);
+    });
+  }
+  return resumed;
 }
 
 export async function deleteRecording(id) {

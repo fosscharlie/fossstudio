@@ -8,6 +8,7 @@ import { api } from "./api.js";
 import { isAuthedRequest } from "./auth.js";
 import { scheduleDailyBackups, sendAlertEmail } from "./ops.js";
 import { initPush } from "./push.js";
+import { resumeOrphanedRecordings } from "./recording/manager.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -82,6 +83,20 @@ attachSignaling(server);
 await startMediasoup();
 await initPush();
 scheduleDailyBackups();
+
+// A recording can be left mid-render if the process dies before it
+// finishes (a deploy recreating the container is exactly what did this
+// once) - pick any of those back up now, rather than leaving them
+// stuck on "processing" forever with no active render behind them.
+resumeOrphanedRecordings().then((n) => {
+  if (n > 0) {
+    console.log(`resumed ${n} orphaned recording(s) from a previous run`);
+    sendAlertEmail(
+      "FOSSStudio resumed interrupted recording(s)",
+      `${n} recording(s) were mid-render when the server last stopped and have been resumed automatically. Worth checking the dashboard to confirm they came out correctly.`
+    ).catch(() => {});
+  }
+}).catch((err) => console.error("resumeOrphanedRecordings failed:", err.message));
 
 process.on("uncaughtException", (err) => {
   console.error("uncaught exception:", err.stack || err.message);
