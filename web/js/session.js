@@ -22,6 +22,10 @@
     mediaWarning: $("mediaWarning"), mediaWarningText: $("mediaWarningText"),
     mediaWarningClose: $("mediaWarningClose"), mediaWarningLink: $("mediaWarningLink"),
     session: $("session"), banner: $("banner"), grid: $("grid"),
+    bannerLogo: $("bannerLogo"), bannerTitle: $("bannerTitle"),
+    titleTools: $("titleTools"), titleSmaller: $("titleSmaller"),
+    titleBigger: $("titleBigger"), titleLogoBtn: $("titleLogoBtn"),
+    titleTextBtn: $("titleTextBtn"),
     muteBtn: $("muteBtn"), camBtn: $("camBtn"), leaveBtn: $("leaveBtn"),
     dimBtn: $("dimBtn"), handBtn: $("handBtn"), hostPanel: $("hostPanel"),
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
@@ -477,14 +481,13 @@
     const logo = document.getElementById("bannerLogo");
     if (theme.logo) {
       logo.src = theme.logo;
-      logo.hidden = false;
-      els.banner.classList.add("has-logo");
       logo.decode().then(() => scheduleBannerSnapshots()).catch(() => {});
     } else {
-      logo.hidden = true;
-      els.banner.classList.remove("has-logo");
+      logo.removeAttribute("src");
     }
-    els.banner.classList.toggle("blank", !theme.title && !theme.logo);
+    // What the theme provides, and what is actually shown, are separate:
+    // the host can drop either part for this session
+    applyTitleShow();
     // Background colour shows when there is no wallpaper; a wallpaper
     // paints over it
     if (theme.bg) els.grid.style.backgroundColor = theme.bg;
@@ -756,7 +759,7 @@
         ? "Unmute everyone at once" : "Mute everyone at once, including you";
     }
     applyLayout();
-    positionTitleBlock();
+    applyTitleShow();
     if (isHost) renderHostGuests();
     scheduleBannerSnapshots();
   }
@@ -786,7 +789,8 @@
       const tagline = third.querySelector(".tagline")?.textContent || "";
       images[peerId] = drawBannerPng(name, tagline, cs.backgroundColor, cs.color);
     }
-    const titleText = document.getElementById("bannerTitle").textContent.trim();
+    const titleEl = document.getElementById("bannerTitle");
+    const titleText = titleEl.hidden ? "" : titleEl.textContent.trim();
     const logoEl = document.getElementById("bannerLogo");
     const hasBlock = titleText || (!logoEl.hidden && logoEl.complete && logoEl.naturalWidth > 0);
     const title = hasBlock ? drawTitlePng(titleText) : null;
@@ -798,16 +802,56 @@
     await request("bannerSnapshots", { images, title });
   }
 
-  // The logo/title block for the composite, drawn at 2x the on-screen
-  // 180px design: logo up to 360x100, title under it; text-only titles
-  // fill the block with wrapped lines
+  // The logo/title block for the composite, drawn at a 532px design
+  // width. Every measurement here has a matching ratio of --title-w in
+  // session.css, and the block is content-height exactly like the DOM
+  // one - it used to reserve a fixed title area whatever the text did,
+  // which made the block in the video up to 2.7x taller than the block
+  // on screen even though both started at the same top edge.
   function drawTitlePng(text) {
     const logo = document.getElementById("bannerLogo");
     const hasLogo = !logo.hidden && logo.complete && logo.naturalWidth > 0;
-    const W = 532, r = 16, padX = 16;
-    const logoH = hasLogo ? 100 : 0;
-    const titleH = text ? (hasLogo ? 64 : 150) : 0;
-    const H = 14 + logoH + (logoH && titleH ? 4 : 0) + titleH + 14;
+    const W = 532, r = 16, padX = 16, padY = 14, gap = 4;
+    const innerW = W - 2 * padX;
+
+    // Fitted the way the DOM fits it: max 500x100, aspect preserved
+    let logoW = 0, logoH = 0;
+    if (hasLogo) {
+      const fit = Math.min(500 / logo.naturalWidth, 100 / logo.naturalHeight);
+      logoW = logo.naturalWidth * fit;
+      logoH = logo.naturalHeight * fit;
+    }
+
+    // Lay the text out before sizing the canvas, so the canvas can be
+    // as tall as the text actually turned out to be
+    const font = hasLogo ? "700 30px Manrope, sans-serif" : "700 40px Manrope, sans-serif";
+    const lineH = hasLogo ? Math.round(30 * 1.15) : Math.round(40 * 1.2);
+    const meas = document.createElement("canvas").getContext("2d");
+    meas.font = font;
+    let lines = [];
+    if (text && hasLogo) {
+      lines = [ellipsize(meas, text, innerW)];
+    } else if (text) {
+      // Text-only: wrap to at most three larger lines, like the DOM's
+      // -webkit-line-clamp: 3
+      let line = "";
+      for (const word of text.split(/\s+/)) {
+        const next = line ? `${line} ${word}` : word;
+        if (meas.measureText(next).width > innerW && line) {
+          lines.push(line);
+          line = word;
+        } else line = next;
+      }
+      if (line) lines.push(line);
+      if (lines.length > 3) {
+        lines = lines.slice(0, 3);
+        lines[2] += "…";
+      }
+      lines = lines.map((l) => ellipsize(meas, l, innerW));
+    }
+
+    const titleH = lines.length * lineH;
+    const H = Math.round(padY + logoH + (logoH && titleH ? gap : 0) + titleH + padY);
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
     const x = c.getContext("2d");
@@ -818,61 +862,99 @@
     x.strokeStyle = "rgba(255, 255, 255, 0.18)";
     x.lineWidth = 2;
     x.stroke();
-    let yPos = 14;
+    let yPos = padY;
     if (hasLogo) {
-      const scale = Math.min(500 / logo.naturalWidth, logoH / logo.naturalHeight);
-      const lw = logo.naturalWidth * scale, lh = logo.naturalHeight * scale;
-      x.drawImage(logo, (W - lw) / 2, yPos + (logoH - lh) / 2, lw, lh);
-      yPos += logoH + 4;
+      x.drawImage(logo, (W - logoW) / 2, yPos, logoW, logoH);
+      yPos += logoH + (titleH ? gap : 0);
     }
-    if (text) {
+    if (titleH) {
       x.fillStyle = "#ffffff";
       x.textAlign = "center";
       x.textBaseline = "middle";
-      if (hasLogo) {
-        x.font = "700 30px Manrope, sans-serif";
-        x.fillText(ellipsize(x, text, W - 2 * padX), W / 2, yPos + titleH / 2);
-      } else {
-        // Text-only: wrap up to three larger lines
-        x.font = "700 40px Manrope, sans-serif";
-        const words = text.split(/\s+/);
-        const lines = [];
-        let line = "";
-        for (const w of words) {
-          const next = line ? `${line} ${w}` : w;
-          if (x.measureText(next).width > W - 2 * padX && line) {
-            lines.push(line);
-            line = w;
-          } else line = next;
-        }
-        if (line) lines.push(line);
-        const shown = lines.slice(0, 3);
-        if (lines.length > 3) shown[2] = ellipsize(x, shown[2] + "…", W - 2 * padX);
-        const lh = 48;
-        const start = yPos + titleH / 2 - ((shown.length - 1) * lh) / 2;
-        shown.forEach((l, i) =>
-          x.fillText(ellipsize(x, l, W - 2 * padX), W / 2, start + i * lh));
-      }
+      x.font = font;
+      lines.forEach((l, i) => x.fillText(l, W / 2, yPos + i * lineH + lineH / 2));
     }
     return c.toDataURL("image/png");
   }
 
   // ---------- Block position: shared via control, dragged by the host ----------
 
+  // The compositors draw this block at 286/1280 of the frame width (see
+  // server/src/composite.js). Sizing it here by the same fraction of the
+  // video area is what makes the recording look like the screen: it used
+  // to be a viewport-relative CSS width, which drifted up to 38% away
+  // from the video on wide screens and further again for the host, whose
+  // grid is narrower because of the sidebar.
+  const TITLE_WIDTH_FRACTION = 286 / 1280;
+  const TITLE_TOP_INSET = 14 / 720; // matches the compositors' 14px of 720
+
   function positionTitleBlock() {
     const pos = control.titlePos || { x: 0.5, y: 0 };
     const gw = els.grid.clientWidth, gh = els.grid.clientHeight;
+    const scale = Math.min(2, Math.max(0.5, Number(control.titleScale) || 1));
+    els.banner.style.setProperty("--title-w", `${gw * TITLE_WIDTH_FRACTION * scale}px`);
+    // Width has to be applied before the block is measured
     const bw = els.banner.offsetWidth, bh = els.banner.offsetHeight;
     // Same formula as the ffmpeg overlay, so the video matches the screen
     els.banner.style.left = `${pos.x * (gw - bw)}px`;
-    els.banner.style.top = `${pos.y * (gh - bh) + 14 * (1 - pos.y)}px`;
+    els.banner.style.top = `${pos.y * (gh - bh) + TITLE_TOP_INSET * gh * (1 - pos.y)}px`;
     els.banner.style.transform = "none";
+    // Tools hang below the block normally, above it once the block is
+    // low enough that below would be off the bottom of the video
+    els.banner.classList.toggle("tools-above", pos.y > 0.65);
+  }
+
+  // Host dropped the logo or the title. Only this browser's drawing of
+  // the block PNG needs to know: it re-uploads without the hidden part,
+  // and the compositors just overlay whatever they are given.
+  function applyTitleShow() {
+    const show = control?.titleShow || { logo: true, text: true };
+    const logoEl = els.bannerLogo, titleEl = els.bannerTitle;
+    if (logoEl) logoEl.hidden = !show.logo || !logoEl.getAttribute("src");
+    if (titleEl) titleEl.hidden = !show.text || !titleEl.textContent.trim();
+    els.banner.classList.toggle("has-logo", !!logoEl && !logoEl.hidden);
+    els.banner.classList.toggle("blank", logoEl.hidden && titleEl.hidden);
+    if (isHost) {
+      const scale = Math.min(2, Math.max(0.5, Number(control?.titleScale) || 1));
+      els.titleLogoBtn.setAttribute("aria-pressed", String(show.logo));
+      els.titleTextBtn.setAttribute("aria-pressed", String(show.text));
+      // A logo the theme never supplied is nothing to toggle
+      els.titleLogoBtn.disabled = !logoEl.getAttribute("src");
+      els.titleTextBtn.disabled = !titleEl.textContent.trim();
+      els.titleSmaller.disabled = scale <= 0.5;
+      els.titleBigger.disabled = scale >= 2;
+    }
+    positionTitleBlock();
+    sendBannerSnapshots().catch(() => {});
   }
   window.addEventListener("resize", () => positionTitleBlock());
 
   function enableTitleDrag() {
     els.banner.classList.add("host-drag");
     els.banner.dataset.tip = "Drag to move the title anywhere";
+    els.titleTools.hidden = false;
+    // Pressing a tool must not also start a drag of the block under it
+    els.titleTools.addEventListener("pointerdown", (e) => e.stopPropagation());
+
+    const setScale = (next) => {
+      const s = Math.min(2, Math.max(0.5, Math.round(next * 10) / 10));
+      control.titleScale = s; // optimistic; the broadcast confirms it
+      applyTitleShow();
+      request("hostControl", { action: "titleScale", scale: s }).catch(() => {});
+    };
+    els.titleSmaller.onclick = () => setScale((control.titleScale || 1) - 0.1);
+    els.titleBigger.onclick = () => setScale((control.titleScale || 1) + 0.1);
+
+    const toggleTitlePart = (key) => {
+      const show = { logo: true, text: true, ...(control.titleShow || {}) };
+      show[key] = !show[key];
+      control.titleShow = show;
+      applyTitleShow();
+      request("hostControl", { action: "titleShow", ...show }).catch(() => {});
+    };
+    els.titleLogoBtn.onclick = () => toggleTitlePart("logo");
+    els.titleTextBtn.onclick = () => toggleTitlePart("text");
+
     let dragging = null;
     els.banner.addEventListener("pointerdown", (e) => {
       dragging = { dx: e.clientX - els.banner.offsetLeft, dy: e.clientY - els.banner.offsetTop };

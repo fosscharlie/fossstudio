@@ -301,6 +301,27 @@ export function attachSignaling(httpServer) {
                 if (recPos) recPos.titlePos = c.titlePos;
                 break;
               }
+              case "titleScale": {
+                // Host resized the block. The compositors scale the
+                // uploaded PNG by the same factor, so screen and video
+                // stay the same size relative to the frame.
+                const s = Math.min(2, Math.max(0.5, Number(data.scale) || 1));
+                c.titleScale = s;
+                const recScale = activeRecording(room.id);
+                if (recScale) recScale.titleScale = s;
+                if (isStreaming(room.id)) refreshStream(room.id);
+                break;
+              }
+              case "titleShow": {
+                // Dropping the logo or the title only changes what the
+                // host's browser draws into the block PNG, which it
+                // re-uploads; the compositors need no say in it.
+                c.titleShow = {
+                  logo: data.logo !== false,
+                  text: data.text !== false
+                };
+                break;
+              }
               case "muteAll": {
                 const muted = data.muted !== false; // default: mute
                 for (const p2 of room.peers.values()) {

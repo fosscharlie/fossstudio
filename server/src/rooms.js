@@ -32,7 +32,9 @@ export async function getOrCreateRoom(roomId) {
         bannerChoice: false,     // guests may pick their own colour
         bannerColors: {},        // peerId -> hex when bannerMulti
         autoGain: true,          // per-session, host-toggled (on by default)
-        titlePos: { x: 0.5, y: 0 } // logo/title block, fraction of free space
+        titlePos: { x: 0.5, y: 0 }, // logo/title block, fraction of free space
+        titleScale: 1,             // host-resized, 0.5x to 2x
+        titleShow: { logo: true, text: true } // host can drop either part
       }
     };
     rooms.set(roomId, room);

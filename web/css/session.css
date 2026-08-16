@@ -113,6 +113,74 @@ body {
   cursor: pointer;
   white-space: nowrap;
 }
+/* Field explainers on the join screen. The pill [data-tip] tooltips
+   elsewhere are single-line labels; these carry a sentence or two, so
+   they are a real panel beside the field rather than a pill above it. */
+.info { position: relative; display: inline-flex; vertical-align: -0.15em; }
+.info-btn {
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  color: var(--muted, #9aa0a8);
+  cursor: help;
+}
+.info-btn svg { width: 1.05rem; height: 1.05rem; }
+.info-btn:hover, .info-btn:focus-visible { color: var(--text); }
+.info-panel {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 0.5rem);
+  transform: translateY(-50%);
+  width: 15rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+/* Fields in the right-hand column open leftwards so the panel stays
+   on screen instead of running off the edge of the card */
+.info[data-side="left"] .info-panel {
+  left: auto;
+  right: calc(100% + 0.5rem);
+}
+.info:hover .info-panel,
+.info-btn:focus-visible + .info-panel {
+  opacity: 1;
+  visibility: visible;
+}
+/* Narrow screens: no room either side, so the panel drops under the
+   field. It anchors to the label rather than the icon (position:static
+   hands the containing block up a level) - anchored to the icon it
+   would hang off whichever edge the icon happens to sit near. */
+@media (max-width: 700px) {
+  #bannerRow { flex-direction: column; }
+  .preview-card label { position: relative; }
+  .info { position: static; }
+  .info-panel,
+  .info[data-side="left"] .info-panel {
+    top: calc(100% + 0.4rem);
+    left: 0;
+    right: 0;
+    width: auto;
+    transform: none;
+  }
+}
 .preview-card select, .preview-card input {
   font: inherit;
   color: var(--text);
@@ -195,32 +263,36 @@ body {
   /* Absolutely-positioned grid children stretch to their row without
      an explicit height - keep the block content-sized */
   height: fit-content;
-  /* Scales down with the viewport so small screens keep their video */
-  width: clamp(150px, 24vw, 266px);
-  padding: 0.4rem 0.5rem;
+  /* --title-w is set in JS to the same fraction of the video area that
+     the compositors use of the video frame (composite.js), times the
+     host's chosen scale. Everything inside is a ratio of it, matching
+     drawTitlePng()'s 532px design, so the block lands the same size on
+     screen as it does in the recording and the stream. */
+  width: var(--title-w, 266px);
+  padding: calc(var(--title-w, 266px) * 0.0263) calc(var(--title-w, 266px) * 0.0301);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: calc(var(--title-w, 266px) * 0.0075);
   text-align: center;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: calc(var(--title-w, 266px) * 0.0301);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
   user-select: none;
 }
 .banner.host-drag { cursor: grab; }
 .banner.host-drag:active { cursor: grabbing; }
 #bannerLogo {
-  max-width: clamp(140px, 22.5vw, 250px);
-  max-height: clamp(28px, 4.5vw, 50px);
+  max-width: calc(var(--title-w, 266px) * 0.9398);
+  max-height: calc(var(--title-w, 266px) * 0.188);
   object-fit: contain;
 }
 #bannerTitle {
   /* Never wider than the logo width: clamp with an ellipsis */
-  width: clamp(140px, 22.5vw, 250px);
+  width: calc(var(--title-w, 266px) * 0.9398);
   font-weight: 700;
-  font-size: clamp(0.62rem, 1.2vw, 0.85rem);
+  font-size: calc(var(--title-w, 266px) * 0.0564);
   line-height: 1.15;
   overflow: hidden;
   overflow-wrap: break-word;
@@ -230,11 +302,66 @@ body {
 }
 /* No logo: the title text fills the whole block, up to three lines */
 .banner:not(.has-logo) #bannerTitle {
-  font-size: clamp(0.72rem, 1.5vw, 1.05rem);
-  line-height: 1.25;
+  font-size: calc(var(--title-w, 266px) * 0.0752);
+  line-height: 1.2;
   -webkit-line-clamp: 3;
 }
-.banner.blank:not(.live) { display: none; }
+/* #grid prefix so this outranks #grid .banner's display:flex - without
+   it an empty block sat visible on sessions with no logo and no title */
+#grid .banner.blank:not(.live) { display: none; }
+/* The host keeps a faint placeholder after dropping both parts, so the
+   tools stay reachable. Guests, the stream and the recording see none. */
+#grid .banner.blank.host-drag:not(.live) {
+  display: flex;
+  min-height: calc(var(--title-w, 266px) * 0.09);
+  opacity: 0.3;
+}
+#grid .banner.blank.host-drag:not(.live):hover { opacity: 1; }
+
+/* Host-only tools on the logo/title block: resize, or drop either part */
+.title-tools {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+}
+.banner.tools-above .title-tools {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+.banner:hover .title-tools,
+.title-tools:focus-within {
+  opacity: 1;
+  visibility: visible;
+}
+.tt-btn {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.tt-btn svg { width: 1rem; height: 1rem; }
+.tt-btn:hover:not(:disabled) { background: var(--panel); color: var(--text); }
+.tt-btn[aria-pressed="false"] { color: #5b626c; }
+.tt-btn:disabled { opacity: 0.35; cursor: default; }
+.tt-sep { width: 1px; height: 1.1rem; background: var(--line); margin: 0 2px; }
+body.output-mode .title-tools { display: none; }
 .hp-build {
   margin-top: 0.7rem;
   font-size: 0.65rem;

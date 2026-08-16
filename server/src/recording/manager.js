@@ -61,7 +61,8 @@ async function saveSnapshot(rec) {
   try {
     const snap = {
       id: rec.id, roomId: rec.roomId, ownerId: rec.ownerId, mode: rec.mode,
-      title: rec.title, titlePos: rec.titlePos, startedAt: rec.startedAt,
+      title: rec.title, titlePos: rec.titlePos, titleScale: rec.titleScale,
+      startedAt: rec.startedAt,
       bg: rec.bg, wallpaper: rec.wallpaper, titleFile: rec.titleFile,
       peers: Object.fromEntries(rec.peers),
       overlays: rec.overlays, clips: rec.clips, intros: rec.intros
@@ -150,6 +151,7 @@ export async function startRecording(room, mode) {
     mode,
     title: room.title || "",
     titlePos: room.control?.titlePos || { x: 0.5, y: 0 },
+    titleScale: room.control?.titleScale || 1,
     startedAt: Date.now(),
     peers: new Map(), // peerId -> {name, files:{}, clientStartOffsetMs, done}
     overlays: [],     // {kind, offsetMs, file?} baked into combined.mp4

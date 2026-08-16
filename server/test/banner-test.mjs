@@ -1,7 +1,18 @@
 import { chromium } from "playwright";
 import { makeRoom } from "./helpers.mjs";
-const B = "http://127.0.0.1:3999";
-const CAMS = "/tmp/claude-1000/-home-charlie-GitHub-fossstudio/30aef10b-264b-4404-9752-f5d84c9a6596/scratchpad";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+const B = process.argv[2] || "http://127.0.0.1:3999";
+// Fake cameras are generated here on the fly: this used to point at one
+// machine's scratch directory, so the test only ran for whoever made it
+const CAMS = fs.mkdtempSync(path.join(os.tmpdir(), "fossstudio-banner-test-"));
+for (const cam of ["vcam1.y4m", "vcam2.y4m"]) {
+  execFileSync("ffmpeg", ["-loglevel", "error", "-f", "lavfi", "-i",
+    "testsrc=size=640x480:rate=15:duration=30", "-pix_fmt", "yuv420p",
+    "-y", path.join(CAMS, cam)]);
+}
 const ROOM = await makeRoom(B, "testpass123");
 let pass = true;
 const check = (l, ok) => { console.log(`${ok ? "OK  " : "FAIL"} ${l}`); pass &&= ok; };

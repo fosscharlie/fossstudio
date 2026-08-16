@@ -4,6 +4,34 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Every field on the join screen now has an "i" beside it that explains,
+  on hover or keyboard focus, what the field is for. The two banner
+  fields say what they actually end up as: the title is the big line
+  under your video, the subtitle is the smaller line under it and a good
+  place for a website, an email address or a social handle.
+- The episode logo/title block can now be resized as well as dragged,
+  and the host can drop either the logo or the title for a session
+  without changing the saved settings. The controls appear on the block
+  itself when the host hovers it. Dropping both leaves the host a faint
+  handle to bring them back; guests, the recording and the stream see
+  nothing at all.
+- Fixed: the block was a different size on screen than in the recording.
+  It was sized in viewport units while the compositors used a fixed
+  fraction of the video frame, so the two drifted apart by up to 38% on
+  a wide screen, and further again for the host, whose video area is
+  narrower because of the sidebar. Both now use the same fraction, so
+  the block is the same size on every screen and in the video.
+- Fixed: the block was also up to 2.7x taller in the video than on
+  screen, because the uploaded PNG reserved a fixed height for the title
+  whatever the text did. It is now content-height, like the block on
+  screen.
+- Fixed: a session with no logo and no episode title left an empty box
+  floating over the video. The rule meant to hide it was outranked by
+  the rule that lays it out, so it never applied.
+- Fixed: `test/banner-test.mjs` pointed at one machine's scratch
+  directory for its fake cameras and a hard-coded port, so it only ever
+  ran for whoever wrote it. It now generates its own cameras and takes
+  the URL like the other tests.
 - New setup check at `/diagnostics` for anyone self-hosting this. It
   reports whether the page arrived over HTTPS, whether `PUBLIC_IP` is
   an address guests can actually reach, whether the signaling socket

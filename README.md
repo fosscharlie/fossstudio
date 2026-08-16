@@ -37,7 +37,8 @@ dashboard.
   previewed and downloaded from the dashboard - per file, or zipped
   bundles of all audio or all files in one click. The combined video matches the
   screen: everyone's tile, their lower-third name banners, the podcast
-  logo + episode title block (draggable anywhere by the host), and any
+  logo + episode title block (the host drags it anywhere, resizes it,
+  and can drop the logo or the title for a session), and any
   subscribe/ad overlays you triggered, at the moment you triggered
   them.
 - **Streaming:** server-composited RTMP out to YouTube, with the same
@@ -237,6 +238,7 @@ node test/streaming-test.mjs             # local only (file: destination)
 node test/audio-energy-test.mjs          # noise suppression audio flows
 node test/resume-orphaned-recording-test.mjs  # crash mid-render, self-heals on restart
 node test/diagnostics-test.mjs           # setup check, incl. a proxy that drops WebSocket upgrades
+node test/title-block-test.mjs <url> <password>  # logo/title block matches the video, host tools
 node test/firefox-compat-test.mjs <url> <password>  # same flows, real Firefox engine
 ```
 

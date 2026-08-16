@@ -11,6 +11,7 @@ import os from "node:os";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
+import { titleWidth } from "./composite.js";
 
 const ASSETS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "assets");
 
@@ -226,8 +227,9 @@ async function launch(state) {
     const ti = nextIdx++;
     const pos = room.control?.titlePos || { x: 0.5, y: 0 };
     const px = Number(pos.x).toFixed(3), py = Number(pos.y).toFixed(3);
+    const tw = titleWidth(room.control?.titleScale);
     titleArgs = ["-loop", "1", "-framerate", "5", "-i", titlePng];
-    titleFilter = `;[${ti}:v]scale=286:-2[tls];${finalLabel}[tls]overlay=` +
+    titleFilter = `;[${ti}:v]scale=${tw}:-2[tls];${finalLabel}[tls]overlay=` +
       `x=(main_w-overlay_w)*${px}:y=(main_h-overlay_h)*${py}+14*(1-${py}):eof_action=repeat[vtl]`;
     finalLabel = "[vtl]";
   }

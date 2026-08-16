@@ -5,6 +5,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { recDir } from "./manager.js";
+import { titleWidth } from "../composite.js";
 import { fileURLToPath } from "node:url";
 
 const ASSETS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "assets");
@@ -203,7 +204,8 @@ export async function processRecording(rec) {
       const ti = addInput(titleFile, 0);
       const pos = rec.titlePos || { x: 0.5, y: 0 };
       const px = Number(pos.x).toFixed(3), py = Number(pos.y).toFixed(3);
-      overlayFilters += `;[${ti}:v]scale=286:-2[tls];${finalLabel}[tls]overlay=` +
+      const tw = titleWidth(rec.titleScale);
+      overlayFilters += `;[${ti}:v]scale=${tw}:-2[tls];${finalLabel}[tls]overlay=` +
         `x=(main_w-overlay_w)*${px}:y=(main_h-overlay_h)*${py}+14*(1-${py}):eof_action=repeat[vtl]`;
       finalLabel = "[vtl]";
     }
