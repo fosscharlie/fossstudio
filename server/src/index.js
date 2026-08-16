@@ -115,7 +115,10 @@ process.on("unhandledRejection", (err) => {
   console.error("unhandled rejection:", err?.stack || String(err));
 });
 
-// Only Caddy talks to the app directly, so bind to loopback.
-server.listen(config.httpPort, "127.0.0.1", () => {
-  console.log(`FOSS Studio listening on 127.0.0.1:${config.httpPort}`);
+// Loopback by default: only the reverse proxy on this host talks to the
+// app directly. BIND_HOST widens that for setups with no local proxy
+// (e.g. a Tailscale address, or 0.0.0.0 behind a proxy in another
+// container) - never expose the app port itself to the open internet.
+server.listen(config.httpPort, config.bindHost, () => {
+  console.log(`FOSS Studio listening on ${config.bindHost}:${config.httpPort}`);
 });

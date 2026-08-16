@@ -12,10 +12,14 @@ function required(name) {
   return v || "";
 }
 
+const domain = process.env.DOMAIN || "localhost";
+
 export const config = {
-  domain: process.env.DOMAIN || "localhost",
+  domain,
   publicIp: process.env.PUBLIC_IP || "",
   httpPort: Number(process.env.HTTP_PORT || 3000),
+  bindHost: process.env.BIND_HOST || "127.0.0.1",
+  turnHost: process.env.TURN_HOST || domain,
   dataDir: process.env.DATA_DIR || path.join(root, "..", "data"),
   webDir: process.env.WEB_DIR || path.join(root, "..", "web"),
   sessionSecret: required("SESSION_SECRET"),

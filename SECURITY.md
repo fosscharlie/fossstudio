@@ -36,10 +36,15 @@ For self-hosters assessing the project:
   (the lower-third images baked into recordings/streams) are host-only,
   PNG-only, size-capped, and written under server-controlled names for
   peers that actually exist in the room.
-- **Transport**: HTTPS everywhere via Caddy (TLS 1.2/1.3, HSTS); WebRTC
-  media is DTLS-SRTP encrypted end-to-server; the app binds to loopback
-  behind the proxy. A strict Content-Security-Policy, X-Frame-Options,
-  nosniff and Referrer-Policy are set on every response.
+- **Transport**: HTTPS everywhere (via the bundled Caddy with TLS
+  1.2/1.3 and HSTS, or your own TLS-terminating proxy); WebRTC media is
+  DTLS-SRTP encrypted end-to-server; the app binds to loopback behind
+  the proxy by default (`BIND_HOST` can widen this for private-network
+  setups such as Tailscale, and must never expose the app port to the
+  open internet). A strict Content-Security-Policy, X-Frame-Options,
+  nosniff and Referrer-Policy are set by the app on every response, so
+  they hold regardless of which proxy sits in front; HSTS is the one
+  header your own proxy must add itself.
 - **Least privilege**: the application container runs as a non-root
   user; data files holding credentials are stored owner-only (0600).
   Deployment is a dedicated SSH key, used nowhere else, that is itself

@@ -4,6 +4,21 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Self-hosting behind your own reverse proxy (Nginx, Apache, etc.)
+  instead of the bundled Caddy is now a documented, first-class path:
+  a new `docker-compose.byo-proxy.yml` runs the app + coturn without
+  Caddy, and the README explains the two things a non-Caddy proxy must
+  set up itself - WebSocket upgrade headers and TLS termination -
+  with a working Nginx example.
+- Two new optional env vars for setups beyond a same-host proxy:
+  `BIND_HOST` (the address the app listens on; still 127.0.0.1 by
+  default, settable to e.g. a Tailscale IP) and `TURN_HOST` (where
+  guests reach the TURN relay; defaults to `DOMAIN`, needed when
+  DOMAIN sits behind Cloudflare, whose edge doesn't forward the TURN
+  port). The README now documents Cloudflare Tunnel and fully-private
+  Tailscale setups, including the parts that can't change: WebRTC
+  media can't ride an HTTP tunnel, and browsers require HTTPS for
+  camera/mic access.
 - Bumped the app image from Node 20 to Node 22. mediasoup 3.24 (the
   version this project already runs) declares Node >=22 as its own
   minimum - Node 20 happened to still work, but was already outside

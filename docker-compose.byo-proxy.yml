@@ -1,0 +1,31 @@
+services:
+  app:
+    build: ./server
+    restart: unless-stopped
+    # Host networking: the media engine hands out many UDP ports (40000-40100)
+    # and needs to see real client addresses; mapping them one-by-one is slower
+    # and error-prone. The app itself binds only to 127.0.0.1, same as the
+    # default stack — your own reverse proxy just needs to run on this host
+    # (or in another host-networked container) and point at 127.0.0.1:${HTTP_PORT}.
+    network_mode: host
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+      WEB_DIR: /app/web
+    volumes:
+      - ${DATA_PATH:-./data}:/data
+      - ./web:/app/web:ro
+
+  coturn:
+    image: coturn/coturn:4-alpine
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env
+    command: >
+      --realm=${DOMAIN}
+      --use-auth-secret
+      --static-auth-secret=${TURN_SECRET}
+      --listening-port=3478
+      --min-port=49160 --max-port=49200
+      --no-cli
+      --no-multicast-peers

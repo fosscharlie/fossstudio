@@ -63,7 +63,8 @@ software under the [GNU GPL v3](LICENSE).
 ## Stack
 
 Node.js + [mediasoup](https://mediasoup.org) SFU, Caddy (automatic
-HTTPS), coturn (TURN relay), ffmpeg (recording/streaming), flat JSON
+HTTPS, optional - bring your own reverse proxy instead if you
+prefer), coturn (TURN relay), ffmpeg (recording/streaming), flat JSON
 files, no database. One Docker Compose stack, everything self-hosted,
 no external calls from any page.
 
@@ -101,6 +102,103 @@ bundled Caddy serves those too. To
 deploy updates from a dev machine instead of building on the server:
 `FOSSSTUDIO_HOST=root@<ip> scripts/deploy.sh` (release folders with
 instant rollback via `scripts/rollback.sh`).
+
+### Bring your own reverse proxy (Nginx, Apache, etc.)
+
+Already running Nginx or another proxy on your server and don't want
+a second one? Use `docker-compose.byo-proxy.yml` instead of
+`docker-compose.yml` - it's the same stack minus Caddy:
+
+```bash
+docker compose -f docker-compose.byo-proxy.yml up -d --build
+```
+
+This still binds the app to `127.0.0.1:${HTTP_PORT}` (3000 by
+default), exactly like the Caddy stack does — your proxy just needs to
+run on the same host (or in another host-networked container) and
+point at that address. Two things Nginx doesn't do automatically that
+Caddy does, both required or the app silently breaks:
+
+1. **WebSocket upgrade headers.** The app's live signaling runs over
+   `/ws`; without these headers the page loads but nothing ever
+   connects.
+2. **TLS termination.** Browsers only allow camera and microphone
+   access on HTTPS pages, and session cookies are sent `Secure`-only,
+   so the app requires HTTPS end-to-end. Terminate TLS in Nginx (e.g.
+   with certbot) - plain HTTP cannot work.
+
+Example server block:
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name studio.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/studio.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/studio.example.com/privkey.pem;
+
+    # The app sets its own security headers (CSP etc.); HSTS belongs
+    # here at the TLS terminator, matching the bundled Caddy setup.
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 80;
+    server_name studio.example.com;
+    return 301 https://$host$request_uri;
+}
+```
+
+Everything else - the media ports (40000-40100/udp), coturn
+(3478 + 49160-49200/udp), `PUBLIC_IP`/`DOMAIN` in `.env` - is
+identical to the Caddy path; only the HTTP(S) front door changes.
+
+### Cloudflare Tunnel
+
+The web side works through a Cloudflare Tunnel (`cloudflared` pointing
+at `http://127.0.0.1:3000`), with two things to know:
+
+- **Media cannot go through the tunnel.** WebRTC video/audio is UDP
+  straight between guests and your server, so the media ports
+  (40000-40100/udp) and coturn ports (3478 + 49160-49200/udp) must
+  still be open to the internet directly, and `PUBLIC_IP` set to your
+  server's real public IP. A tunnel hides the web pages, not the
+  media.
+- **Set `TURN_HOST`.** With Cloudflare in front, `DOMAIN` resolves to
+  Cloudflare's edge, which does not forward the TURN port. Point
+  `TURN_HOST` in `.env` at an unproxied (grey-cloud) hostname or your
+  raw server IP so guests behind strict NATs can still connect.
+
+### Tailscale (private, no open ports at all)
+
+For a studio reachable only inside your tailnet - nothing exposed to
+the internet - run the `byo-proxy` stack and:
+
+1. Set `BIND_HOST` in `.env` to your machine's Tailscale IP (the
+   `100.x.y.z` address).
+2. Serve it over HTTPS with `tailscale serve` (browsers refuse
+   camera/microphone access on plain HTTP):
+   `tailscale serve --bg https / http://100.x.y.z:3000`
+3. Set `DOMAIN` to your machine's tailnet name (the
+   `machine.tailnet-name.ts.net` one `tailscale serve` prints) and
+   `PUBLIC_IP` to the Tailscale IP, so the media engine hands out an
+   address every tailnet member can reach.
+
+Guests then need to be on your tailnet (Tailscale's sharing features
+cover inviting others). Everyone connects directly over the tailnet;
+the TURN relay is rarely needed since Tailscale already handles
+NAT traversal.
 
 ## Tests
 

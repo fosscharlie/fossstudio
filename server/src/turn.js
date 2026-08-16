@@ -11,16 +11,19 @@ export function iceServers() {
     .createHmac("sha1", config.turnSecret)
     .update(username)
     .digest("base64");
+  // TURN_HOST exists for setups where DOMAIN doesn't resolve to this
+  // server directly (Cloudflare proxied DNS / tunnels): relay traffic
+  // must reach coturn itself, not a CDN edge that drops port 3478.
   return [
     {
       urls: [
-        `stun:${config.domain}:3478`
+        `stun:${config.turnHost}:3478`
       ]
     },
     {
       urls: [
-        `turn:${config.domain}:3478?transport=udp`,
-        `turn:${config.domain}:3478?transport=tcp`
+        `turn:${config.turnHost}:3478?transport=udp`,
+        `turn:${config.turnHost}:3478?transport=tcp`
       ],
       username,
       credential
