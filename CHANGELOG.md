@@ -4,6 +4,24 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Spotlight now reaches the recording and the stream. It changed the
+  session view only: the compositors never read it, so a show where the
+  host spotlit someone recorded as a plain even grid. Both now lay the
+  featured person above a strip of everyone else, the same as the
+  screen. A recording renders once, when it ends, so a mid-take change
+  applies to the whole take; the stream follows changes as they happen.
+- Fixed: tiles were a different size and spacing in the video than on
+  screen. The live grid used fixed 50px padding and gaps while the
+  compositors used 24 and 20 of a 1280px frame, so recordings came out
+  noticeably tighter and more zoomed in than the session people were
+  looking at, with corners a different roundness too. All three now come
+  from one set of frame-relative fractions in `server/src/composite.js`,
+  which the browser mirrors. Phone layout is deliberately left alone:
+  two columns and tighter spacing, so faces stay big enough to see.
+- Fixed: in spotlight the strip tiles hide each person's subtitle on
+  screen, but the banner baked into the video still carried it.
+- Fixed: `test/streaming-test.mjs` wrote to one machine's scratch
+  directory, like `banner-test.mjs` did.
 - Every field on the join screen now has an "i" beside it that explains,
   on hover or keyboard focus, what the field is for. The two banner
   fields say what they actually end up as: the title is the big line

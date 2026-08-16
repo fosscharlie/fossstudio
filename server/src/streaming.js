@@ -11,7 +11,7 @@ import os from "node:os";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
-import { titleWidth } from "./composite.js";
+import { titleWidth, LAYOUT, tileLayout } from "./composite.js";
 
 const ASSETS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "assets");
 
@@ -121,31 +121,29 @@ async function launch(state) {
   // Presentation matching the on-screen grid: a background (the session
   // wallpaper if set, else its colour), gaps between tiles, and subtly
   // rounded corners. Canvas is a fixed 1280x720.
-  const W = 1280, H = 720, GAP = 20, PAD = 24, RAD = 16;
+  const W = 1280, H = 720;
+  // Same fractions the live grid uses of its video area
+  const PAD = Math.round(W * LAYOUT.pad);
+  const GAP = Math.round(W * LAYOUT.gap);
+  const RAD = Math.round(W * LAYOUT.radius);
   const n = videos.length;
-  const cols = Math.ceil(Math.sqrt(n));
-  const nRows = Math.ceil(n / cols);
-  const availW = W - 2 * PAD, availH = H - 2 * PAD;
-  let tileW = Math.min((availW - (cols - 1) * GAP) / cols,
-    ((availH - (nRows - 1) * GAP) / nRows) * 16 / 9);
-  tileW = Math.max(2, 2 * Math.floor(tileW / 2));
-  const tileH = Math.max(2, 2 * Math.floor((tileW * 9 / 16) / 2));
-  const rBase = Math.floor(n / nRows), rExtra = n % nRows;
-  const rowSizes = Array.from({ length: nRows }, (_, r) => rBase + (r < rExtra ? 1 : 0));
-  const blockH = nRows * tileH + (nRows - 1) * GAP;
-  const startY = Math.round(PAD + Math.max(0, (availH - blockH) / 2));
-  const positions = [];
-  rowSizes.forEach((size, r) => {
-    const rowW = size * tileW + (size - 1) * GAP;
-    const x0 = Math.round(PAD + (availW - rowW) / 2);
-    for (let c = 0; c < size; c++) {
-      positions.push({ x: x0 + c * (tileW + GAP), y: startY + r * (tileH + GAP) });
-    }
-  });
+  // Spotlight puts one person above a strip of everyone else, exactly as
+  // the session view does; -1 means the plain even grid
+  const spotIndex = room.control?.layout === "spotlight" && room.control?.spotlightPeerId
+    ? videos.findIndex((v) => v.peerId === room.control.spotlightPeerId)
+    : -1;
+  const boxes = tileLayout(n, spotIndex, W, H);
 
-  // Rounded-corner alpha mask (tile-sized), generated once for this launch
-  const maskPath = path.join(workDir, "cornermask.png");
-  await makeCornerMask(maskPath, tileW, tileH, RAD);
+  // Rounded-corner alpha masks, generated once for this launch. Spotlight
+  // tiles are not all one size, so there is one mask per distinct size.
+  const sizeKey = (b) => `${b.w}x${b.h}`;
+  const maskPaths = new Map();
+  for (const key of new Set(boxes.map(sizeKey))) {
+    const [mw, mh] = key.split("x").map(Number);
+    const file = path.join(workDir, `cornermask-${key}.png`);
+    await makeCornerMask(file, mw, mh, RAD);
+    maskPaths.set(key, file);
+  }
 
   // Background + mask inputs come first, then banners - the order fixes
   // the ffmpeg input indices used in the filter graph
@@ -168,8 +166,12 @@ async function launch(state) {
     const hex = (bg && /^#[0-9a-fA-F]{6}$/.test(bg)) ? bg.slice(1) : "14161a";
     bgArgs = ["-f", "lavfi", "-i", `color=c=0x${hex}:s=${W}x${H}`];
   }
-  const maskIdx = nextIdx++;
-  const maskArgs = ["-loop", "1", "-framerate", "5", "-i", maskPath];
+  const maskIdxBySize = new Map();
+  const maskArgs = [];
+  for (const [key, file] of maskPaths) {
+    maskIdxBySize.set(key, nextIdx++);
+    maskArgs.push("-loop", "1", "-framerate", "5", "-i", file);
+  }
 
   // Lower-third banners: the host's browser uploads each one as a PNG
   // (ffmpeg can't draw text) - overlaid on the tile, like the DOM
@@ -182,19 +184,24 @@ async function launch(state) {
     }
   }
   // Banner PNGs are drawn at 20px per cqw (tile = 2000px design width)
-  // and now hug their text, so scale each by its own width, not a fixed
-  // fraction of the tile
-  const bannerScale = `scale=w=trunc(iw*${tileW}/4000)*2:h=-2`;
+  // and now hug their text, so scale each by its own tile's width
+  const bannerScale = (w) => `scale=w=trunc(iw*${w}/4000)*2:h=-2`;
 
   const gp = [];
   gp.push(`[${bgIdx}:v]setsar=1,fps=30[bg]`);
-  gp.push(`[${maskIdx}:v]format=gray,scale=${tileW}:${tileH},setsar=1[mk];` +
-    `[mk]split=${n}${videos.map((_, k) => `[m${k}]`).join("")}`);
+  // One mask per distinct tile size, split between the tiles using it
+  for (const [key, mIdx] of maskIdxBySize) {
+    const users = boxes.map((b, k) => (sizeKey(b) === key ? k : -1)).filter((k) => k >= 0);
+    const [mw, mh] = key.split("x").map(Number);
+    gp.push(`[${mIdx}:v]format=gray,scale=${mw}:${mh},setsar=1[mk${key}];` +
+      `[mk${key}]split=${users.length}${users.map((k) => `[m${k}]`).join("")}`);
+  }
   videos.forEach((v, k) => {
-    let t = `[${v.i}:v]scale=${tileW}:${tileH}:force_original_aspect_ratio=increase,` +
-      `crop=${tileW}:${tileH}:(iw-${tileW})/2:(ih-${tileH})/2,setsar=1,fps=30`;
+    const b = boxes[k];
+    let t = `[${v.i}:v]scale=${b.w}:${b.h}:force_original_aspect_ratio=increase,` +
+      `crop=${b.w}:${b.h}:(iw-${b.w})/2:(ih-${b.h})/2,setsar=1,fps=30`;
     if (v.bnIdx != null) {
-      t += `[tb${k}];[${v.bnIdx}:v]${bannerScale}[bn${k}];` +
+      t += `[tb${k}];[${v.bnIdx}:v]${bannerScale(b.w)}[bn${k}];` +
         `[tb${k}][bn${k}]overlay=x=0:y=main_h-overlay_h:eof_action=repeat[tt${k}];` +
         `[tt${k}][m${k}]alphamerge[rt${k}]`;
     } else {
@@ -205,7 +212,7 @@ async function launch(state) {
   let prev = "[bg]";
   videos.forEach((_, k) => {
     const out = k === n - 1 ? "[vout]" : `[og${k}]`;
-    gp.push(`${prev}[rt${k}]overlay=${positions[k].x}:${positions[k].y}${out}`);
+    gp.push(`${prev}[rt${k}]overlay=${boxes[k].x}:${boxes[k].y}${out}`);
     prev = out;
   });
   const grid = gp.join(";");

@@ -591,11 +591,44 @@
     if (isHost) renderHostGuests();
   }
 
+  // Fractions of frame width, matching LAYOUT in server/src/composite.js.
+  // They cannot be imported from there (the browser can't load server
+  // code), so test/geometry-test.mjs asserts the two stay in step.
+  const PAD_FRACTION = 24 / 1280;
+  const GAP_FRACTION = 20 / 1280;
+  const RADIUS_FRACTION = 16 / 1280;
+  const STRIP_FRACTION = 0.16;
+
+  function applyGridSpacing() {
+    const gw = els.grid.clientWidth;
+    if (matchMedia("(max-width: 700px)").matches) {
+      // Phone layout is deliberately not the recording's layout: two
+      // columns and tighter spacing so faces stay big enough to see.
+      // Let the stylesheet have it.
+      els.grid.style.removeProperty("padding");
+      els.grid.style.removeProperty("gap");
+    } else {
+      els.grid.style.padding = `${Math.round(gw * PAD_FRACTION)}px`;
+      els.grid.style.gap = `${Math.round(gw * GAP_FRACTION)}px`;
+    }
+    els.grid.style.setProperty("--tile-rad", `${(gw * RADIUS_FRACTION).toFixed(1)}px`);
+    els.grid.style.setProperty("--strip-h", `${Math.round(els.grid.clientHeight * STRIP_FRACTION)}px`);
+  }
+
   function applyLayout() {
     const spot = control.layout === "spotlight" && tiles.has(control.spotlightPeerId);
+    // Spacing is a fraction of the video area, the same fraction the
+    // compositors use of the frame, so the recording is the same picture
+    // rather than a tighter, more zoomed-in one
+    applyGridSpacing();
     els.grid.classList.toggle("spotlight", spot);
     for (const [peerId, tile] of tiles) {
       tile.el.classList.toggle("featured", spot && peerId === control.spotlightPeerId);
+    }
+    if (spot) {
+      // One column per person in the strip, so they spread across it the
+      // way tileLayout() spreads them in the recording and the stream
+      els.grid.style.setProperty("--strip-cols", `repeat(${Math.max(1, tiles.size - 1)}, 1fr)`);
     }
     if (!spot) {
       const mobile = matchMedia("(max-width: 700px)").matches;
@@ -786,7 +819,11 @@
       if (!third) continue;
       const cs = getComputedStyle(third);
       const name = third.querySelector(".name")?.textContent || tile.name;
-      const tagline = third.querySelector(".tagline")?.textContent || "";
+      // Spotlight hides the tagline on the strip tiles, so the banner
+      // baked into the video has to drop it there too
+      const tagEl = third.querySelector(".tagline");
+      const tagline = tagEl && getComputedStyle(tagEl).display !== "none"
+        ? tagEl.textContent : "";
       images[peerId] = drawBannerPng(name, tagline, cs.backgroundColor, cs.color);
     }
     const titleEl = document.getElementById("bannerTitle");

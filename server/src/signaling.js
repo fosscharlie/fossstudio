@@ -234,10 +234,21 @@ export function attachSignaling(httpServer) {
             if (!peer || peer.role !== "host") return fail("host only");
             const c = room.control;
             switch (data.action) {
-              case "layout":
+              case "layout": {
                 c.layout = data.layout === "spotlight" ? "spotlight" : "grid";
                 c.spotlightPeerId = c.layout === "spotlight" ? String(data.peerId || "") : null;
+                // The compositors lay tiles out the same way, so a
+                // recording and a stream show the spotlight too. A
+                // recording renders once, at the end, so a mid-take
+                // change applies to the whole take (as titlePos does).
+                const recLayout = activeRecording(room.id);
+                if (recLayout) {
+                  recLayout.layout = c.layout;
+                  recLayout.spotlightPeerId = c.spotlightPeerId;
+                }
+                if (isStreaming(room.id)) refreshStream(room.id);
                 break;
+              }
               case "volume": {
                 const v = Math.min(1.5, Math.max(0, Number(data.volume)));
                 if (room.peers.has(data.peerId) && Number.isFinite(v)) c.volumes[data.peerId] = v;

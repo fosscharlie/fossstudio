@@ -400,17 +400,17 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   flex-wrap: wrap;
   justify-content: center;
   align-content: center;
-  /* Even spacing all round so the wallpaper shows through: 50px on
-     desktop, smaller on tablet and phone so the videos stay big */
-  gap: 50px;
-  padding: 50px;
+  /* Set from JS as a fraction of this area, matching the fraction the
+     compositors use of the video frame; these are the pre-script values */
+  gap: 20px;
+  padding: 24px;
   overflow: hidden;
 }
 .tile {
   /* Placed by hand in normal layout (balanced centred rows) */
   position: absolute;
   background: #000;
-  border-radius: 10px;
+  border-radius: var(--tile-rad, 16px);
   overflow: hidden;
   min-height: 0;
   width: var(--tile-w, 480px);
@@ -682,8 +682,9 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
    Featured tile fills the top; everyone else shrinks to a bottom strip. */
 .grid.spotlight {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  grid-template-rows: 1fr 16vh;
+  /* Set from JS: one column per person in the strip */
+  grid-template-columns: var(--strip-cols, repeat(auto-fit, minmax(110px, 1fr)));
+  grid-template-rows: 1fr var(--strip-h, 16vh);
   align-content: stretch;
 }
 .grid.spotlight .tile { position: relative; width: auto; aspect-ratio: auto; flex: initial; }
@@ -899,10 +900,9 @@ body.dim-ui .host-panel:hover { opacity: 1; }
 
 /* Mobile: your own tile sits in the grid with everyone else, so you
    can always see yourself where you'll appear in the recording. Tiles
-   start below the default logo/title block position. */
-@media (max-width: 1024px) {
-  .grid { gap: 20px; padding: 20px; }
-}
+   start below the default logo/title block position. Phone layout is
+   deliberately not the recording's layout - two columns and tighter
+   spacing, so faces stay big enough to see on a small screen. */
 @media (max-width: 700px) {
   .grid { align-content: flex-start; gap: 12px; padding: 12px; padding-top: 84px; }
 }

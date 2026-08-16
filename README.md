@@ -38,9 +38,13 @@ dashboard.
   bundles of all audio or all files in one click. The combined video matches the
   screen: everyone's tile, their lower-third name banners, the podcast
   logo + episode title block (the host drags it anywhere, resizes it,
-  and can drop the logo or the title for a session), and any
-  subscribe/ad overlays you triggered, at the moment you triggered
-  them.
+  and can drop the logo or the title for a session), spotlight when the
+  host has spotlit someone, and any subscribe/ad overlays you triggered,
+  at the moment you triggered them. Tile sizes, spacing and corners all
+  come from one set of frame-relative fractions shared by the browser
+  and the compositors, so the video is the picture people were on - the
+  exception is a phone, which deliberately uses a two-column layout so
+  faces stay big enough to see.
 - **Streaming:** server-composited RTMP out to YouTube, with the same
   lower-third banners and overlays as the session view.
 - **OBS clean feed:** every session also has a view-only output link
@@ -115,7 +119,7 @@ docker compose -f docker-compose.byo-proxy.yml up -d --build
 ```
 
 This still binds the app to `127.0.0.1:${HTTP_PORT}` (3000 by
-default), exactly like the Caddy stack does — your proxy just needs to
+default), exactly like the Caddy stack does - your proxy just needs to
 run on the same host (or in another host-networked container) and
 point at that address. Two things Nginx doesn't do automatically that
 Caddy does, both required or the app silently breaks:
@@ -239,6 +243,8 @@ node test/audio-energy-test.mjs          # noise suppression audio flows
 node test/resume-orphaned-recording-test.mjs  # crash mid-render, self-heals on restart
 node test/diagnostics-test.mjs           # setup check, incl. a proxy that drops WebSocket upgrades
 node test/title-block-test.mjs <url> <password>  # logo/title block matches the video, host tools
+node test/geometry-test.mjs <url> <password>     # live tile layout matches the compositors, grid and spotlight
+node test/spotlight-record-test.mjs <url> <password>  # a spotlit session records as a spotlight
 node test/firefox-compat-test.mjs <url> <password>  # same flows, real Firefox engine
 ```
 

@@ -5,7 +5,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { recDir } from "./manager.js";
-import { titleWidth } from "../composite.js";
+import { titleWidth, LAYOUT, tileLayout } from "../composite.js";
 import { fileURLToPath } from "node:url";
 
 const ASSETS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "assets");
@@ -71,6 +71,7 @@ export async function processRecording(rec) {
     const bannerFile = path.join(raw, p.banner || `banner-${peerId}.png`);
     const part = {
       name,
+      peerId,
       role: p.role,
       offsetMs: p.startOffsetMs || 0,
       audioFile: audioFile && await exists(audioFile) ? audioFile : null,
@@ -118,33 +119,31 @@ export async function processRecording(rec) {
     // Presentation matches the on-screen grid: a background (the session
     // wallpaper if set, else its colour), gaps between tiles, and subtly
     // rounded corners. Canvas is a fixed 1280x720.
-    const W = 1280, H = 720, GAP = 20, PAD = 24, RAD = 16;
+    const W = 1280, H = 720;
+    // Same fractions the live grid uses of its video area
+    const PAD = Math.round(W * LAYOUT.pad);
+    const GAP = Math.round(W * LAYOUT.gap);
+    const RAD = Math.round(W * LAYOUT.radius);
     const n = videos.length;
-    const cols = Math.ceil(Math.sqrt(n));
-    const nRows = Math.ceil(n / cols);
-    const availW = W - 2 * PAD, availH = H - 2 * PAD;
-    let tileW = Math.min((availW - (cols - 1) * GAP) / cols,
-      ((availH - (nRows - 1) * GAP) / nRows) * 16 / 9);
-    tileW = Math.max(2, 2 * Math.floor(tileW / 2));
-    const tileH = Math.max(2, 2 * Math.floor((tileW * 9 / 16) / 2));
-    const rBase = Math.floor(n / nRows), rExtra = n % nRows;
-    const rowSizes = Array.from({ length: nRows }, (_, r) => rBase + (r < rExtra ? 1 : 0));
-    const blockH = nRows * tileH + (nRows - 1) * GAP;
-    const startY = Math.round(PAD + Math.max(0, (availH - blockH) / 2));
-    const positions = [];
-    rowSizes.forEach((size, r) => {
-      const rowW = size * tileW + (size - 1) * GAP;
-      const x0 = Math.round(PAD + (availW - rowW) / 2);
-      for (let c = 0; c < size; c++) {
-        positions.push({ x: x0 + c * (tileW + GAP), y: startY + r * (tileH + GAP) });
-      }
-    });
+    // Spotlight puts one person above a strip of everyone else, exactly
+    // as the session view does; -1 means the plain even grid
+    const spotIndex = rec.layout === "spotlight" && rec.spotlightPeerId
+      ? videos.findIndex((p) => p.peerId === rec.spotlightPeerId)
+      : -1;
+    const boxes = tileLayout(n, spotIndex, W, H);
 
-    // Rounded-corner alpha mask (white rounded rect on black), tile-sized
-    const maskPath = path.join(raw, "cornermask.png");
-    await ffmpeg(["-f", "lavfi", "-i", `color=black:s=${tileW}x${tileH}`, "-vf",
-      `format=gray,geq=lum='lte(pow(max(0\\,max(${RAD}-X\\,X-(W-${RAD})))\\,2)+pow(max(0\\,max(${RAD}-Y\\,Y-(H-${RAD})))\\,2)\\,pow(${RAD}\\,2))*255'`,
-      "-frames:v", "1", "-y", maskPath], "cornermask");
+    // Rounded-corner alpha masks (white rounded rect on black). Spotlight
+    // tiles are not all one size, so there is one mask per distinct size.
+    const sizeKey = (b) => `${b.w}x${b.h}`;
+    const maskPaths = new Map();
+    for (const key of new Set(boxes.map(sizeKey))) {
+      const [mw, mh] = key.split("x").map(Number);
+      const file = path.join(raw, `cornermask-${key}.png`);
+      await ffmpeg(["-f", "lavfi", "-i", `color=black:s=${mw}x${mh}`, "-vf",
+        `format=gray,geq=lum='lte(pow(max(0\\,max(${RAD}-X\\,X-(W-${RAD})))\\,2)+pow(max(0\\,max(${RAD}-Y\\,Y-(H-${RAD})))\\,2)\\,pow(${RAD}\\,2))*255'`,
+        "-frames:v", "1", "-y", file], `cornermask ${key}`);
+      maskPaths.set(key, file);
+    }
 
     // Background input: wallpaper if set, else the session colour. The
     // wallpaper is pre-scaled to the canvas once here (a single frame) so
@@ -161,27 +160,36 @@ export async function processRecording(rec) {
       args.push("-f", "lavfi", "-i", `color=c=0x${hex}:s=${W}x${H}`);
     }
     inputIdx.set("__bg", bgIdx);
-    const maskIdx = inputIdx.size;
-    args.push("-loop", "1", "-i", maskPath);
-    inputIdx.set("__mask", maskIdx);
+    const maskIdxBySize = new Map();
+    for (const [key, file] of maskPaths) {
+      const idx = inputIdx.size;
+      args.push("-loop", "1", "-i", file);
+      inputIdx.set(`__mask_${key}`, idx);
+      maskIdxBySize.set(key, idx);
+    }
 
     // The host uploads each on-screen lower-third as a PNG (ffmpeg can't
     // draw text); overlay it bottom-left of the tile, like the DOM does
     for (const p of videos) { if (p.bannerFile) p.bnIdx = addInput(p.bannerFile, 0); }
     // Banner PNGs are drawn at 20px per cqw (tile = 2000px design width)
-    // and now hug their text, so scale each by its own width, not a fixed
-    // fraction of the tile
-    const bannerScale = `scale=w=trunc(iw*${tileW}/4000)*2:h=-2`;
+    // and now hug their text, so scale each by its own tile's width
+    const bannerScale = (w) => `scale=w=trunc(iw*${w}/4000)*2:h=-2`;
 
     const gp = [];
     gp.push(`[${bgIdx}:v]setsar=1[bg]`);
-    gp.push(`[${maskIdx}:v]format=gray,scale=${tileW}:${tileH},setsar=1[mk];` +
-      `[mk]split=${n}${videos.map((_, i) => `[m${i}]`).join("")}`);
+    // One mask per distinct tile size, split between the tiles using it
+    for (const [key, mIdx] of maskIdxBySize) {
+      const users = boxes.map((b, i) => (sizeKey(b) === key ? i : -1)).filter((i) => i >= 0);
+      const [mw, mh] = key.split("x").map(Number);
+      gp.push(`[${mIdx}:v]format=gray,scale=${mw}:${mh},setsar=1[mk${key}];` +
+        `[mk${key}]split=${users.length}${users.map((i) => `[m${i}]`).join("")}`);
+    }
     videos.forEach((p, i) => {
-      let t = `[${p.vIdx}:v]scale=${tileW}:${tileH}:force_original_aspect_ratio=increase,` +
-        `crop=${tileW}:${tileH}:(iw-${tileW})/2:(ih-${tileH})/2,setsar=1`;
+      const b = boxes[i];
+      let t = `[${p.vIdx}:v]scale=${b.w}:${b.h}:force_original_aspect_ratio=increase,` +
+        `crop=${b.w}:${b.h}:(iw-${b.w})/2:(ih-${b.h})/2,setsar=1`;
       if (p.bnIdx != null) {
-        t += `[tb${i}];[${p.bnIdx}:v]${bannerScale}[bn${i}];` +
+        t += `[tb${i}];[${p.bnIdx}:v]${bannerScale(b.w)}[bn${i}];` +
           `[tb${i}][bn${i}]overlay=x=0:y=main_h-overlay_h:eof_action=repeat[tt${i}];` +
           `[tt${i}][m${i}]alphamerge[rt${i}]`;
       } else {
@@ -192,7 +200,7 @@ export async function processRecording(rec) {
     let prev = "[bg]";
     videos.forEach((_, i) => {
       const out = i === n - 1 ? "[vout]" : `[og${i}]`;
-      gp.push(`${prev}[rt${i}]overlay=${positions[i].x}:${positions[i].y}${out}`);
+      gp.push(`${prev}[rt${i}]overlay=${boxes[i].x}:${boxes[i].y}${out}`);
       prev = out;
     });
     const grid = gp.join(";");
