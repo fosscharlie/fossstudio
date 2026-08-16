@@ -151,6 +151,35 @@ body {
   display: flex;
   min-height: 0;
 }
+/* Sits above the video rather than over it, so it never covers a face
+   and never needs to be dismissed to keep talking */
+.media-warning {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  padding: 0.7rem 0.9rem;
+  background: #3a2a12;
+  border-bottom: 1px solid #6b4d1c;
+  color: #f4e4c4;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.media-warning[hidden] { display: none; }
+.media-warning svg { width: 1.2rem; height: 1.2rem; flex: none; color: #fbc711; margin-top: 0.1rem; }
+.media-warning b { display: block; }
+.media-warning a { color: inherit; }
+.media-warning-close {
+  margin-left: auto;
+  flex: none;
+  background: none;
+  border: 0;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+  font: inherit;
+  padding: 0 0.2rem;
+}
+.media-warning-close:hover { opacity: 1; }
 .session-body .grid { flex: 1; min-width: 0; }
 /* Episode logo + title block: 180px wide, logo up to 180x50 with the
    title (up to 30px) underneath; text-only titles fill the space.
@@ -775,5 +804,7 @@ body.dim-ui .host-panel:hover { opacity: 1; }
 /* OBS clean feed (?output=1): nothing on screen but the show itself */
 body.output-mode .controls { display: none; }
 body.output-mode #hostPanel { display: none; }
+/* OBS captures this page as the clean feed: nothing but the show */
+body.output-mode .media-warning { display: none; }
 body.output-mode [data-tip]::after,
 body.output-mode [data-tip]::before { display: none; }

@@ -65,5 +65,14 @@ For self-hosters assessing the project:
   age out of the last-14 window.)
 - **Secrets** live in the server's `.env` and the data directory -
   never in the repository.
+- **Unauthenticated endpoints** are deliberately limited to three, none
+  of which take input or reveal anything a guest does not already learn
+  on joining a session: `/healthz` (up or not), `/render-status` (a
+  count of recordings currently rendering) and `/diagnostics` (the
+  setup check: the configured domain, the announced media IP, and the
+  port ranges the media engine uses). The setup check skips login by
+  design, because a misconfigured install often cannot log in at all
+  and a check that needs a working install would be no use; it reports
+  no secrets, no session or recording data, and no user information.
 - **Headers**: `X-Content-Type-Options`, `X-Frame-Options: DENY`,
   `Referrer-Policy`, and a restrictive `Permissions-Policy`.

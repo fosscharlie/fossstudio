@@ -4,6 +4,22 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- New setup check at `/diagnostics` for anyone self-hosting this. It
+  reports whether the page arrived over HTTPS, whether `PUBLIC_IP` is
+  an address guests can actually reach, whether the signaling socket
+  connects (the check that catches a reverse proxy not forwarding
+  WebSocket upgrades), whether the TURN relay answers, and which UDP
+  ports still need to reach the machine directly. Every failure says
+  what to change rather than only that something is wrong. It needs no
+  login on purpose: a broken install often cannot log in at all, since
+  the session cookie is Secure-only and plain HTTP never stores it. It
+  takes no input and reports only what a guest already learns on
+  joining, so no secrets are exposed.
+- A session that connects but carries no video or audio now says so.
+  Previously the tiles just sat black and silent with nothing on screen
+  explaining why, which is indistinguishable from the app being broken;
+  the media transports are now watched and a banner explains what
+  happened, with a link to the setup check for the host.
 - Self-hosting behind your own reverse proxy (Nginx, Apache, etc.)
   instead of the bundled Caddy is now a documented, first-class path:
   a new `docker-compose.byo-proxy.yml` runs the app + coturn without

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FOSSStudio session</title>
-<link rel="stylesheet" href="/css/session.css?v=20260809e">
+<link rel="stylesheet" href="/css/session.css?v=20260816a">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -52,6 +52,20 @@
 
 <!-- Live session -->
 <div id="session" class="session" hidden>
+  <!-- Shown when the call connects but no media flows: without it the
+       tiles just sit black and silent with nothing explaining why -->
+  <div id="mediaWarning" class="media-warning" role="status" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>
+      <path d="M12 9v4M12 16.5h.01"/>
+    </svg>
+    <div>
+      <b>Video and audio aren't getting through.</b>
+      <span id="mediaWarningText"></span>
+      <a id="mediaWarningLink" href="/diagnostics" target="_blank" rel="noopener" hidden>Run the setup check</a>
+    </div>
+    <button type="button" id="mediaWarningClose" class="media-warning-close" aria-label="Dismiss">✕</button>
+  </div>
   <div class="session-body">
   <main id="grid" class="grid">
     <!-- Episode logo + title block: floats over the video; the host
@@ -117,6 +131,6 @@
 </div>
 
 <script src="/assets/mediasoup-client.js?v=20260807e"></script>
-<script src="/js/session.js?v=20260809h"></script>
+<script src="/js/session.js?v=20260816a"></script>
 </body>
 </html>

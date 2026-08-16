@@ -19,6 +19,8 @@
     zoomSlider: $("zoomSlider"), zoomValue: $("zoomValue"), mirrorBtn: $("mirrorBtn"),
     nameInput: $("nameInput"), taglineInput: $("taglineInput"), joinBtn: $("joinBtn"),
     previewError: $("previewError"), micMeterFill: $("micMeterFill"),
+    mediaWarning: $("mediaWarning"), mediaWarningText: $("mediaWarningText"),
+    mediaWarningClose: $("mediaWarningClose"), mediaWarningLink: $("mediaWarningLink"),
     session: $("session"), banner: $("banner"), grid: $("grid"),
     muteBtn: $("muteBtn"), camBtn: $("camBtn"), leaveBtn: $("leaveBtn"),
     dimBtn: $("dimBtn"), handBtn: $("handBtn"), hostPanel: $("hostPanel"),
@@ -82,6 +84,41 @@
   function showError(msg) {
     els.previewError.textContent = msg;
     els.previewError.hidden = false;
+  }
+
+  // A media transport that fails leaves every tile black and silent
+  // with nothing on screen to say why, which reads as the app being
+  // broken. Say what happened and point at the page that diagnoses it.
+  let mediaWarningDismissed = false;
+  function setMediaWarning(state) {
+    if (state === "connected") {
+      els.mediaWarning.hidden = true;
+      return;
+    }
+    if (mediaWarningDismissed) return;
+    els.mediaWarningText.textContent = state === "failed"
+      ? "The connection to the studio was made, but no video or audio can get through it. On a self-hosted studio this is nearly always the media ports not being reachable."
+      : "The connection dropped and is trying to come back. If it doesn't recover in a few seconds, rejoin.";
+    // Only the host can act on the setup check, so only the host sees it
+    els.mediaWarningLink.hidden = !(isHost && state === "failed");
+    els.mediaWarning.hidden = false;
+  }
+  els.mediaWarningClose.onclick = () => {
+    mediaWarningDismissed = true;
+    els.mediaWarning.hidden = true;
+  };
+
+  // Either direction failing is enough to break the call, so the worst
+  // state of the two is the one worth showing.
+  const transportStates = new Map();
+  function watchTransport(transport) {
+    transport.on("connectionstatechange", (state) => {
+      transportStates.set(transport.id, state);
+      const states = [...transportStates.values()];
+      if (states.includes("failed")) return setMediaWarning("failed");
+      if (states.includes("disconnected")) return setMediaWarning("disconnected");
+      if (states.every((s) => s === "connected")) setMediaWarning("connected");
+    });
   }
 
   async function startPreview() {
@@ -1491,6 +1528,7 @@
           request("connectTransport", { transportId: transport.id, dtlsParameters })
             .then(cb).catch(eb);
         });
+        watchTransport(transport);
         if (direction === "send") {
           transport.on("produce", ({ kind, rtpParameters, appData }, cb, eb) => {
             request("produce", {

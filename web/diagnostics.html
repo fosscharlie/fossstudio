@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Setup check - FOSSStudio</title>
+<link rel="icon" href="/icons/icon-192.png">
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    background: #14161a;
+    color: #e8eaed;
+    font-family: system-ui, sans-serif;
+    line-height: 1.5;
+    padding: 2rem 1.25rem 4rem;
+  }
+  main { max-width: 46rem; margin: 0 auto; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.05rem; margin: 2.25rem 0 0.75rem; }
+  .lead { color: #9aa0a8; margin-top: 0.6rem; }
+  .verdict {
+    margin-top: 1.5rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: 0.6rem;
+    border: 1px solid #2a2e35;
+    background: #191c21;
+    font-weight: 600;
+  }
+  .verdict[data-level="ok"] { border-color: #4bae4f; }
+  .verdict[data-level="warn"] { border-color: #fbc711; }
+  .verdict[data-level="fail"] { border-color: #f34236; }
+  ul { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+  .check {
+    display: grid;
+    grid-template-columns: 1.35rem 1fr;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: #191c21;
+    border: 1px solid #2a2e35;
+    border-radius: 0.6rem;
+  }
+  .check svg { width: 1.35rem; height: 1.35rem; margin-top: 0.1rem; }
+  .check[data-level="ok"] svg { color: #4bae4f; }
+  .check[data-level="warn"] svg { color: #fbc711; }
+  .check[data-level="fail"] svg { color: #f34236; }
+  .check[data-level="pending"] svg { color: #6b727d; }
+  .check b { font-weight: 600; }
+  .check p { color: #9aa0a8; font-size: 0.92rem; margin-top: 0.2rem; }
+  .check .fix {
+    margin-top: 0.5rem;
+    color: #cfd3d8;
+    font-size: 0.92rem;
+    border-left: 2px solid #3a3f47;
+    padding-left: 0.7rem;
+  }
+  code {
+    font-family: ui-monospace, monospace;
+    background: #22262c;
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.88em;
+    overflow-wrap: anywhere;
+  }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 0.5rem 0.7rem; border-bottom: 1px solid #2a2e35; }
+  th { color: #9aa0a8; font-weight: 600; }
+  .btn {
+    margin-top: 0.9rem;
+    background: #22262c;
+    color: #e8eaed;
+    border: 1px solid #3a3f47;
+    border-radius: 0.45rem;
+    padding: 0.55rem 0.9rem;
+    font: inherit;
+    cursor: pointer;
+  }
+  .btn:hover { border-color: #6b727d; }
+  footer { margin-top: 2.5rem; color: #9aa0a8; font-size: 0.92rem; }
+  a { color: #e8eaed; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Setup check</h1>
+  <p class="lead">
+    This page checks the things that usually go wrong when someone
+    self-hosts FOSSStudio: the address the media engine hands out, the
+    ports that have to be reachable, and whether this page reached your
+    browser over HTTPS. Run it from the same browser and network a guest
+    would use.
+  </p>
+
+  <div class="verdict" id="verdict" data-level="pending">Running checks…</div>
+
+  <h2>Your server's configuration</h2>
+  <ul id="serverChecks"></ul>
+
+  <h2>What this browser can actually reach</h2>
+  <ul id="browserChecks"></ul>
+  <button type="button" class="btn" id="mediaBtn">Also test my camera and microphone</button>
+
+  <h2>Ports that must be open</h2>
+  <p class="lead">
+    Video and audio travel straight between guests and this server over
+    UDP, never through the web page's own connection. A reverse proxy,
+    a Cloudflare tunnel or an SSH tunnel carries the pages only, so
+    these ports still need to reach this machine directly. On a home
+    server that means forwarding them on your router.
+  </p>
+  <table>
+    <thead><tr><th>What for</th><th>Ports</th><th>Protocol</th></tr></thead>
+    <tbody id="portRows"></tbody>
+  </table>
+
+  <footer>
+    Full setup notes, including Nginx, Cloudflare Tunnel and Tailscale,
+    are in the
+    <a href="https://github.com/lightmorphic/fossstudio#readme">README</a>.
+  </footer>
+</main>
+<script type="module" src="/js/diagnostics.js"></script>
+</body>
+</html>

@@ -200,6 +200,32 @@ cover inviting others). Everyone connects directly over the tailnet;
 the TURN relay is rarely needed since Tailscale already handles
 NAT traversal.
 
+### Something not working? Run the setup check
+
+Visit `https://your-domain/diagnostics` from the same browser and
+network a guest would use. It checks the handful of things that
+actually go wrong on a self-hosted install and says what to change:
+
+- whether the page reached the browser over HTTPS (without it, browsers
+  refuse camera and microphone access outright)
+- whether `PUBLIC_IP` is set to an address guests can reach
+- whether the live signaling socket connects, which is the check that
+  catches a reverse proxy not forwarding WebSocket upgrades
+- whether the TURN relay answers on its port
+- which UDP ports still need to reach the machine directly
+
+It needs no login, on purpose: a broken install often can't log in at
+all (the session cookie is `Secure`-only, so plain HTTP never stores
+it), and a check that needs a working install is no use. It takes no
+input and reports only what a guest already learns on joining: the
+domain, the announced IP and the port ranges. No secrets.
+
+The most common cause of "everyone joins, nobody can see or hear
+anything" is that the media ports never reach the server. Video and
+audio go straight between guests and the server over UDP, so a reverse
+proxy, a Cloudflare tunnel or an SSH tunnel carries the pages only.
+On a home server, those UDP ranges need forwarding on the router.
+
 ## Tests
 
 ```bash
@@ -210,6 +236,7 @@ node test/recording-test.mjs <url> <password> browser|server
 node test/streaming-test.mjs             # local only (file: destination)
 node test/audio-energy-test.mjs          # noise suppression audio flows
 node test/resume-orphaned-recording-test.mjs  # crash mid-render, self-heals on restart
+node test/diagnostics-test.mjs           # setup check, incl. a proxy that drops WebSocket upgrades
 node test/firefox-compat-test.mjs <url> <password>  # same flows, real Firefox engine
 ```
 

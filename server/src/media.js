@@ -4,8 +4,8 @@
 import * as mediasoup from "mediasoup";
 import { config } from "./config.js";
 
-const RTC_MIN_PORT = 40000;
-const RTC_MAX_PORT = 40100;
+export const RTC_MIN_PORT = 40000;
+export const RTC_MAX_PORT = 40100;
 
 export const mediaCodecs = [
   {
@@ -33,6 +33,10 @@ export const mediaCodecs = [
 ];
 
 let worker;
+
+export function workerAlive() {
+  return Boolean(worker && !worker.closed);
+}
 
 export async function startMediasoup() {
   worker = await mediasoup.createWorker({

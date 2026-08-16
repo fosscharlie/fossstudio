@@ -9,6 +9,7 @@ import { isAuthedRequest } from "./auth.js";
 import { scheduleDailyBackups, sendAlertEmail } from "./ops.js";
 import { initPush } from "./push.js";
 import { resumeOrphanedRecordings, activeRenderCount } from "./recording/manager.js";
+import { diagnostics } from "./diagnostics.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -67,6 +68,15 @@ app.get("/healthz", (req, res) => {
 // kept at top level (not under /api) for the same reason.
 app.get("/render-status", (req, res) => {
   res.json({ rendering: activeRenderCount() });
+});
+
+// Setup self-check for whoever installed this. Unauthenticated on
+// purpose - see the note at the top of diagnostics.js.
+app.get("/diagnostics", (req, res) => {
+  res.sendFile(path.join(config.webDir, "diagnostics.html"));
+});
+app.get("/diagnostics.json", (req, res) => {
+  res.json(diagnostics(req));
 });
 
 // Session links guests receive: https://<domain>/s/<room-id>
