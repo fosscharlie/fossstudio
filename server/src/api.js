@@ -648,6 +648,59 @@ api.get("/recordings/:id/files/:file", requireAuth, async (req, res) => {
   });
 });
 
+// Publish a recording to the host's FOSSCast instance as a draft
+// episode, via FOSSCast's stable publish API (studio-integration.md in
+// its repo): PUT the media file, then POST the episode pointing at it.
+// Drafts by design - the host reviews on FOSSCast before it goes
+// public. Server-side so the publisher token never reaches a browser.
+api.post("/recordings/:id/publish", requireAuth, async (req, res) => {
+  const id = path.basename(req.params.id);
+  const rec = await recAccess(req, id);
+  if (!rec) return res.status(404).json({ error: "not found" });
+  const settings = await getSettings(req.user.uid);
+  if (!settings.fosscastUrl || !settings.fosscastToken) {
+    return res.status(400).json({ error: "Add your FOSSCast address and publisher token in Settings → Live streaming first." });
+  }
+  const file = path.basename(String(req.body.file || "combined.mp4"));
+  if (!(rec.files || []).includes(file)) {
+    return res.status(404).json({ error: "no such file in this recording" });
+  }
+  const full = path.join(recDir(id), "out", file);
+  const stat = await fs.stat(full).catch(() => null);
+  if (!stat) return res.status(404).json({ error: "file missing on disk" });
+  const auth = { Authorization: `Bearer ${settings.fosscastToken}` };
+  try {
+    // A clean, dated filename on the FOSSCast side beats "combined.mp4"
+    const date = new Date(rec.startedAt).toISOString().slice(0, 10);
+    const slug = (rec.title || rec.roomId).toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "").slice(0, 60) || "episode";
+    const remoteName = `${date}-${slug}${path.extname(file)}`;
+    const { Readable } = await import("node:stream");
+    const up = await fetch(`${settings.fosscastUrl}/api/v1/media?filename=${encodeURIComponent(remoteName)}`, {
+      method: "PUT",
+      headers: { ...auth, "Content-Length": String(stat.size) },
+      body: Readable.toWeb((await import("node:fs")).createReadStream(full)),
+      duplex: "half"
+    });
+    if (!up.ok) throw new Error(`media upload failed (${up.status})`);
+    const media = await up.json();
+    const ep = await fetch(`${settings.fosscastUrl}/api/v1/episodes`, {
+      method: "POST",
+      headers: { ...auth, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: rec.title || `Session ${rec.roomId}`,
+        date,
+        mediaUrl: media.urlPath
+      })
+    });
+    if (!ep.ok) throw new Error(`episode create failed (${ep.status})`);
+    const created = await ep.json();
+    res.json({ ok: true, draft: created.draft !== false, editUrl: created.editUrl || null });
+  } catch (err) {
+    res.status(502).json({ error: `FOSSCast publish failed: ${err.message}` });
+  }
+});
+
 // One-click bundles: every file, or just the audio (the FLACs), zipped
 // on the fly - nothing is written to disk
 api.get("/recordings/:id/zip", requireAuth, async (req, res) => {

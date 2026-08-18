@@ -29,6 +29,7 @@
     muteBtn: $("muteBtn"), camBtn: $("camBtn"), leaveBtn: $("leaveBtn"),
     dimBtn: $("dimBtn"), handBtn: $("handBtn"), hostPanel: $("hostPanel"),
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
+    hpChatBtn: $("hpChatBtn"),
     hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn"),
     hpServerRec: $("hpServerRec"),
     hpMuteAllBtn: $("hpMuteAllBtn"), hpSubBtn: $("hpSubBtn"), hpAdBtn: $("hpAdBtn"),
@@ -1547,10 +1548,20 @@
   };
 
   let live = false;
+  let livePageUrl = "";
+  let chatWindow = null;
+  els.hpChatBtn.onclick = () => {
+    if (chatWindow && !chatWindow.closed) { chatWindow.focus(); return; }
+    const url = `${livePageUrl}${livePageUrl.includes("?") ? "&" : "?"}embed=1`;
+    chatWindow = window.open(url, "fossstudio-chat", "width=360,height=640,popup");
+  };
   function setLiveIndicator(on) {
     live = on;
     liveStartAt = on ? (liveStartAt || Date.now()) : null;
     els.banner.classList.toggle("live", on);
+    // Audience chat lives on the FOSSCast live page; its embed view is
+    // built to sit in a window beside the studio while the show runs
+    els.hpChatBtn.hidden = !(on && isHost && livePageUrl);
     els.hpStreamBtn.textContent = on
       ? `■ ${fmtElapsed(Date.now() - liveStartAt)}`
       : "📡 Go live";
@@ -1626,6 +1637,7 @@
       });
       selfId = info.peerId;
       isHost = info.role === "host";
+      livePageUrl = info.livePageUrl || "";
       applyControl(info.control);
       applyTheme(info.theme);
       els.hostPanel.hidden = !isHost; // sidebar is always open for the host

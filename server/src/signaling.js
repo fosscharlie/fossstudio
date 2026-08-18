@@ -113,6 +113,9 @@ export function attachSignaling(httpServer) {
               ownerId: role === "host" ? room.ownerId : undefined,
               sounds: role === "host" ? (settings.sounds || []) : undefined,
               intros: role === "host" ? (settings.intros || []) : undefined,
+              // Where the audience watches (FOSSCast live page): the
+              // host gets a chat button and a copyable link in-session
+              livePageUrl: role === "host" ? (settings.livePageUrl || "") : undefined,
               routerRtpCapabilities: room.router.rtpCapabilities,
               iceServers: iceServers(),
               control: room.control,
@@ -387,7 +390,7 @@ export function attachSignaling(httpServer) {
                 if (data.start) {
                   const settings = await getSettings(room.ownerId);
                   if (!settings.streamKey) {
-                    return fail("Add your YouTube stream key in the dashboard first.");
+                    return fail("Add your stream key in the dashboard first (FOSSCast or YouTube).");
                   }
                   const url = `${settings.streamUrl.replace(/\/$/, "")}/${settings.streamKey}`;
                   await startStream(room, url);

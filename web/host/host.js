@@ -44,6 +44,10 @@
   ];
 
   let me = { role: "subadmin", username: "" };
+  // FOSSCast integration state, filled from settings: the audience's
+  // live page link, and whether publishing recordings is configured
+  let livePageUrl = "";
+  let canPublish = false;
   let currentMenu = null;
 
   function visibleMenus() {
@@ -118,7 +122,9 @@
     gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a7.97 7.97 0 0 0 .1-3l2-1.2-2-3.4-2.2.7a8 8 0 0 0-2.6-1.5L14.3 4h-4l-.4 2.6a8 8 0 0 0-2.6 1.5l-2.2-.7-2 3.4 2 1.2a7.97 7.97 0 0 0 .1 3l-2 1.2 2 3.4 2.2-.7a8 8 0 0 0 2.6 1.5l.4 2.6h4l.4-2.6a8 8 0 0 0 2.6-1.5l2.2.7 2-3.4z"/></svg>',
     tick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5L20 7"/></svg>',
     obs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10.5" r="3"/></svg>',
-    pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>'
+    pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+    live: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1a10 10 0 0 1 0-14.2M7.8 16.2a6 6 0 0 1 0-8.4M19.1 4.9a10 10 0 0 1 0 14.2M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="2"/></svg>',
+    publish: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 20h16"/></svg>'
   };
 
   function iconBtn(icon, label, onClick) {
@@ -134,12 +140,20 @@
   // Destructive actions confirm inline: first click shows a tick,
   // second click (within 4s) does it. No popups.
   function confirmBtn(icon, label, onConfirm) {
+    let reset = null;
     const b = iconBtn(icon, label, () => {
-      if (b.classList.contains("confirm")) { onConfirm(); return; }
+      // Once confirmed the action owns the button's state - the armed
+      // timeout must not reset it mid-action
+      if (b.classList.contains("confirm")) {
+        clearTimeout(reset);
+        b.classList.remove("confirm");
+        onConfirm();
+        return;
+      }
       b.classList.add("confirm");
       b.innerHTML = ICONS.tick;
       b.dataset.tip = "Click again to confirm";
-      setTimeout(() => {
+      reset = setTimeout(() => {
         b.classList.remove("confirm");
         b.innerHTML = ICONS[icon];
         b.dataset.tip = label;
@@ -221,7 +235,17 @@
         await apiFetch(`/api/sessions/${s.id}`, { method: "DELETE" });
         loadSessions();
       });
-      row.append(edit, copy, obs, open, del);
+      if (livePageUrl) {
+        const live = iconBtn("live", "Copy the live page link - where the audience watches and chats (FOSSCast)", async () => {
+          await navigator.clipboard.writeText(livePageUrl);
+          live.classList.add("done");
+          live.innerHTML = ICONS.tick;
+          setTimeout(() => { live.classList.remove("done"); live.innerHTML = ICONS.live; }, 1500);
+        });
+        row.append(edit, copy, obs, live, open, del);
+      } else {
+        row.append(edit, copy, obs, open, del);
+      }
       list.appendChild(row);
     }
   }
@@ -464,6 +488,33 @@
         dlAll.setAttribute("aria-label", "Download all files");
         actions.appendChild(dlAll);
       }
+      // Publish the combined video to FOSSCast as a draft episode. Two
+      // clicks like every outward action: publishing is the point of no
+      // return only on FOSSCast's side (drafts are reviewed there), but
+      // an accidental multi-GB upload is still worth a confirm.
+      const videoFile = (r.files || []).find((f) => /\.(mp4|webm|mkv|mov)$/i.test(f));
+      if (canPublish && r.status === "ready" && videoFile) {
+        const pub = confirmBtn("publish", "Publish to FOSSCast as a draft episode (click again to confirm)", async () => {
+          pub.disabled = true;
+          pub.dataset.tip = "Uploading to FOSSCast…";
+          try {
+            const out = await apiFetch(`/api/recordings/${encodeURIComponent(r.id)}/publish`, {
+              method: "POST",
+              body: JSON.stringify({ file: videoFile })
+            });
+            pub.classList.add("done");
+            pub.innerHTML = ICONS.tick;
+            pub.dataset.tip = out.draft
+              ? "Uploaded - review the draft in your FOSSCast dashboard"
+              : "Published to FOSSCast";
+          } catch (err) {
+            pub.dataset.tip = err.message || "Publish failed";
+            pub.innerHTML = ICONS.publish;
+            pub.disabled = false;
+          }
+        });
+        actions.appendChild(pub);
+      }
       actions.appendChild(
         confirmBtn("del", "Delete recording and its files", async () => {
           await apiFetch(`/api/recordings/${encodeURIComponent(r.id)}`, { method: "DELETE" });
@@ -479,11 +530,28 @@
       method: "PUT",
       body: JSON.stringify({
         streamUrl: $("streamUrl").value.trim() || "rtmp://a.rtmp.youtube.com/live2",
-        streamKey: $("streamKey").value.trim()
+        streamKey: $("streamKey").value.trim(),
+        livePageUrl: $("livePageUrl").value.trim()
       })
     });
+    livePageUrl = $("livePageUrl").value.trim();
+    loadSessions().catch(() => {});
     $("streamMsg").hidden = false;
     setTimeout(() => { $("streamMsg").hidden = true; }, 2000);
+  };
+
+  $("saveFosscastBtn").onclick = async () => {
+    await apiFetch("/api/settings", {
+      method: "PUT",
+      body: JSON.stringify({
+        fosscastUrl: $("fosscastUrl").value.trim(),
+        fosscastToken: $("fosscastToken").value.trim()
+      })
+    });
+    canPublish = !!($("fosscastUrl").value.trim() && $("fosscastToken").value.trim());
+    loadRecordings().catch(() => {});
+    $("fosscastMsg").hidden = false;
+    setTimeout(() => { $("fosscastMsg").hidden = true; }, 2000);
   };
 
   // ---------- theme ----------
@@ -526,6 +594,11 @@
     const s = await apiFetch("/api/settings");
     $("streamUrl").value = s.streamUrl || "";
     $("streamKey").value = s.streamKey || "";
+    $("livePageUrl").value = s.livePageUrl || "";
+    $("fosscastUrl").value = s.fosscastUrl || "";
+    $("fosscastToken").value = s.fosscastToken || "";
+    livePageUrl = s.livePageUrl || "";
+    canPublish = !!(s.fosscastUrl && s.fosscastToken);
     currentBg = s.bg || null;
     renderBgSwatches();
     $("bgHex").value = currentBg || "";
@@ -980,9 +1053,12 @@
       loadLogs();
       loadSmtp();
     } else {
-      loadSessions();
-      loadRecordings();
-      loadSettings();
+      // Settings first: session rows and recording cards read the
+      // FOSSCast fields (live link button, publish button) as they render
+      loadSettings().then(() => {
+        loadSessions();
+        loadRecordings();
+      });
       loadSounds();
       loadIntros();
       setInterval(loadSessions, 10000);   // keep the live badges fresh

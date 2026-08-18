@@ -35,6 +35,22 @@ export async function updateSettings(uid, patch) {
   if (typeof patch.streamKey === "string") {
     clean.streamKey = patch.streamKey.trim().slice(0, 200);
   }
+  // FOSSCast integration: where the audience watches (shareable link),
+  // and the publish API for pushing finished recordings as episodes
+  if (typeof patch.livePageUrl === "string") {
+    const u = patch.livePageUrl.trim();
+    if (u === "" || /^https:\/\/[^\s]+$/.test(u)) clean.livePageUrl = u.slice(0, 200);
+  }
+  if (typeof patch.fosscastUrl === "string") {
+    const u = patch.fosscastUrl.trim().replace(/\/$/, "");
+    if (u === "" || /^https:\/\/[^\s]+$/.test(u) ||
+        (process.env.ALLOW_FILE_STREAM === "1" && u.startsWith("http://127.0.0.1"))) {
+      clean.fosscastUrl = u.slice(0, 200);
+    }
+  }
+  if (typeof patch.fosscastToken === "string") {
+    clean.fosscastToken = patch.fosscastToken.trim().slice(0, 300);
+  }
   return updateUserSettings(uid, clean);
 }
 

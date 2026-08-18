@@ -4,17 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio: self-hosted video podcast studio</title>
-<meta name="description" content="FOSSStudio is a free, open-source, self-hosted video podcast studio. Guests join by link with no account. Lossless recordings, noise suppression, YouTube streaming, all on your own server.">
+<meta name="description" content="FOSSStudio is a free, open-source, self-hosted video podcast studio. Guests join by link with no account. Lossless recordings, noise suppression, live streaming to your own FOSSCast page or YouTube, all on your own server.">
 <link rel="canonical" href="https://fossstudio.org/">
 <link rel="icon" href="icon.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://fossstudio.org/">
 <meta property="og:title" content="FOSSStudio: self-hosted video podcast studio">
-<meta property="og:description" content="Guests click a link and they're in. Lossless recordings, noise suppression, YouTube streaming, on your own server.">
+<meta property="og:description" content="Guests click a link and they're in. Lossless recordings, noise suppression, live streaming to your own page or YouTube, on your own server.">
 <meta property="og:image" content="https://fossstudio.org/shots/session.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="FOSSStudio: self-hosted video podcast studio">
-<meta name="twitter:description" content="Guests click a link and they're in. Lossless recordings, noise suppression, YouTube streaming, on your own server.">
+<meta name="twitter:description" content="Guests click a link and they're in. Lossless recordings, noise suppression, live streaming to your own page or YouTube, on your own server.">
 <meta name="twitter:image" content="https://fossstudio.org/shots/session.jpg">
 <script type="application/ld+json">
 {
@@ -23,7 +23,7 @@
   "name": "FOSSStudio",
   "operatingSystem": "Linux",
   "applicationCategory": "MultimediaApplication",
-  "description": "Self-hosted video podcast studio: no-account guest links, up to 10 participants, lossless FLAC recordings, combined MP4, RNNoise noise suppression, YouTube RTMP streaming, an OBS clean-feed link for streaming anywhere, multi-host support.",
+  "description": "Self-hosted video podcast studio: no-account guest links, up to 10 participants, lossless FLAC recordings, combined MP4, RNNoise noise suppression, RTMP streaming to a self-hosted FOSSCast page or YouTube, an OBS clean-feed link for streaming anywhere, multi-host support.",
   "url": "https://fossstudio.org",
   "downloadUrl": "https://github.com/lightmorphic/fossstudio",
   "license": "https://www.gnu.org/licenses/gpl-3.0.html",
@@ -328,7 +328,7 @@
     <div>
       <span class="eyebrow" style="color:var(--pink); border-color:var(--pink)">For hosts</span>
       <h3>The host runs the show</h3>
-      <p>A slide-in panel only the host sees: start the recording, go live to YouTube, spotlight a speaker, balance quiet and loud voices, and set each guest's volume for everyone at once.</p>
+      <p>A slide-in panel only the host sees: start the recording, go live to your own FOSSCast page or YouTube, spotlight a speaker, balance quiet and loud voices, and set each guest's volume for everyone at once.</p>
       <ul>
         <li>Grid or spotlight layouts, applied to every screen</li>
         <li>Per-session choice of browser or server-side recording</li>
@@ -377,7 +377,7 @@
     <div>
       <span class="eyebrow" style="color:var(--orange); border-color:var(--orange)">For teams</span>
       <h3>One server, many shows</h3>
-      <p>An admin account invites hosts by email; each host sets their own password and gets their own sessions, recordings, banner, wallpaper and YouTube stream key. Two shows can record at the same time without ever seeing each other.</p>
+      <p>An admin account invites hosts by email; each host sets their own password and gets their own sessions, recordings, banner, wallpaper and stream key. Two shows can record at the same time without ever seeing each other.</p>
       <ul>
         <li>Each host manages their own theme, sessions and stream key</li>
         <li>Optional two-factor login for every account</li>
@@ -394,7 +394,7 @@
     <div class="card" style="--c:var(--yellow)"><span class="dot">🔍</span><h3>Camera zoom</h3><p>Guests can zoom their camera right on the preview screen: real lens zoom where the camera supports it, digital crop-zoom everywhere else. Rare even in the paid tools.</p></div>
     <div class="card" style="--c:var(--red)"><span class="dot">●</span><h3>Lossless recording</h3><p>Browser-side per-person capture in raw PCM, converted to FLAC on the server, plus a combined video that matches the screen: every tile, name banners and overlays included.</p></div>
     <div class="card" style="--c:var(--orange)"><span class="dot">🔊</span><h3>Soundboard &amp; intros</h3><p>Fire clips one-click: laughs and applause over the chat, or stings that mute everyone and bring them back. Plus fullscreen intro videos that take over every screen. Auto-levelled to speech loudness, all baked into the recording and the stream.</p></div>
-    <div class="card" style="--c:var(--pink)"><span class="dot">📡</span><h3>YouTube live</h3><p>Server-composited 720p grid over RTMP, name banners and all. The grid rebuilds itself when someone joins or leaves.</p></div>
+    <div class="card" style="--c:var(--pink)"><span class="dot">📡</span><h3>Go live anywhere</h3><p>Server-composited 720p grid over RTMP, name banners and all. Stream to your own watch page with live chat via <a href="https://github.com/lightmorphic/fosscast">FOSSCast</a>, or to YouTube - and publish finished recordings to FOSSCast as episodes in one click.</p></div>
     <div class="card" style="--c:var(--indigo)"><span class="dot">🎬</span><h3>OBS clean feed</h3><p>Every session has a view-only link with no join screen and no buttons: add it to OBS as a Browser Source and stream the show to any platform, with full audio. Invisible to your guests and never in the recording.</p></div>
     <div class="card" style="--c:var(--blue)"><span class="dot">👥</span><h3>Up to 10 people</h3><p>A forwarding media engine (mediasoup) means a 2-core VPS handles a full grid comfortably.</p></div>
     <div class="card" style="--c:var(--teal)"><span class="dot">🗂</span><h3>No database</h3><p>Flat JSON files in one folder. Back it up, export it as a zip, restore it with a click.</p></div>

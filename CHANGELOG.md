@@ -4,6 +4,19 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- FOSSCast integration: FOSSStudio and its audience-facing companion
+  [FOSSCast](https://github.com/lightmorphic/fosscast) now work as a
+  pair. "Go live" can point at a FOSSCast instance (stream server
+  `rtmp://<cast-domain>/live` + the show's key) for a watch page with
+  live chat on your own domain - no YouTube needed; YouTube remains
+  supported by pointing the same two fields at it. A new "Live page
+  link" setting adds a copy-the-watch-link button to each session and
+  an audience chat window button to the host controls while live. A
+  "Publish to FOSSCast" button on each finished recording uploads the
+  video and creates a draft episode over FOSSCast's publish API, with
+  the publisher token kept server-side. Chat itself - nicknames, word
+  masking, blocking with a reversible ban list - is FOSSCast's half
+  and lives there.
 - Spotlight now reaches the recording and the stream. It changed the
   session view only: the compositors never read it, so a show where the
   host spotlit someone recorded as a plain even grid. Both now lay the

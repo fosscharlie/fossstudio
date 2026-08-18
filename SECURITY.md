@@ -64,7 +64,9 @@ For self-hosters assessing the project:
   subscription. (Rotating local backups may retain snapshots until they
   age out of the last-14 window.)
 - **Secrets** live in the server's `.env` and the data directory -
-  never in the repository.
+  never in the repository. That includes the optional FOSSCast
+  publisher token: publishing runs server-side, so the token is never
+  sent to any browser.
 - **Unauthenticated endpoints** are deliberately limited to three, none
   of which take input or reveal anything a guest does not already learn
   on joining a session: `/healthz` (up or not), `/render-status` (a

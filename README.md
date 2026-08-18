@@ -45,8 +45,18 @@ dashboard.
   and the compositors, so the video is the picture people were on - the
   exception is a phone, which deliberately uses a two-column layout so
   faces stay big enough to see.
-- **Streaming:** server-composited RTMP out to YouTube, with the same
-  lower-third banners and overlays as the session view.
+- **Streaming:** server-composited RTMP out, with the same lower-third
+  banners and overlays as the session view. Point it at your own
+  [FOSSCast](https://github.com/lightmorphic/fosscast) instance for a
+  watch page on your own domain with live chat beside the video
+  (nickname chat, word masking, reversible IP bans - all FOSSCast's
+  side), or at YouTube. With a FOSSCast live page configured, sessions
+  get a copy-the-watch-link button and the host controls get a chat
+  window button while live.
+- **Publish to FOSSCast:** one click on a finished recording pushes the
+  video to your FOSSCast instance as a draft episode (reviewed there
+  before it goes public), using FOSSCast's publish API. The publisher
+  token stays on the server; it never reaches a browser.
 - **OBS clean feed:** every session also has a view-only output link
   (`?output=1`) with no join screen and no controls - add it as an OBS
   Browser Source and stream the show from OBS to any platform. The feed
@@ -245,6 +255,7 @@ node test/diagnostics-test.mjs           # setup check, incl. a proxy that drops
 node test/title-block-test.mjs <url> <password>  # logo/title block matches the video, host tools
 node test/geometry-test.mjs <url> <password>     # live tile layout matches the compositors, grid and spotlight
 node test/spotlight-record-test.mjs <url> <password>  # a spotlit session records as a spotlight
+node test/fosscast-publish-test.mjs      # publish-to-FOSSCast flow against a stub instance
 node test/firefox-compat-test.mjs <url> <password>  # same flows, real Firefox engine
 ```
 

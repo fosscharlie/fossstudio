@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio - Host</title>
-<link rel="stylesheet" href="/host/host.css?v=20260809c">
+<link rel="stylesheet" href="/host/host.css?v=20260818a">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -45,21 +45,40 @@
         </div>
       </section>
 
-      <!-- Recordings: streaming -->
+      <!-- Recordings: live streaming -->
       <section id="pane-streaming" class="stack" hidden>
         <div class="panel">
-          <h2>YouTube streaming</h2>
-          <p class="hint" style="margin-bottom:0.8rem">Paste the stream key from YouTube Studio → Go live. Then use the "Go live" button in the session's host controls. Best for smaller sessions - the server does heavy lifting while live.</p>
+          <h2>Live streaming</h2>
+          <p class="hint" style="margin-bottom:0.8rem">Where "Go live" sends the show. Point it at your own <a href="https://github.com/lightmorphic/fosscast" target="_blank" rel="noopener">FOSSCast</a> instance for a watch page with live chat on your own domain (stream server <code>rtmp://your-cast-domain/live</code>, key from FOSSCast → Stream), or at YouTube (<code>rtmp://a.rtmp.youtube.com/live2</code>, key from YouTube Studio → Go live).</p>
           <div class="field">
             <label for="streamUrl">Stream server</label>
-            <input type="text" id="streamUrl" placeholder="rtmp://a.rtmp.youtube.com/live2">
+            <input type="text" id="streamUrl" placeholder="rtmp://cast.example.com/live">
           </div>
           <div class="field">
             <label for="streamKey">Stream key</label>
             <input type="password" id="streamKey" autocomplete="off" placeholder="xxxx-xxxx-xxxx-xxxx">
           </div>
+          <div class="field">
+            <label for="livePageUrl">Live page link <span class="hint-inline">(optional - where the audience watches)</span></label>
+            <input type="text" id="livePageUrl" placeholder="https://cast.example.com/live/my-show">
+            <p class="hint">Your show's FOSSCast live page. Adds a copy-link button to each session and a chat window button to the host controls while live.</p>
+          </div>
           <button class="btn primary" id="saveStreamBtn">Save streaming settings</button>
           <span class="msg ok" id="streamMsg" hidden>✓ Saved</span>
+        </div>
+        <div class="panel">
+          <h2>Publish to FOSSCast</h2>
+          <p class="hint" style="margin-bottom:0.8rem">Lets the button on each recording push the video straight to your FOSSCast instance as a draft episode - you review it there before it goes public. The token is FOSSCast's <code>PUBLISHER_TOKEN</code>; it stays on this server and never reaches the browser.</p>
+          <div class="field">
+            <label for="fosscastUrl">FOSSCast address</label>
+            <input type="text" id="fosscastUrl" placeholder="https://cast.example.com">
+          </div>
+          <div class="field">
+            <label for="fosscastToken">Publisher token</label>
+            <input type="password" id="fosscastToken" autocomplete="off">
+          </div>
+          <button class="btn primary" id="saveFosscastBtn">Save FOSSCast settings</button>
+          <span class="msg ok" id="fosscastMsg" hidden>✓ Saved</span>
         </div>
       </section>
 
@@ -310,6 +329,6 @@
   </div>
 </div>
 
-<script src="/host/host.js?v=20260809c"></script>
+<script src="/host/host.js?v=20260818a"></script>
 </body>
 </html>
