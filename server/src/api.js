@@ -28,6 +28,8 @@ import {
   restoreBackup, restartApp, streamFullExport
 } from "./ops.js";
 import { publicKey, addSubscription } from "./push.js";
+import { isStreaming, streamingSince } from "./streaming.js";
+import { listBlocked, unblock } from "./livechat.js";
 
 export const api = express.Router();
 api.use(express.json({ limit: "64kb" }));
@@ -646,6 +648,31 @@ api.get("/recordings/:id/files/:file", requireAuth, async (req, res) => {
   res.download(path.join(recDir(id), "out", file), file, (err) => {
     if (err && !res.headersSent) res.status(404).json({ error: "file not found" });
   });
+});
+
+// Watch page status: live or not, and what the show is called. Public,
+// same trust as the watch page itself; nothing here a viewer would not
+// see on joining.
+api.get("/live/:roomId", async (req, res) => {
+  const roomId = path.basename(req.params.roomId);
+  const session = await findSession(roomId);
+  if (!session) return res.status(404).json({ error: "not found" });
+  res.json({
+    live: isStreaming(roomId),
+    since: streamingSince(roomId),
+    title: session.title || ""
+  });
+});
+
+// Chat moderation: the reversible block list. Any host can manage it -
+// blocking is per person, not per show.
+api.get("/chat/blocked", requireAuth, async (req, res) => {
+  res.json(await listBlocked());
+});
+api.delete("/chat/blocked/:id", requireAuth, async (req, res) => {
+  const ok = await unblock(path.basename(req.params.id));
+  if (!ok) return res.status(404).json({ error: "not found" });
+  res.json({ ok: true });
 });
 
 // Publish a recording to the host's FOSSCast instance as a draft

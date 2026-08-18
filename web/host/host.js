@@ -44,9 +44,7 @@
   ];
 
   let me = { role: "subadmin", username: "" };
-  // FOSSCast integration state, filled from settings: the audience's
-  // live page link, and whether publishing recordings is configured
-  let livePageUrl = "";
+  // Whether publishing recordings to FOSSCast is configured
   let canPublish = false;
   let currentMenu = null;
 
@@ -235,17 +233,13 @@
         await apiFetch(`/api/sessions/${s.id}`, { method: "DELETE" });
         loadSessions();
       });
-      if (livePageUrl) {
-        const live = iconBtn("live", "Copy the live page link - where the audience watches and chats (FOSSCast)", async () => {
-          await navigator.clipboard.writeText(livePageUrl);
-          live.classList.add("done");
-          live.innerHTML = ICONS.tick;
-          setTimeout(() => { live.classList.remove("done"); live.innerHTML = ICONS.live; }, 1500);
-        });
-        row.append(edit, copy, obs, live, open, del);
-      } else {
-        row.append(edit, copy, obs, open, del);
-      }
+      const liveBtn = iconBtn("live", "Copy the watch page link - where the audience sees the show live and chats", async () => {
+        await navigator.clipboard.writeText(`${location.origin}/live/${s.id}`);
+        liveBtn.classList.add("done");
+        liveBtn.innerHTML = ICONS.tick;
+        setTimeout(() => { liveBtn.classList.remove("done"); liveBtn.innerHTML = ICONS.live; }, 1500);
+      });
+      row.append(edit, copy, obs, liveBtn, open, del);
       list.appendChild(row);
     }
   }
@@ -446,7 +440,7 @@
         <div class="files"></div>`;
       card.querySelector(".title").textContent = r.title || `Session ${r.roomId}`;
       card.querySelector(".meta").textContent =
-        `${when}${mins ? ` · ${mins} min` : ""} · ${r.mode === "server" ? "server-side" : "browser-side"}`;
+        `${when}${mins ? ` · ${mins} min` : ""} · ${r.mode === "live" ? "live stream" : r.mode === "server" ? "server-side" : "browser-side"}`;
       setStatusBadge(card.querySelector(".badge"), r.status);
       const filesEl = card.querySelector(".files");
       for (const f of r.files || []) {
@@ -530,15 +524,41 @@
       method: "PUT",
       body: JSON.stringify({
         streamUrl: $("streamUrl").value.trim() || "rtmp://a.rtmp.youtube.com/live2",
-        streamKey: $("streamKey").value.trim(),
-        livePageUrl: $("livePageUrl").value.trim()
+        streamKey: $("streamKey").value.trim()
       })
     });
-    livePageUrl = $("livePageUrl").value.trim();
-    loadSessions().catch(() => {});
     $("streamMsg").hidden = false;
     setTimeout(() => { $("streamMsg").hidden = true; }, 2000);
   };
+
+  // ---------- chat block list ----------
+
+  async function loadBlocked() {
+    const list = $("blockedList");
+    if (!list) return;
+    const blocked = await apiFetch("/api/chat/blocked");
+    list.innerHTML = "";
+    if (blocked.length === 0) {
+      list.innerHTML = '<p class="hint">Nobody is blocked. Block someone from the chat on the watch page while live.</p>';
+      return;
+    }
+    for (const b of blocked) {
+      const row = document.createElement("div");
+      row.className = "session-row";
+      const name = document.createElement("span");
+      name.className = "session-title";
+      name.textContent = b.name;
+      const when = document.createElement("span");
+      when.className = "hint";
+      when.textContent = `blocked ${new Date(b.blockedAt).toLocaleString()}`;
+      row.append(name, when);
+      row.appendChild(confirmBtn("del", "Unblock - lets them back into the chat", async () => {
+        await apiFetch(`/api/chat/blocked/${encodeURIComponent(b.id)}`, { method: "DELETE" });
+        loadBlocked();
+      }));
+      list.appendChild(row);
+    }
+  }
 
   $("saveFosscastBtn").onclick = async () => {
     await apiFetch("/api/settings", {
@@ -594,10 +614,8 @@
     const s = await apiFetch("/api/settings");
     $("streamUrl").value = s.streamUrl || "";
     $("streamKey").value = s.streamKey || "";
-    $("livePageUrl").value = s.livePageUrl || "";
     $("fosscastUrl").value = s.fosscastUrl || "";
     $("fosscastToken").value = s.fosscastToken || "";
-    livePageUrl = s.livePageUrl || "";
     canPublish = !!(s.fosscastUrl && s.fosscastToken);
     currentBg = s.bg || null;
     renderBgSwatches();
@@ -1059,6 +1077,7 @@
         loadSessions();
         loadRecordings();
       });
+      loadBlocked();
       loadSounds();
       loadIntros();
       setInterval(loadSessions, 10000);   // keep the live badges fresh

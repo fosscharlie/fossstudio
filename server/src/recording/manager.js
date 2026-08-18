@@ -131,7 +131,9 @@ export function uploadCreds(rec, peerId) {
   return { recId: rec.id, peerId, token: uploadToken(rec.id, peerId) };
 }
 
-async function saveIndex(entry) {
+// Also used by the live-stream engine to file the watched stream as a
+// ready recording when a stream ends
+export async function saveIndex(entry) {
   const list = await readJson("recordings.json", []);
   const i = list.findIndex((r) => r.id === entry.id);
   i === -1 ? list.unshift(entry) : (list[i] = entry);

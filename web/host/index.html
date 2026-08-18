@@ -49,22 +49,22 @@
       <section id="pane-streaming" class="stack" hidden>
         <div class="panel">
           <h2>Live streaming</h2>
-          <p class="hint" style="margin-bottom:0.8rem">Where "Go live" sends the show. Point it at your own <a href="https://github.com/lightmorphic/fosscast" target="_blank" rel="noopener">FOSSCast</a> instance for a watch page with live chat on your own domain (stream server <code>rtmp://your-cast-domain/live</code>, key from FOSSCast → Stream), or at YouTube (<code>rtmp://a.rtmp.youtube.com/live2</code>, key from YouTube Studio → Go live).</p>
+          <p class="hint" style="margin-bottom:0.8rem">"Go live" always streams to this studio's own watch page - the audience watches and chats at <code>/live/&lt;session&gt;</code> on your domain, no other platform needed (copy the link from the session row). To also stream to YouTube at the same time, add its server and key here and it rides along.</p>
           <div class="field">
-            <label for="streamUrl">Stream server</label>
-            <input type="text" id="streamUrl" placeholder="rtmp://cast.example.com/live">
+            <label for="streamUrl">Extra RTMP destination <span class="hint-inline">(optional)</span></label>
+            <input type="text" id="streamUrl" placeholder="rtmp://a.rtmp.youtube.com/live2">
           </div>
           <div class="field">
             <label for="streamKey">Stream key</label>
             <input type="password" id="streamKey" autocomplete="off" placeholder="xxxx-xxxx-xxxx-xxxx">
           </div>
-          <div class="field">
-            <label for="livePageUrl">Live page link <span class="hint-inline">(optional - where the audience watches)</span></label>
-            <input type="text" id="livePageUrl" placeholder="https://cast.example.com/live/my-show">
-            <p class="hint">Your show's FOSSCast live page. Adds a copy-link button to each session and a chat window button to the host controls while live.</p>
-          </div>
           <button class="btn primary" id="saveStreamBtn">Save streaming settings</button>
           <span class="msg ok" id="streamMsg" hidden>✓ Saved</span>
+        </div>
+        <div class="panel">
+          <h2>Blocked from chat</h2>
+          <p class="hint" style="margin-bottom:0.8rem">People blocked from the live chat, by name and address. Blocking is instant and so is unblocking - use it when a block was a mistake, or an apology has been accepted.</p>
+          <div id="blockedList"><p class="hint">Loading…</p></div>
         </div>
         <div class="panel">
           <h2>Publish to FOSSCast</h2>

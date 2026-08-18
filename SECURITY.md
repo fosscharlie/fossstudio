@@ -67,14 +67,20 @@ For self-hosters assessing the project:
   never in the repository. That includes the optional FOSSCast
   publisher token: publishing runs server-side, so the token is never
   sent to any browser.
-- **Unauthenticated endpoints** are deliberately limited to three, none
-  of which take input or reveal anything a guest does not already learn
-  on joining a session: `/healthz` (up or not), `/render-status` (a
-  count of recordings currently rendering) and `/diagnostics` (the
-  setup check: the configured domain, the announced media IP, and the
-  port ranges the media engine uses). The setup check skips login by
-  design, because a misconfigured install often cannot log in at all
-  and a check that needs a working install would be no use; it reports
-  no secrets, no session or recording data, and no user information.
+- **Unauthenticated endpoints** are deliberately few: `/healthz` (up
+  or not), `/render-status` (a count of recordings currently
+  rendering), `/diagnostics` (the setup check: the configured domain,
+  the announced media IP, and the port ranges the media engine uses -
+  no login by design, because a misconfigured install often cannot log
+  in at all), and the audience-facing live layer: `/live/<session>`
+  (the watch page and its HLS media, which exists only while that
+  session streams) plus its chat socket. The watch page carries the
+  same trust as a session link - session ids are unguessable and the
+  page can only ever receive.
+- **Live chat** is nickname-only with no accounts: rate-limited per
+  address, messages capped and filtered server-side, and moderation
+  (blocking by name and address) restricted to logged-in hosts.
+  Viewer IP addresses are stored server-side only (owner-only files)
+  and are never exposed by any endpoint, including to hosts.
 - **Headers**: `X-Content-Type-Options`, `X-Frame-Options: DENY`,
   `Referrer-Policy`, and a restrictive `Permissions-Policy`.

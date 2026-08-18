@@ -12,6 +12,8 @@ import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
 import { titleWidth, LAYOUT, tileLayout } from "./composite.js";
+import { notifyLive } from "./livechat.js";
+import { saveIndex } from "./recording/manager.js";
 
 const ASSETS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "assets");
 
@@ -72,10 +74,111 @@ export function streamingSince(roomId) {
 
 export async function startStream(room, rtmpUrl) {
   if (streams.has(room.id)) throw new Error("already streaming");
-  const state = { room, rtmpUrl, generation: 0, stopping: false, startedAt: Date.now() };
+  // The studio's own watch page always gets the stream (HLS on disk,
+  // served at /live/<session>); RTMP goes out too when a destination
+  // is configured. rtmpUrl may be null: own page only, no YouTube.
+  const liveDir = path.join(config.dataDir, "live", room.id);
+  await fs.rm(liveDir, { recursive: true, force: true });
+  await fs.mkdir(liveDir, { recursive: true });
+  const state = { room, rtmpUrl, liveDir, generation: 0, stopping: false, startedAt: Date.now() };
   streams.set(room.id, state);
-  await launch(state);
+  try {
+    await launch(state);
+  } catch (err) {
+    streams.delete(room.id);
+    await fs.rm(liveDir, { recursive: true, force: true }).catch(() => {});
+    throw err;
+  }
+  notifyLive(room.id, true);
   return state;
+}
+
+// Output arguments shared by the grid and intro launches: HLS for the
+// watch page, plus RTMP via the tee muxer when configured - one encode
+// either way. Each relaunch appends to the same playlist with a
+// discontinuity marker, so viewers ride through the blip and the
+// finished playlist is the whole show in order.
+async function destArgs(state, gen) {
+  const dir = state.liveDir;
+  const playlist = path.join(dir, "live.m3u8");
+  // fMP4 segments with one init per generation: append_list rewrites
+  // the playlist's EXT-X-MAP to the newest init, and each generation's
+  // codec setup only truly matches its own - keeping them separate is
+  // what lets finalizeLive() stitch the show together losslessly.
+  const seg = path.join(dir, `seg-${gen}-%05d.m4s`);
+  const init = `init-${gen}.mp4`;
+  const appending = await fs.access(playlist).then(() => true, () => false);
+  const flags = `omit_endlist${appending ? "+append_list+discont_start" : ""}`;
+  if (!state.rtmpUrl) {
+    return ["-f", "hls", "-hls_time", "2", "-hls_list_size", "0",
+      "-hls_flags", flags, "-hls_segment_type", "fmp4",
+      "-hls_fmp4_init_filename", init,
+      "-hls_segment_filename", seg, "-y", playlist];
+  }
+  // tee: same encoded packets to both. onfail=ignore on the RTMP leg so
+  // a YouTube hiccup never kills the own-page stream.
+  const rtmpLeg = state.rtmpUrl.startsWith("file:")
+    ? `[f=flv:onfail=ignore]${state.rtmpUrl.slice(5)}`
+    : `[f=flv:onfail=ignore]${state.rtmpUrl}`;
+  const hlsLeg = `[f=hls:hls_time=2:hls_list_size=0:hls_flags=${flags}:` +
+    `hls_segment_type=fmp4:hls_fmp4_init_filename=${init}:hls_segment_filename=${seg}]${playlist}`;
+  return ["-f", "tee", "-use_fifo", "1", "-y", `${hlsLeg}|${rtmpLeg}`];
+}
+
+// The playlist the audience just watched, stitched losslessly into one
+// file and filed as a ready recording - the saved video is exactly the
+// stream, by construction.
+export async function finalizeLive(state) {
+  try {
+    // Each generation (one per relaunch) becomes a valid fMP4 by
+    // prepending its own init to its segments; the generations then
+    // stream-copy concat into one file. Reading back the playlist
+    // would map every generation to the newest init, which corrupts
+    // all the earlier ones - this way each keeps its own.
+    const files = await fs.readdir(state.liveDir);
+    const gens = [...new Set(files
+      .map((f) => /^seg-(\d+)-\d+\.m4s$/.exec(f)?.[1])
+      .filter(Boolean).map(Number))].sort((a, b) => a - b);
+    if (gens.length === 0) throw new Error("no segments");
+    const parts = [];
+    for (const g of gens) {
+      const segs = files.filter((f) => f.startsWith(`seg-${g}-`) && f.endsWith(".m4s")).sort();
+      const dest = path.join(state.liveDir, `gen-${g}.mp4`);
+      const fh = await fs.open(dest, "w");
+      for (const piece of [`init-${g}.mp4`, ...segs]) {
+        await fh.writeFile(await fs.readFile(path.join(state.liveDir, piece)));
+      }
+      await fh.close();
+      parts.push(dest);
+    }
+    const listFile = path.join(state.liveDir, "concat.txt");
+    await fs.writeFile(listFile, parts.map((p) => `file '${p}'`).join("\n") + "\n");
+    const recId = `${state.room.id}-live-${new Date(state.startedAt).toISOString().replace(/[:.]/g, "-").slice(0, 19)}`;
+    const { recDir } = await import("./recording/manager.js");
+    const out = path.join(recDir(recId), "out");
+    await fs.mkdir(out, { recursive: true });
+    await new Promise((resolve, reject) => {
+      const p = spawn("nice", ["-n", "15", "ffmpeg", "-nostdin", "-loglevel", "error",
+        "-f", "concat", "-safe", "0", "-i", listFile,
+        "-c", "copy", "-movflags", "+faststart",
+        "-y", path.join(out, "live.mp4")]);
+      let err = "";
+      p.stderr.on("data", (d) => { err += d; });
+      p.on("close", (code) => code === 0 ? resolve()
+        : reject(new Error(`live concat exited ${code}: ${err.slice(-300)}`)));
+    });
+    await saveIndex({
+      id: recId, roomId: state.room.id, ownerId: state.room.ownerId || null,
+      mode: "live", title: state.room.title || "",
+      startedAt: state.startedAt, endedAt: Date.now(),
+      status: "ready", files: ["live.mp4"]
+    });
+    await fs.rm(state.liveDir, { recursive: true, force: true });
+  } catch (err) {
+    // Keep the raw segments rather than lose the show: the operator can
+    // stitch by hand from data/live/<session>
+    console.error(`live finalize for ${state.room.id} failed: ${err.message} - raw segments kept`);
+  }
 }
 
 async function launch(state) {
@@ -260,10 +363,7 @@ async function launch(state) {
     finalLabel = "[vfin]";
   }
 
-  // "file:" destinations exist for tests; anything else goes out as RTMP
-  const dest = state.rtmpUrl.startsWith("file:")
-    ? [state.rtmpUrl.slice(5)]
-    : ["-f", "flv", state.rtmpUrl];
+  const dest = await destArgs(state, gen);
 
   const ffArgs = [
     "-nostdin", "-loglevel", "warning",
@@ -284,7 +384,7 @@ async function launch(state) {
     "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
     "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k", "-g", "60",
     "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
-    "-y", ...dest
+    ...dest
   ];
   cleanup.ffmpeg = spawn("ffmpeg", ffArgs);
   cleanup.ffmpeg.stderr.on("data", (d) => {
@@ -319,9 +419,7 @@ async function launch(state) {
 async function launchIntro(state, gen) {
   const cleanup = { transports: [], consumers: [], ffmpeg: null, workDir: null };
   state.current = cleanup;
-  const dest = state.rtmpUrl.startsWith("file:")
-    ? [state.rtmpUrl.slice(5)]
-    : ["-f", "flv", state.rtmpUrl];
+  const dest = await destArgs(state, gen);
   // Silent intros still need an audio track for the AAC/RTMP output
   const audioIn = state.introHasAudio
     ? []
@@ -341,7 +439,7 @@ async function launchIntro(state, gen) {
     "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
     "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k", "-g", "60",
     "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
-    "-y", ...dest
+    ...dest
   ];
   cleanup.ffmpeg = spawn("ffmpeg", ffArgs);
   cleanup.ffmpeg.stderr.on("data", (d) => {
@@ -453,5 +551,7 @@ export async function stopStream(roomId) {
   clearTimeout(state.introTimer);
   streams.delete(roomId);
   await teardown(state.current);
+  notifyLive(roomId, false);
+  await finalizeLive(state);
   console.log(`stream stopped for ${roomId}`);
 }

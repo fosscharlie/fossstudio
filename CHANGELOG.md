@@ -4,19 +4,33 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
-- FOSSCast integration: FOSSStudio and its audience-facing companion
-  [FOSSCast](https://github.com/lightmorphic/fosscast) now work as a
-  pair. "Go live" can point at a FOSSCast instance (stream server
-  `rtmp://<cast-domain>/live` + the show's key) for a watch page with
-  live chat on your own domain - no YouTube needed; YouTube remains
-  supported by pointing the same two fields at it. A new "Live page
-  link" setting adds a copy-the-watch-link button to each session and
-  an audience chat window button to the host controls while live. A
-  "Publish to FOSSCast" button on each finished recording uploads the
-  video and creates a draft episode over FOSSCast's publish API, with
-  the publisher token kept server-side. Chat itself - nicknames, word
-  masking, blocking with a reversible ban list - is FOSSCast's half
-  and lives there.
+- The studio now has its own live watch page: "Go live" streams the
+  composited show to `/live/<session>` on your domain, with an HLS
+  player (self-hosted hls.js, native on Safari), a live viewer count,
+  and chat beside the video - nobody needs YouTube, and nobody leaves
+  the window. The page switches itself on when the stream starts and
+  off when it ends. Each session row has a copy-the-watch-link button
+  and the host controls get a chat window button while live. YouTube
+  (or any RTMP destination) can ride along on the same encode when
+  configured; going live no longer requires a stream key at all. When
+  the stream ends, the exact video the audience watched is stitched
+  losslessly into a ready recording. This is the live layer FOSSCast
+  handed over (its docs/live-handover.md): FOSSStudio owns everything
+  live, FOSSCast is the episode archive and RSS half.
+- Live chat: viewers pick a name and talk while they watch, no
+  accounts. Words on the banned list are masked, never deleted - first
+  and last letter kept, stars between ("f\*\*\*k"), whole words only, so
+  ordinary words containing them are untouched. A default English list
+  ships in `server/assets/banned-words.txt` (copy to
+  `data/banned-words.txt` to customise). Hosts appear under their own
+  name and can block anyone from their messages: blocking bans the
+  username AND the address, the person's messages vanish for everyone
+  instantly, and the dashboard's block list is visible and reversible,
+  for when a block was a mistake or an apology is accepted. Viewer
+  addresses never reach any client, hosts included.
+- Publish to FOSSCast: a button on each finished recording (live
+  streams included) uploads the video and creates a draft episode over
+  FOSSCast's publish API, with the publisher token kept server-side.
 - Spotlight now reaches the recording and the stream. It changed the
   session view only: the compositors never read it, so a show where the
   host spotlit someone recorded as a plain even grid. Both now lay the

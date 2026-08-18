@@ -103,17 +103,15 @@ try {
 
   // ---------- settings round-trip ----------
   await api("/settings", { method: "PUT", body: JSON.stringify({
-    livePageUrl: "https://cast.example.com/live/my-show",
     fosscastUrl: `http://127.0.0.1:${CAST_PORT}`,
     fosscastToken: "test-publisher-token"
   }) });
   const s = await j(await api("/settings"));
-  check("live page URL saved", s.livePageUrl === "https://cast.example.com/live/my-show", s.livePageUrl);
   check("fosscast address saved", s.fosscastUrl === `http://127.0.0.1:${CAST_PORT}`, s.fosscastUrl);
 
-  await api("/settings", { method: "PUT", body: JSON.stringify({ livePageUrl: "javascript:alert(1)" }) });
+  await api("/settings", { method: "PUT", body: JSON.stringify({ fosscastUrl: "javascript:alert(1)" }) });
   const s2 = await j(await api("/settings"));
-  check("non-https live page URL rejected", s2.livePageUrl === "https://cast.example.com/live/my-show");
+  check("non-https fosscast address rejected", s2.fosscastUrl === `http://127.0.0.1:${CAST_PORT}`);
 
   // ---------- a recording to publish ----------
   const uid = (await j(await api("/me"))).uid;

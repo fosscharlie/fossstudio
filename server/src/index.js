@@ -10,6 +10,8 @@ import { scheduleDailyBackups, sendAlertEmail } from "./ops.js";
 import { initPush } from "./push.js";
 import { resumeOrphanedRecordings, activeRenderCount } from "./recording/manager.js";
 import { diagnostics } from "./diagnostics.js";
+import { attachChat } from "./livechat.js";
+import { findSession } from "./settings.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -84,6 +86,31 @@ app.get("/s/:roomId([a-zA-Z0-9_-]{4,32})", (req, res) => {
   res.sendFile(path.join(config.webDir, "session.html"));
 });
 
+// The audience watch page: the live show with chat beside it. Public by
+// design, same trust as a session link - it can only ever receive.
+app.get("/live/:roomId([a-zA-Z0-9_-]{4,32})", async (req, res) => {
+  const session = await findSession(req.params.roomId);
+  if (!session) {
+    return res.status(404).sendFile(path.join(config.webDir, "404.html"), (err) => {
+      if (err) res.status(404).send("Not found");
+    });
+  }
+  res.sendFile(path.join(config.webDir, "live.html"));
+});
+
+// HLS playlist and segments for the watch page, written by the stream
+// engine under data/live/<room>. The playlist must never be cached (it
+// grows while live); finished segments never change, so a short cache
+// keeps many viewers cheap.
+app.get("/live/:roomId([a-zA-Z0-9_-]{4,32})/media/:file", (req, res) => {
+  const file = path.basename(req.params.file);
+  if (!/^(live\.m3u8|seg-\d+-\d+\.m4s|init-\d+\.mp4)$/.test(file)) return res.status(404).end();
+  res.setHeader("Cache-Control", file.endsWith(".m3u8") ? "no-store" : "public, max-age=60");
+  res.sendFile(path.join(config.dataDir, "live", req.params.roomId, file), (err) => {
+    if (err && !res.headersSent) res.status(404).end();
+  });
+});
+
 // Big unchanging assets get real caching; pages stay fresh
 for (const dir of ["assets", "fonts", "icons"]) {
   app.use(`/${dir}`, express.static(path.join(config.webDir, dir), { maxAge: "7d" }));
@@ -97,7 +124,17 @@ app.use((req, res) => {
 });
 
 const server = http.createServer(app);
-attachSignaling(server);
+// Two WebSocket endpoints share the server: /ws (session signaling) and
+// /chat (watch-page chat). Routed here by path - ws's own per-path
+// binding rejects the other endpoint's upgrades with a 400.
+const wssSignal = attachSignaling();
+const wssChat = attachChat();
+server.on("upgrade", (req, socket, head) => {
+  const { pathname } = new URL(req.url, "http://localhost");
+  const wss = pathname === "/ws" ? wssSignal : pathname === "/chat" ? wssChat : null;
+  if (!wss) return socket.destroy();
+  wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws, req));
+});
 
 await startMediasoup();
 await initPush();

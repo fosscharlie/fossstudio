@@ -1,0 +1,174 @@
+/* The audience watch page: video with the chat beside it. Same dark
+   look as the rest of the guest-facing app. */
+* { margin: 0; box-sizing: border-box; }
+:root {
+  --bg: #14161a;
+  --panel: #1e2127;
+  --text: #e8eaed;
+  --muted: #9aa0a8;
+  --line: #2c3038;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+}
+[hidden] { display: none !important; }
+
+.watch {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.watch-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.watch-head h1 { font-size: 1.05rem; font-weight: 700; }
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ff6b60;
+  border: 1px solid #6b2f2a;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+.live-badge .pulse {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #f34236;
+  animation: pulse 1.6s ease-out infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(243, 66, 54, 0.55); }
+  100% { box-shadow: 0 0 0 8px rgba(243, 66, 54, 0); }
+}
+.viewers { color: var(--muted); font-size: 0.85rem; margin-left: auto; }
+
+.watch-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+.player-wrap {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  background: #000;
+}
+#player { width: 100%; height: 100%; max-height: calc(100dvh - 3.2rem); }
+.offline {
+  text-align: center;
+  color: var(--muted);
+  padding: 2rem;
+}
+.offline svg { width: 3rem; height: 3rem; margin-bottom: 1rem; color: #565d6b; }
+.offline b { color: var(--text); font-size: 1.1rem; }
+.offline .soft { margin-top: 0.4rem; font-size: 0.9rem; }
+
+/* ---------- chat ---------- */
+.chat {
+  width: 21rem;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--line);
+  background: var(--bg);
+}
+.chat-head {
+  padding: 0.6rem 0.9rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--line);
+}
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.6rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.chat-msg { display: flex; gap: 0.4rem; align-items: baseline; }
+.chat-msg .who { font-weight: 700; flex: none; }
+.chat-msg.host .who { color: #fbc711; }
+.chat-msg .block {
+  margin-left: auto;
+  flex: none;
+  align-self: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+}
+.chat-msg:hover .block, .chat-msg .block:focus-visible { opacity: 1; }
+.chat-msg .block:hover { color: #ff6b60; }
+.chat-msg .block.confirm { color: #ff6b60; opacity: 1; }
+.chat-msg .block svg { width: 0.95rem; height: 0.95rem; }
+.chat-note { color: var(--muted); font-size: 0.8rem; text-align: center; }
+
+.join-box, .send-box {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  border-top: 1px solid var(--line);
+}
+.join-box input, .send-box input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+}
+.join-box button, .send-box button {
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  background: #4a7dbd;
+  color: #fff;
+  cursor: pointer;
+}
+.send-box button { display: grid; place-items: center; }
+.send-box button svg { width: 1.05rem; height: 1.05rem; }
+.chat-error {
+  color: #e08f8f;
+  font-size: 0.8rem;
+  padding: 0 0.9rem 0.6rem;
+}
+
+/* Narrow screens: video on top, chat fills the rest */
+@media (max-width: 760px) {
+  .watch-body { flex-direction: column; }
+  .player-wrap { flex: none; }
+  #player, .offline { width: 100%; }
+  #player { aspect-ratio: 16 / 9; height: auto; }
+  .chat { width: 100%; flex: 1; min-height: 0; border-left: 0; border-top: 1px solid var(--line); }
+}

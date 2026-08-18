@@ -45,18 +45,34 @@ dashboard.
   and the compositors, so the video is the picture people were on - the
   exception is a phone, which deliberately uses a two-column layout so
   faces stay big enough to see.
-- **Streaming:** server-composited RTMP out, with the same lower-third
-  banners and overlays as the session view. Point it at your own
-  [FOSSCast](https://github.com/lightmorphic/fosscast) instance for a
-  watch page on your own domain with live chat beside the video
-  (nickname chat, word masking, reversible IP bans - all FOSSCast's
-  side), or at YouTube. With a FOSSCast live page configured, sessions
-  get a copy-the-watch-link button and the host controls get a chat
-  window button while live.
-- **Publish to FOSSCast:** one click on a finished recording pushes the
-  video to your FOSSCast instance as a draft episode (reviewed there
-  before it goes public), using FOSSCast's publish API. The publisher
-  token stays on the server; it never reaches a browser.
+- **Your own live page:** "Go live" streams the composited show to the
+  studio's built-in watch page at `/live/<session>` - your URL, your
+  server, no other platform involved. The page switches itself on the
+  moment the stream starts and back off when it ends, with an HLS
+  player (self-hosted hls.js, native on Safari) and a live viewer
+  count. To also stream to YouTube at the same time, set its RTMP
+  server and key in the dashboard and it rides along on the same
+  encode. When the stream ends, the exact video the audience watched
+  is stitched losslessly into a ready recording in the dashboard.
+- **Live chat:** beside the video on the watch page. Viewers pick a
+  name and join in - no accounts, and nobody leaves the window. Words
+  on the banned list are masked, never deleted: first and last letter
+  kept, stars between ("f\*\*\*k"), whole words only, so ordinary words
+  containing them are never touched. A default English list ships in
+  `server/assets/banned-words.txt`; copy it to `data/banned-words.txt`
+  to customise. Hosts appear under their own name and can block anyone
+  from their messages - blocking bans the username AND the address, the
+  person's messages vanish for everyone instantly, and the block list
+  in the dashboard is visible and reversible (a mistake, or an accepted
+  apology, is one click to undo). Viewer addresses never reach any
+  client.
+- **Publish to FOSSCast:** one click on a finished recording (live
+  streams included) pushes the video to your
+  [FOSSCast](https://github.com/lightmorphic/fosscast) instance as a
+  draft episode - reviewed there before it goes public - using
+  FOSSCast's publish API. The publisher token stays on the server; it
+  never reaches a browser. FOSSCast is the episode archive and RSS
+  half; the studio owns everything live.
 - **OBS clean feed:** every session also has a view-only output link
   (`?output=1`) with no join screen and no controls - add it as an OBS
   Browser Source and stream the show from OBS to any platform. The feed
@@ -256,6 +272,7 @@ node test/title-block-test.mjs <url> <password>  # logo/title block matches the 
 node test/geometry-test.mjs <url> <password>     # live tile layout matches the compositors, grid and spotlight
 node test/spotlight-record-test.mjs <url> <password>  # a spotlit session records as a spotlight
 node test/fosscast-publish-test.mjs      # publish-to-FOSSCast flow against a stub instance
+node test/live-watch-test.mjs            # watch page, chat, word filter, blocking, live DVR stitch
 node test/firefox-compat-test.mjs <url> <password>  # same flows, real Firefox engine
 ```
 

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live - FOSSStudio</title>
+<link rel="icon" href="/icons/icon-192.png">
+<meta name="theme-color" content="#14161a">
+<link rel="stylesheet" href="/css/live.css?v=20260818a">
+</head>
+<body>
+<div class="watch">
+  <header class="watch-head">
+    <h1 id="showTitle">Live</h1>
+    <span id="liveBadge" class="live-badge" hidden><span class="pulse"></span>LIVE</span>
+    <span id="viewerCount" class="viewers" hidden></span>
+  </header>
+
+  <div class="watch-body">
+    <main class="player-wrap">
+      <video id="player" playsinline controls hidden></video>
+      <div id="offline" class="offline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4.9 19.1a10 10 0 0 1 0-14.2M7.8 16.2a6 6 0 0 1 0-8.4M19.1 4.9a10 10 0 0 1 0 14.2M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="2"/>
+        </svg>
+        <p><b id="offlineTitle">Not live right now</b></p>
+        <p class="soft">This page switches on by itself the moment the show starts.</p>
+      </div>
+    </main>
+
+    <aside class="chat" aria-label="Live chat">
+      <div class="chat-head">Chat</div>
+      <div id="chatList" class="chat-list" aria-live="polite"></div>
+      <div id="joinBox" class="join-box">
+        <input id="nameInput" maxlength="24" placeholder="Pick a name to chat" aria-label="Chat name">
+        <button id="joinBtn" type="button">Join chat</button>
+      </div>
+      <form id="sendBox" class="send-box" hidden>
+        <input id="msgInput" maxlength="500" placeholder="Say something…" autocomplete="off" aria-label="Message">
+        <button type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button>
+      </form>
+      <p id="chatError" class="chat-error" hidden></p>
+    </aside>
+  </div>
+</div>
+<script src="/assets/hls.min.js"></script>
+<script src="/js/live.js?v=20260818a"></script>
+</body>
+</html>

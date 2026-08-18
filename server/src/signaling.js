@@ -52,8 +52,11 @@ function forceMuteWindow(room, durationMs) {
   }, dur + 250);
 }
 
-export function attachSignaling(httpServer) {
-  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+export function attachSignaling() {
+  // noServer: index.js routes upgrade requests by path, because two
+  // path-scoped WebSocketServers on one HTTP server fight over the
+  // upgrade event (the first rejects the other's paths with a 400)
+  const wss = new WebSocketServer({ noServer: true });
 
   wss.on("connection", async (socket, req) => {
     const url = new URL(req.url, "http://localhost");
@@ -113,9 +116,6 @@ export function attachSignaling(httpServer) {
               ownerId: role === "host" ? room.ownerId : undefined,
               sounds: role === "host" ? (settings.sounds || []) : undefined,
               intros: role === "host" ? (settings.intros || []) : undefined,
-              // Where the audience watches (FOSSCast live page): the
-              // host gets a chat button and a copyable link in-session
-              livePageUrl: role === "host" ? (settings.livePageUrl || "") : undefined,
               routerRtpCapabilities: room.router.rtpCapabilities,
               iceServers: iceServers(),
               control: room.control,
@@ -388,11 +388,12 @@ export function attachSignaling(httpServer) {
               }
               case "stream": {
                 if (data.start) {
+                  // The studio's own watch page always gets the show;
+                  // RTMP (YouTube etc.) rides along when configured
                   const settings = await getSettings(room.ownerId);
-                  if (!settings.streamKey) {
-                    return fail("Add your stream key in the dashboard first (FOSSCast or YouTube).");
-                  }
-                  const url = `${settings.streamUrl.replace(/\/$/, "")}/${settings.streamKey}`;
+                  const url = settings.streamKey
+                    ? `${settings.streamUrl.replace(/\/$/, "")}/${settings.streamKey}`
+                    : null;
                   await startStream(room, url);
                   broadcast(room, null, { event: "streaming", data: { live: true } });
                 } else {
