@@ -19,7 +19,8 @@ import {
 } from "./recording/manager.js";
 import { capturePeer } from "./recording/serverRecorder.js";
 import {
-  startStream, stopStream, isStreaming, streamingSince, refreshStream, showOverlay, playIntroOnStream
+  startOutput, stopOutput, stopStream, isStreaming, liveOutputs, streamingSince,
+  refreshStream, showOverlay, playIntroOnStream
 } from "./streaming.js";
 
 const ROOM_ID_RE = /^[a-zA-Z0-9_-]{4,32}$/;
@@ -119,8 +120,7 @@ export function attachSignaling() {
               routerRtpCapabilities: room.router.rtpCapabilities,
               iceServers: iceServers(),
               control: room.control,
-              streaming: isStreaming(room.id),
-              streamingSince: streamingSince(room.id),
+              streaming: liveOutputs(room.id),
               recordingSince: activeRecording(room.id)?.startedAt || null,
               theme: {
                 // The pinned theme: identical for everyone until the
@@ -326,6 +326,26 @@ export function attachSignaling() {
                 if (isStreaming(room.id)) refreshStream(room.id);
                 break;
               }
+              case "titleBg": {
+                // Background colour of the logo/title block; the host's
+                // browser redraws the block PNG with it, so recordings
+                // and streams follow automatically
+                if (data.color !== null && !/^#[0-9a-fA-F]{6}$/.test(String(data.color))) {
+                  return fail("bad colour");
+                }
+                c.titleBg = data.color ? String(data.color).toLowerCase() : null;
+                break;
+              }
+              case "titleLayout": {
+                // Where the logo sits relative to the title. Only the
+                // host's browser needs it (it redraws and re-uploads
+                // the block PNG); everyone mirrors it on screen.
+                if (!["left", "right", "top", "bottom"].includes(data.layout)) {
+                  return fail("unknown layout");
+                }
+                c.titleLayout = data.layout;
+                break;
+              }
               case "titleShow": {
                 // Dropping the logo or the title only changes what the
                 // host's browser draws into the block PNG, which it
@@ -387,19 +407,24 @@ export function attachSignaling() {
                 return reply({});
               }
               case "stream": {
+                // Two independent outputs: "channel" is the studio's
+                // own watch page (chat, DVR), "rtmp" is YouTube or any
+                // RTMP destination. One shared encode carries both.
+                const target = data.target === "rtmp" ? "rtmp" : "channel";
                 if (data.start) {
-                  // The studio's own watch page always gets the show;
-                  // RTMP (YouTube etc.) rides along when configured
-                  const settings = await getSettings(room.ownerId);
-                  const url = settings.streamKey
-                    ? `${settings.streamUrl.replace(/\/$/, "")}/${settings.streamKey}`
-                    : null;
-                  await startStream(room, url);
-                  broadcast(room, null, { event: "streaming", data: { live: true } });
+                  let url = null;
+                  if (target === "rtmp") {
+                    const settings = await getSettings(room.ownerId);
+                    if (!settings.streamKey) {
+                      return fail("Add your YouTube stream server and key in the dashboard first.");
+                    }
+                    url = `${settings.streamUrl.replace(/\/$/, "")}/${settings.streamKey}`;
+                  }
+                  await startOutput(room, target, url);
                 } else {
-                  broadcast(room, null, { event: "streaming", data: { live: false } });
-                  await stopStream(room.id);
+                  await stopOutput(room.id, target);
                 }
+                broadcast(room, null, { event: "streaming", data: liveOutputs(room.id) });
                 return reply({});
               }
               case "overlay": {

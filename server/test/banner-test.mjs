@@ -55,6 +55,9 @@ check("banner overlays the bottom-left of the video, compact width",
   }));
 
 // Host changes banner colour to pink; guest should follow
+// The colour tools live behind the "Banner colours" button now
+await host.page.click("#hpBannerColorsBtn");
+await host.page.waitForSelector("#hpBannerPop:not([hidden])");
 await host.page.evaluate(() => {
   const inp = document.getElementById("hpBannerHex");
   inp.value = "#e8207e";
@@ -74,7 +77,7 @@ check(`per-person colours differ (${colours.join(" vs ")})`,
   colours.length === 2 && colours[0] !== colours[1]);
 
 // Back to a single colour via a swatch
-await host.page.$$eval(".hp-swatch", (btns) => btns[5].click());
+await host.page.$$eval("#hpBannerSwatches .hp-swatch", (btns) => btns[5].click());
 await new Promise((r) => setTimeout(r, 1500));
 const uniform = await guest.page.evaluate(() =>
   [...document.querySelectorAll(".tile .lower-third")].map((el) => getComputedStyle(el).backgroundColor));

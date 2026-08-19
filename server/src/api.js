@@ -29,7 +29,7 @@ import {
   getBackupKeep, setBackupKeep
 } from "./ops.js";
 import { publicKey, addSubscription } from "./push.js";
-import { isStreaming, streamingSince } from "./streaming.js";
+import { isStreaming, streamingSince, liveOutputs, channelRoomForOwner } from "./streaming.js";
 import { listBlocked, unblock } from "./livechat.js";
 import { probeMedia, transcodeIntro, needsConversion } from "./introcoder.js";
 
@@ -654,15 +654,30 @@ api.get("/recordings/:id/files/:file", requireAuth, async (req, res) => {
 
 // Watch page status: live or not, and what the show is called. Public,
 // same trust as the watch page itself; nothing here a viewer would not
-// see on joining.
-api.get("/live/:roomId", async (req, res) => {
-  const roomId = path.basename(req.params.roomId);
-  const session = await findSession(roomId);
-  if (!session) return res.status(404).json({ error: "not found" });
+// see on joining. The slug is either a session id (one show) or a
+// host's username - their permanent channel page (/live/fossnerds),
+// which switches to whichever of their sessions is live right now.
+api.get("/live/:slug", async (req, res) => {
+  const slug = path.basename(req.params.slug);
+  const session = await findSession(slug);
+  if (session) {
+    const outs = liveOutputs(slug);
+    return res.json({
+      live: outs.channel,
+      since: outs.channelSince,
+      roomId: slug,
+      title: session.title || ""
+    });
+  }
+  const user = await findByUsername(slug.toLowerCase());
+  if (!user || user.role === "admin") return res.status(404).json({ error: "not found" });
+  const roomId = channelRoomForOwner(user.id);
+  const live = roomId ? await findSession(roomId) : null;
   res.json({
-    live: isStreaming(roomId),
-    since: streamingSince(roomId),
-    title: session.title || ""
+    live: !!roomId,
+    since: roomId ? streamingSince(roomId) : null,
+    roomId: roomId || null,
+    title: live?.title || user.username
   });
 });
 

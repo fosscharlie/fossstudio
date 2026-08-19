@@ -4,6 +4,35 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Going live is now two independent buttons: "Go live" runs your own
+  channel page (video, chat, and the saved copy), "YouTube" pushes the
+  RTMP stream - either alone or both at once, on one shared encode,
+  each with its own running clock in the host controls.
+- Every host has a permanent channel link: `/live/<username>` (for
+  example `/live/fossnerds`). It never changes between shows - share it
+  once, and it switches itself on whenever one of your sessions goes
+  live on the channel, back to "not live" when it ends. Session-id
+  watch links keep working; the dashboard's copy button now hands out
+  the channel link.
+- While live on the channel, the chat docks into the left side of the
+  host's session view: read the room, reply under your banner name,
+  and block people straight from their messages - without leaving the
+  studio. (The pop-out chat window button is gone; this replaces it.)
+- The logo/title block's controls moved into a right-click menu on the
+  block itself - the hover toolbar kept vanishing before the pointer
+  could reach it, and the "drag to move" tooltip pill is gone too
+  (dragging still works, left button). The menu also gained logo
+  placement: left of the title (the new default), right, above or
+  below - mirrored exactly in recordings and streams.
+- The logo/title block's background colour is now pickable (host
+  controls, "Title colour"): swatches or a hex code, light backgrounds
+  flip the text dark automatically, and recordings and streams follow.
+- Host controls redesigned at half the width: active states are calm
+  grays instead of bright yellow (Mute all, NR, per-guest mute and
+  spotlight - the raised hand keeps its yellow, and recording/live
+  keep their red), the colour tools sit behind two small buttons
+  instead of always-open swatch rows, and Record / Go live / YouTube
+  are stacked full-width so their clocks never squeeze.
 - Intro videos are now bounded at 720p H.264: an upload above that (or
   in a heavy codec like VP9/HEVC/AV1) is converted once at upload, and
   intros uploaded before this are converted automatically at the next

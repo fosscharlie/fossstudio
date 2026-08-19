@@ -242,8 +242,8 @@
         await apiFetch(`/api/sessions/${s.id}`, { method: "DELETE" });
         loadSessions();
       });
-      const liveBtn = iconBtn("live", "Copy the watch page link - where the audience sees the show live and chats", async () => {
-        await navigator.clipboard.writeText(`${location.origin}/live/${s.id}`);
+      const liveBtn = iconBtn("live", "Copy your channel link - one permanent page where the audience watches and chats whenever you go live", async () => {
+        await navigator.clipboard.writeText(`${location.origin}/live/${me.username}`);
         liveBtn.classList.add("done");
         liveBtn.innerHTML = ICONS.tick;
         setTimeout(() => { liveBtn.classList.remove("done"); liveBtn.innerHTML = ICONS.live; }, 1500);

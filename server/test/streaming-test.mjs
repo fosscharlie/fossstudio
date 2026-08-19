@@ -54,7 +54,7 @@ const guestCtx = await browser.newContext({ permissions: ["camera", "microphone"
 const guest = await join(guestCtx, "Guest", false);
 await new Promise((r) => setTimeout(r, 2000));
 
-await host.click("#hpStreamBtn");
+await host.click("#hpYtBtn");
 await new Promise((r) => setTimeout(r, 3000));
 check("host sees LIVE indicator",
   await host.$eval("#banner", (el) => el.classList.contains("live")));
@@ -62,7 +62,7 @@ check("guest sees LIVE indicator",
   await guest.$eval("#banner", (el) => el.classList.contains("live")));
 
 await new Promise((r) => setTimeout(r, 15000));
-await host.click("#hpStreamBtn");
+await host.click("#hpYtBtn");
 await new Promise((r) => setTimeout(r, 3000));
 check("LIVE indicator cleared",
   await guest.$eval("#banner", (el) => !el.classList.contains("live")));

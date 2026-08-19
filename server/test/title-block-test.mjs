@@ -4,8 +4,9 @@
 // the two drifted apart by up to 38% on wide screens - and further for
 // the host, whose grid is narrower because of the sidebar.
 //
-// Also covers the host's block tools: resize, and dropping either the
-// logo or the title.
+// Also covers the host's right-click menu on the block: resize, logo
+// position (left by default), and dropping either the logo or the
+// title.
 //   node test/title-block-test.mjs <url> <password>
 import { chromium } from "playwright";
 import { makeRoom } from "./helpers.mjs";
@@ -38,10 +39,11 @@ async function join(ctx, roomId, name, asHost) {
   return page;
 }
 
-// The tools only exist while the block is hovered, like any hover control
-async function tool(page, id) {
-  await page.hover("#banner");
-  await page.click(id);
+// The block's controls live in its right-click menu
+async function menuClick(page, selector) {
+  await page.click("#banner", { button: "right" });
+  await page.waitForSelector("#titleMenu:not([hidden])", { timeout: 4000 });
+  await page.click(selector);
   await page.waitForTimeout(400);
 }
 
@@ -92,14 +94,21 @@ try {
   }
   await guest.setViewportSize({ width: 1600, height: 900 });
 
-  // --- host tools ---
-  const toolsVisible = await host.evaluate(() => !document.getElementById("titleTools").hidden);
-  check("host gets the block tools", toolsVisible);
-  const guestNoTools = await guest.evaluate(() => document.getElementById("titleTools").hidden);
-  check("guests do not", guestNoTools);
+  // --- the right-click menu ---
+  await host.click("#banner", { button: "right" });
+  const menuShown = await host.waitForSelector("#titleMenu:not([hidden])", { timeout: 4000 })
+    .then(() => true, () => false);
+  check("right-click opens the block menu for the host", menuShown);
+  check("no drag tooltip pill on the block",
+    await host.evaluate(() => !document.getElementById("banner").dataset.tip));
+  await host.keyboard.press("Escape");
+  await guest.click("#banner", { button: "right" }).catch(() => {});
+  await guest.waitForTimeout(300);
+  check("guests get no menu", await guest.evaluate(() =>
+    document.getElementById("titleMenu").hidden));
 
   const before = (await measure(host)).w;
-  await tool(host, "#titleBigger");
+  await menuClick(host, "#tmBigger");
   const bigger = (await measure(host)).w;
   check("bigger makes it bigger", bigger > before * 1.05, `${before.toFixed(0)} -> ${bigger.toFixed(0)}`);
 
@@ -116,11 +125,15 @@ try {
     titleWidth(1.1) === Math.round(1280 * TITLE_WIDTH_FRACTION * 1.1 / 2) * 2,
     String(titleWidth(1.1)));
 
-  await tool(host, "#titleSmaller");
+  await menuClick(host, "#tmSmaller");
   check("smaller undoes it", Math.abs((await measure(host)).w - before) < 2);
 
-  // Dropping the title: this session has no logo, so the block empties
-  await tool(host, "#titleTextBtn");
+  // Dropping every part empties the block (the logo too, when the
+  // theme carries one from an earlier run against the same data)
+  const hasLogo = await host.evaluate(() =>
+    !!document.getElementById("bannerLogo").getAttribute("src"));
+  if (hasLogo) await menuClick(host, "#tmLogo");
+  await menuClick(host, "#tmText");
   await host.waitForTimeout(500);
   const hidden = await guest.evaluate(() =>
     getComputedStyle(document.getElementById("bannerTitle")).display === "none" ||
@@ -133,10 +146,41 @@ try {
     getComputedStyle(document.getElementById("banner")).display !== "none");
   check("but the host keeps a handle to bring it back", hostKeepsHandle);
 
-  await tool(host, "#titleTextBtn");
+  await menuClick(host, "#tmText");
+  if (hasLogo) await menuClick(host, "#tmLogo");
   await host.waitForTimeout(500);
   const restored = await guest.evaluate(() => !document.getElementById("bannerTitle").hidden);
   check("and it comes back", restored);
+
+  // --- logo position: left is the default, changes reach everyone ---
+  // A second session whose theme carries a logo
+  const logoUp = await host.evaluate(async () => {
+    const b64 = "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAECAYAAAC3OK7NAAAAFklEQVR4nGP8z8DwnwEPYMKnYDAoAADAgQMBVti6WgAAAABJRU5ErkJggg==";
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const r = await fetch("/api/logo", {
+      method: "POST", headers: { "Content-Type": "image/png" }, body: bytes
+    });
+    return r.status;
+  });
+  check("logo uploaded for the layout checks", logoUp === 200, String(logoUp));
+  const roomId2 = await makeRoom(B, PASS, "Layout Test");
+  const host2 = await join(hostCtx, roomId2, "Host", true);
+  const guest2 = await join(guestCtx, roomId2, "Guest", false);
+  await host2.waitForTimeout(1500);
+
+  const layoutOf = (page) => page.evaluate(() =>
+    [...document.getElementById("banner").classList].find((c) => c.startsWith("layout-")));
+  check("logo sits left of the title by default", await layoutOf(host2) === "layout-left",
+    String(await layoutOf(host2)));
+  check("guests see the same default", await layoutOf(guest2) === "layout-left");
+
+  await host2.click("#banner", { button: "right" });
+  await host2.waitForSelector("#titleMenu:not([hidden])", { timeout: 4000 });
+  await host2.click('.tm-layout[data-layout="top"]');
+  await host2.waitForTimeout(800);
+  check("host moved the logo above the title", await layoutOf(host2) === "layout-top");
+  check("guests follow the layout change", await layoutOf(guest2) === "layout-top",
+    String(await layoutOf(guest2)));
 } catch (err) {
   check(`test run: ${err.message}`, false);
 } finally {

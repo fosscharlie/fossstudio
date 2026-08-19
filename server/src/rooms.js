@@ -34,7 +34,9 @@ export async function getOrCreateRoom(roomId) {
         autoGain: true,          // per-session, host-toggled (on by default)
         titlePos: { x: 0.5, y: 0 }, // logo/title block, fraction of free space
         titleScale: 1,             // host-resized, 0.5x to 2x
-        titleShow: { logo: true, text: true } // host can drop either part
+        titleShow: { logo: true, text: true }, // host can drop either part
+        titleLayout: "left",       // logo beside/above/below the title
+        titleBg: null              // block background (null = default dark)
       }
     };
     rooms.set(roomId, room);

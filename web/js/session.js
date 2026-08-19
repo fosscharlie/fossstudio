@@ -23,18 +23,22 @@
     mediaWarningClose: $("mediaWarningClose"), mediaWarningLink: $("mediaWarningLink"),
     session: $("session"), banner: $("banner"), grid: $("grid"),
     bannerLogo: $("bannerLogo"), bannerTitle: $("bannerTitle"),
-    titleTools: $("titleTools"), titleSmaller: $("titleSmaller"),
-    titleBigger: $("titleBigger"), titleLogoBtn: $("titleLogoBtn"),
-    titleTextBtn: $("titleTextBtn"),
+    titleMenu: $("titleMenu"), tmBigger: $("tmBigger"), tmSmaller: $("tmSmaller"),
+    tmLogo: $("tmLogo"), tmText: $("tmText"),
     muteBtn: $("muteBtn"), camBtn: $("camBtn"), leaveBtn: $("leaveBtn"),
     dimBtn: $("dimBtn"), handBtn: $("handBtn"), hostPanel: $("hostPanel"),
     hpAutoGain: $("hpAutoGain"), hpGuests: $("hpGuests"),
-    hpChatBtn: $("hpChatBtn"),
-    hpRecordBtn: $("hpRecordBtn"), hpStreamBtn: $("hpStreamBtn"),
+    hpRecordBtn: $("hpRecordBtn"), hpLiveBtn: $("hpLiveBtn"), hpYtBtn: $("hpYtBtn"),
+    hostChat: $("hostChat"), hostChatList: $("hostChatList"),
+    hostChatSend: $("hostChatSend"), hostChatInput: $("hostChatInput"),
+    hostChatViewers: $("hostChatViewers"),
     hpServerRec: $("hpServerRec"),
     hpMuteAllBtn: $("hpMuteAllBtn"), hpSubBtn: $("hpSubBtn"), hpAdBtn: $("hpAdBtn"),
     hpBannerSwatches: $("hpBannerSwatches"), hpBannerHex: $("hpBannerHex"),
     hpBannerMulti: $("hpBannerMulti"), hpBannerChoice: $("hpBannerChoice"),
+    hpBannerColorsBtn: $("hpBannerColorsBtn"), hpTitleColorsBtn: $("hpTitleColorsBtn"),
+    hpBannerPop: $("hpBannerPop"), hpTitlePop: $("hpTitlePop"),
+    hpTitleSwatches: $("hpTitleSwatches"), hpTitleHex: $("hpTitleHex"),
     soundboardBtn: $("soundboardBtn"), soundBar: $("soundBar"),
     soundBarList: $("soundBarList"), soundBarClose: $("soundBarClose"),
     introOverlay: $("introOverlay"), introVideo: $("introVideo"),
@@ -699,6 +703,62 @@
     }
   }
 
+  // The colour tools sit behind two small buttons - the panel stays
+  // calm until colours are wanted
+  const togglePop = (btn, pop, other) => () => {
+    other.hidden = true;
+    pop.hidden = !pop.hidden;
+    els.hpBannerColorsBtn.classList.toggle("active", !els.hpBannerPop.hidden);
+    els.hpTitleColorsBtn.classList.toggle("active", !els.hpTitlePop.hidden);
+  };
+  els.hpBannerColorsBtn.onclick = togglePop(els.hpBannerColorsBtn, els.hpBannerPop, els.hpTitlePop);
+  els.hpTitleColorsBtn.onclick = togglePop(els.hpTitleColorsBtn, els.hpTitlePop, els.hpBannerPop);
+
+  // Background colour of the logo/title block. The first swatch is the
+  // default dark; light backgrounds flip the text dark automatically.
+  const TITLE_DEFAULT_BG = "#1e2127";
+  function titleBgColor() {
+    return /^#[0-9a-fA-F]{6}$/.test(control?.titleBg || "") ? control.titleBg : TITLE_DEFAULT_BG;
+  }
+  function titleFgFor(bg) {
+    const r = parseInt(bg.slice(1, 3), 16), g = parseInt(bg.slice(3, 5), 16), b = parseInt(bg.slice(5, 7), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? "#14161a" : "#ffffff";
+  }
+  function applyTitleBg() {
+    const bg = titleBgColor();
+    els.banner.style.setProperty("--title-bg", bg);
+    els.banner.style.setProperty("--title-fg", titleFgFor(bg));
+    if (isHost) renderTitleSwatches();
+  }
+  function sendTitleBg(c) {
+    control.titleBg = c; // optimistic
+    applyTitleBg();
+    sendBannerSnapshots().catch(() => {});
+    request("hostControl", { action: "titleBg", color: c }).catch(() => {});
+  }
+  function renderTitleSwatches() {
+    els.hpTitleSwatches.innerHTML = "";
+    for (const hex of [TITLE_DEFAULT_BG, ...BANNER_COLOURS.filter((c) => c !== TITLE_DEFAULT_BG)]) {
+      const b = document.createElement("button");
+      b.className = "hp-swatch" + (hex === titleBgColor() ? " active" : "");
+      b.style.background = hex;
+      b.dataset.tip = hex === TITLE_DEFAULT_BG ? "Default" : hex;
+      b.setAttribute("aria-label", `Title block colour ${hex}`);
+      b.onclick = () => sendTitleBg(hex === TITLE_DEFAULT_BG ? null : hex);
+      els.hpTitleSwatches.appendChild(b);
+    }
+    if (document.activeElement !== els.hpTitleHex) {
+      els.hpTitleHex.value = control?.titleBg || "";
+    }
+  }
+  els.hpTitleHex.onchange = () => {
+    let v = els.hpTitleHex.value.trim();
+    if (/^[0-9a-fA-F]{6}$/.test(v)) v = `#${v}`;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) sendTitleBg(v.toLowerCase());
+    else if (v === "") sendTitleBg(null);
+    else els.hpTitleHex.value = control?.titleBg || "";
+  };
+
   els.hpBannerMulti.onclick = () =>
     request("hostControl", { action: "bannerMulti" }).catch(() => {});
   els.hpBannerChoice.onclick = () =>
@@ -793,6 +853,7 @@
         ? "Unmute everyone at once" : "Mute everyone at once, including you";
     }
     applyLayout();
+    applyTitleBg();
     applyTitleShow();
     if (isHost) renderHostGuests();
     scheduleBannerSnapshots();
@@ -805,14 +866,14 @@
 
   let bannerSnapTimer = null;
   function scheduleBannerSnapshots() {
-    if (!isHost || (!recording && !live)) return;
+    if (!isHost || (!recording && !live())) return;
     clearTimeout(bannerSnapTimer);
     bannerSnapTimer = setTimeout(() => sendBannerSnapshots().catch(() => {}), 600);
   }
 
   let lastBannerPayload = "";
   async function sendBannerSnapshots(force) {
-    if (!isHost || (!force && !recording && !live)) return;
+    if (!isHost || (!force && !recording && !live())) return;
     await document.fonts.ready;
     const images = {};
     for (const [peerId, tile] of tiles) {
@@ -841,41 +902,46 @@
   }
 
   // The logo/title block for the composite, drawn at a 532px design
-  // width. Every measurement here has a matching ratio of --title-w in
-  // session.css, and the block is content-height exactly like the DOM
-  // one - it used to reserve a fixed title area whatever the text did,
-  // which made the block in the video up to 2.7x taller than the block
-  // on screen even though both started at the same top edge.
+  // width. Every measurement here has a matching ratio in session.css
+  // (via --title-w), including the four logo positions, and the block
+  // is content-height exactly like the DOM one - so the video shows
+  // the same block the session did.
   function drawTitlePng(text) {
     const logo = document.getElementById("bannerLogo");
     const hasLogo = !logo.hidden && logo.complete && logo.naturalWidth > 0;
-    const W = 532, r = 16, padX = 16, padY = 14, gap = 4;
+    const layout = ["left", "right", "top", "bottom"].includes(control?.titleLayout)
+      ? control.titleLayout : "left";
+    const W = 532, r = 16, padX = 16, padY = 14;
+    const row = hasLogo && text && (layout === "left" || layout === "right");
     const innerW = W - 2 * padX;
 
-    // Fitted the way the DOM fits it: max 500x100, aspect preserved
+    // Row layouts box the logo at 30% width; column layouts let it
+    // span the block - both mirror the CSS ratios exactly
     let logoW = 0, logoH = 0;
     if (hasLogo) {
-      const fit = Math.min(500 / logo.naturalWidth, 100 / logo.naturalHeight);
+      const boxW = row ? W * 0.3008 : 500;
+      const boxH = row ? W * 0.1203 : 100;
+      const fit = Math.min(boxW / logo.naturalWidth, boxH / logo.naturalHeight);
       logoW = logo.naturalWidth * fit;
       logoH = logo.naturalHeight * fit;
     }
 
-    // Lay the text out before sizing the canvas, so the canvas can be
-    // as tall as the text actually turned out to be
+    const gap = row ? W * 0.015 : 4;
+    const textW = row ? innerW - logoW - gap : innerW;
     const font = hasLogo ? "700 30px Manrope, sans-serif" : "700 40px Manrope, sans-serif";
     const lineH = hasLogo ? Math.round(30 * 1.15) : Math.round(40 * 1.2);
     const meas = document.createElement("canvas").getContext("2d");
     meas.font = font;
     let lines = [];
     if (text && hasLogo) {
-      lines = [ellipsize(meas, text, innerW)];
+      lines = [ellipsize(meas, text, textW)];
     } else if (text) {
       // Text-only: wrap to at most three larger lines, like the DOM's
       // -webkit-line-clamp: 3
       let line = "";
       for (const word of text.split(/\s+/)) {
         const next = line ? `${line} ${word}` : word;
-        if (meas.measureText(next).width > innerW && line) {
+        if (meas.measureText(next).width > textW && line) {
           lines.push(line);
           line = word;
         } else line = next;
@@ -885,32 +951,53 @@
         lines = lines.slice(0, 3);
         lines[2] += "…";
       }
-      lines = lines.map((l) => ellipsize(meas, l, innerW));
+      lines = lines.map((l) => ellipsize(meas, l, textW));
     }
-
     const titleH = lines.length * lineH;
-    const H = Math.round(padY + logoH + (logoH && titleH ? gap : 0) + titleH + padY);
+
+    const H = Math.round(row
+      ? Math.max(logoH, titleH) + 2 * padY
+      : padY + logoH + (logoH && titleH ? gap : 0) + titleH + padY);
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
     const x = c.getContext("2d");
+    const bg = titleBgColor();
+    const fg = titleFgFor(bg);
     x.beginPath();
     x.roundRect(0, 0, W, H, r);
-    x.fillStyle = "#1e2127";
+    x.fillStyle = bg;
     x.fill();
-    x.strokeStyle = "rgba(255, 255, 255, 0.18)";
+    x.strokeStyle = fg === "#ffffff" ? "rgba(255, 255, 255, 0.18)" : "rgba(0, 0, 0, 0.22)";
     x.lineWidth = 2;
     x.stroke();
-    let yPos = padY;
-    if (hasLogo) {
-      x.drawImage(logo, (W - logoW) / 2, yPos, logoW, logoH);
-      yPos += logoH + (titleH ? gap : 0);
-    }
-    if (titleH) {
-      x.fillStyle = "#ffffff";
-      x.textAlign = "center";
-      x.textBaseline = "middle";
+    x.fillStyle = fg;
+    x.textBaseline = "middle";
+
+    if (row) {
+      // Logo one side, title the other, both vertically centred
+      const logoX = layout === "left" ? padX : W - padX - logoW;
+      const textStart = layout === "left" ? padX + logoW + gap : padX;
+      x.drawImage(logo, logoX, (H - logoH) / 2, logoW, logoH);
       x.font = font;
-      lines.forEach((l, i) => x.fillText(l, W / 2, yPos + i * lineH + lineH / 2));
+      x.textAlign = "center";
+      x.fillText(lines[0], textStart + textW / 2, H / 2);
+    } else {
+      // Column: logo above the title, or below it for layout-bottom
+      const logoFirst = layout !== "bottom";
+      let yPos = padY;
+      const drawLogo = () => {
+        if (!hasLogo) return;
+        x.drawImage(logo, (W - logoW) / 2, yPos, logoW, logoH);
+        yPos += logoH + (titleH ? gap : 0);
+      };
+      const drawText = () => {
+        if (!titleH) return;
+        x.font = font;
+        x.textAlign = "center";
+        lines.forEach((l, i) => x.fillText(l, W / 2, yPos + i * lineH + lineH / 2));
+        yPos += titleH + (hasLogo && !logoFirst ? gap : 0);
+      };
+      if (logoFirst) { drawLogo(); drawText(); } else { drawText(); drawLogo(); }
     }
     return c.toDataURL("image/png");
   }
@@ -937,9 +1024,6 @@
     els.banner.style.left = `${pos.x * (gw - bw)}px`;
     els.banner.style.top = `${pos.y * (gh - bh) + TITLE_TOP_INSET * gh * (1 - pos.y)}px`;
     els.banner.style.transform = "none";
-    // Tools hang below the block normally, above it once the block is
-    // low enough that below would be off the bottom of the video
-    els.banner.classList.toggle("tools-above", pos.y > 0.65);
   }
 
   // Host dropped the logo or the title. Only this browser's drawing of
@@ -952,15 +1036,28 @@
     if (titleEl) titleEl.hidden = !show.text || !titleEl.textContent.trim();
     els.banner.classList.toggle("has-logo", !!logoEl && !logoEl.hidden);
     els.banner.classList.toggle("blank", logoEl.hidden && titleEl.hidden);
+    // Where the logo sits relative to the title (left by default);
+    // everyone mirrors it, and drawTitlePng() bakes the same geometry
+    // into the recording and the stream
+    const layout = ["left", "right", "top", "bottom"].includes(control?.titleLayout)
+      ? control.titleLayout : "left";
+    for (const l of ["left", "right", "top", "bottom"]) {
+      els.banner.classList.toggle(`layout-${l}`, l === layout);
+    }
     if (isHost) {
       const scale = Math.min(2, Math.max(0.5, Number(control?.titleScale) || 1));
-      els.titleLogoBtn.setAttribute("aria-pressed", String(show.logo));
-      els.titleTextBtn.setAttribute("aria-pressed", String(show.text));
-      // A logo the theme never supplied is nothing to toggle
-      els.titleLogoBtn.disabled = !logoEl.getAttribute("src");
-      els.titleTextBtn.disabled = !titleEl.textContent.trim();
-      els.titleSmaller.disabled = scale <= 0.5;
-      els.titleBigger.disabled = scale >= 2;
+      // A logo the theme never supplied is nothing to toggle or place
+      const hasLogoSrc = !!logoEl.getAttribute("src");
+      els.tmLogo.textContent = show.logo ? "Hide logo" : "Show logo";
+      els.tmText.textContent = show.text ? "Hide title" : "Show title";
+      els.tmLogo.disabled = !hasLogoSrc;
+      els.tmText.disabled = !titleEl.textContent.trim();
+      els.tmSmaller.disabled = scale <= 0.5;
+      els.tmBigger.disabled = scale >= 2;
+      for (const b of els.titleMenu.querySelectorAll(".tm-layout")) {
+        b.classList.toggle("active", b.dataset.layout === layout);
+        b.disabled = !hasLogoSrc || !show.logo;
+      }
     }
     positionTitleBlock();
     sendBannerSnapshots().catch(() => {});
@@ -969,19 +1066,17 @@
 
   function enableTitleDrag() {
     els.banner.classList.add("host-drag");
-    els.banner.dataset.tip = "Drag to move the title anywhere";
-    els.titleTools.hidden = false;
-    // Pressing a tool must not also start a drag of the block under it
-    els.titleTools.addEventListener("pointerdown", (e) => e.stopPropagation());
 
+    // All the block's controls live in a right-click menu: hover
+    // controls kept vanishing before the pointer could reach them
     const setScale = (next) => {
       const s = Math.min(2, Math.max(0.5, Math.round(next * 10) / 10));
       control.titleScale = s; // optimistic; the broadcast confirms it
       applyTitleShow();
       request("hostControl", { action: "titleScale", scale: s }).catch(() => {});
     };
-    els.titleSmaller.onclick = () => setScale((control.titleScale || 1) - 0.1);
-    els.titleBigger.onclick = () => setScale((control.titleScale || 1) + 0.1);
+    els.tmBigger.onclick = () => setScale((control.titleScale || 1) + 0.1);
+    els.tmSmaller.onclick = () => setScale((control.titleScale || 1) - 0.1);
 
     const toggleTitlePart = (key) => {
       const show = { logo: true, text: true, ...(control.titleShow || {}) };
@@ -989,12 +1084,43 @@
       control.titleShow = show;
       applyTitleShow();
       request("hostControl", { action: "titleShow", ...show }).catch(() => {});
+      hideTitleMenu();
     };
-    els.titleLogoBtn.onclick = () => toggleTitlePart("logo");
-    els.titleTextBtn.onclick = () => toggleTitlePart("text");
+    els.tmLogo.onclick = () => toggleTitlePart("logo");
+    els.tmText.onclick = () => toggleTitlePart("text");
+
+    for (const b of els.titleMenu.querySelectorAll(".tm-layout")) {
+      b.onclick = () => {
+        control.titleLayout = b.dataset.layout; // optimistic
+        applyTitleShow();
+        request("hostControl", { action: "titleLayout", layout: b.dataset.layout }).catch(() => {});
+        hideTitleMenu();
+      };
+    }
+
+    function hideTitleMenu() {
+      els.titleMenu.hidden = true;
+    }
+    els.banner.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      applyTitleShow(); // menu labels/ticks reflect the current state
+      const gr = els.grid.getBoundingClientRect();
+      els.titleMenu.hidden = false;
+      // At the pointer, kept inside the video area
+      const mw = els.titleMenu.offsetWidth, mh = els.titleMenu.offsetHeight;
+      els.titleMenu.style.left = `${Math.min(e.clientX - gr.left, els.grid.clientWidth - mw - 8)}px`;
+      els.titleMenu.style.top = `${Math.min(e.clientY - gr.top, els.grid.clientHeight - mh - 8)}px`;
+    });
+    document.addEventListener("pointerdown", (e) => {
+      if (!els.titleMenu.hidden && !els.titleMenu.contains(e.target)) hideTitleMenu();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") hideTitleMenu();
+    });
 
     let dragging = null;
     els.banner.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return; // right button opens the menu instead
       dragging = { dx: e.clientX - els.banner.offsetLeft, dy: e.clientY - els.banner.offsetTop };
       els.banner.setPointerCapture(e.pointerId);
       e.preventDefault();
@@ -1157,7 +1283,8 @@
   // Elapsed timers on the host's record/stream buttons. Start times come
   // from the server where possible, so a host who reloads mid-take still
   // sees the true elapsed time.
-  let recStartAt = null, liveStartAt = null;
+  let recStartAt = null;
+  let channelSince = null, rtmpSince = null;
   const fmtElapsed = (ms) => {
     const t = Math.max(0, Math.floor(ms / 1000));
     const p = (n) => String(n).padStart(2, "0");
@@ -1169,8 +1296,11 @@
     if (recording && recStartAt) {
       els.hpRecordBtn.textContent = `■ ${fmtElapsed(Date.now() - recStartAt)}`;
     }
-    if (live && liveStartAt) {
-      els.hpStreamBtn.textContent = `■ ${fmtElapsed(Date.now() - liveStartAt)}`;
+    if (outputs.channel && channelSince) {
+      els.hpLiveBtn.textContent = `■ ${fmtElapsed(Date.now() - channelSince)}`;
+    }
+    if (outputs.rtmp && rtmpSince) {
+      els.hpYtBtn.textContent = `■ ${fmtElapsed(Date.now() - rtmpSince)}`;
     }
   }, 1000);
 
@@ -1200,12 +1330,12 @@
   // so the switch has to lock while recording or live.
   function updateServerRecLock() {
     if (!isHost || !els.hpServerRec) return;
-    els.hpServerRec.disabled = recording || live;
+    els.hpServerRec.disabled = recording || live();
     updateServerRecTip();
   }
   function updateServerRecTip() {
     const server = els.hpServerRec.classList.contains("active");
-    els.hpServerRec.dataset.tip = (recording || live)
+    els.hpServerRec.dataset.tip = (recording || live())
       ? "Recording mode is locked while recording or live"
       : server
         ? "Recording on the server (click for browser recording)"
@@ -1547,37 +1677,159 @@
     updateServerRecTip();
   };
 
-  let live = false;
-  let chatWindow = null;
-  els.hpChatBtn.onclick = () => {
-    if (chatWindow && !chatWindow.closed) { chatWindow.focus(); return; }
-    // The studio's own watch page: the host is logged in, so the same
-    // page gives them chat with block buttons on every message
-    chatWindow = window.open(`/live/${roomId}`, "fossstudio-chat", "width=380,height=680,popup");
-  };
-  function setLiveIndicator(on) {
-    live = on;
-    liveStartAt = on ? (liveStartAt || Date.now()) : null;
-    els.banner.classList.toggle("live", on);
-    // Audience chat lives on the studio's own watch page - open it in a
-    // window beside the show
-    els.hpChatBtn.hidden = !(on && isHost);
-    els.hpStreamBtn.textContent = on
-      ? `■ ${fmtElapsed(Date.now() - liveStartAt)}`
-      : "📡 Go live";
-    els.hpStreamBtn.dataset.tip = on ? "End the stream" : "Go live to your stream destination";
-    els.hpStreamBtn.classList.toggle("rec-on", on);
+  // The two live outputs are independent: "channel" is the studio's own
+  // watch page (chat, saved copy), "rtmp" is YouTube. Each has its own
+  // button and its own clock.
+  let outputs = { channel: false, rtmp: false };
+  const live = () => outputs.channel || outputs.rtmp;
+  function setLiveIndicator(next) {
+    outputs = { channel: !!next.channel, rtmp: !!next.rtmp };
+    channelSince = next.channelSince || null;
+    rtmpSince = next.rtmpSince || null;
+    els.banner.classList.toggle("live", live());
+    els.hpLiveBtn.textContent = outputs.channel
+      ? `■ ${fmtElapsed(Date.now() - (channelSince || Date.now()))}`
+      : "Go live";
+    els.hpLiveBtn.dataset.tip = outputs.channel
+      ? "End the channel stream"
+      : "Go live on your channel page - video, chat and a saved copy, all on your own domain";
+    els.hpLiveBtn.classList.toggle("rec-on", outputs.channel);
+    els.hpYtBtn.textContent = outputs.rtmp
+      ? `■ ${fmtElapsed(Date.now() - (rtmpSince || Date.now()))}`
+      : "YouTube";
+    els.hpYtBtn.dataset.tip = outputs.rtmp
+      ? "End the YouTube stream"
+      : "Also stream to YouTube (needs the stream key from the dashboard)";
+    els.hpYtBtn.classList.toggle("rec-on", outputs.rtmp);
     updateServerRecLock();
-    if (on) scheduleBannerSnapshots();
+    if (live()) scheduleBannerSnapshots();
+    if (isHost) syncHostChat();
   }
-  els.hpStreamBtn.onclick = async () => {
+  // The channel page's chat, docked on the left while the channel is
+  // live. The host talks under their banner name and can block people
+  // straight from the messages.
+  let hostChatWs = null;
+  let hostChatJoined = false;
+  let hostChatNextId = 1;
+  const hostChatPending = new Map();
+
+  function hostChatRequest(method, data) {
+    return new Promise((resolve, reject) => {
+      if (!hostChatWs || hostChatWs.readyState !== 1) return reject(new Error("Chat not connected."));
+      const id = hostChatNextId++;
+      hostChatPending.set(id, { resolve, reject });
+      hostChatWs.send(JSON.stringify({ id, method, data }));
+      setTimeout(() => { if (hostChatPending.delete(id)) reject(new Error("No reply.")); }, 10000);
+    });
+  }
+
+  function hostChatAdd(m) {
+    const row = document.createElement("div");
+    row.className = "chat-msg" + (m.host ? " host" : "");
+    row.dataset.name = m.name.toLowerCase();
+    const who = document.createElement("span");
+    who.className = "who";
+    who.textContent = m.name;
+    const text = document.createElement("span");
+    text.textContent = m.text;
+    row.append(who, text);
+    if (!m.host) {
+      const block = document.createElement("button");
+      block.className = "block";
+      block.dataset.tip = "Block this person";
+      block.setAttribute("aria-label", `Block ${m.name}`);
+      block.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>';
+      block.onclick = () => {
+        if (!block.classList.contains("confirm")) {
+          block.classList.add("confirm");
+          block.dataset.tip = "Click again to block";
+          setTimeout(() => { block.classList.remove("confirm"); block.dataset.tip = "Block this person"; }, 4000);
+          return;
+        }
+        hostChatRequest("block", { name: m.name }).catch(() => {});
+      };
+      row.appendChild(block);
+    }
+    els.hostChatList.appendChild(row);
+    while (els.hostChatList.children.length > 200) els.hostChatList.firstChild.remove();
+    els.hostChatList.scrollTop = els.hostChatList.scrollHeight;
+  }
+
+  async function hostChatJoin() {
+    // The banner name is who the host is everywhere - the chat included.
+    // If a viewer somehow took it first, a suffix keeps it recognisable.
+    for (const name of [selfName, `${selfName} (host)`]) {
+      try {
+        await hostChatRequest("join", { name });
+        hostChatJoined = true;
+        return;
+      } catch { /* taken - try the next */ }
+    }
+  }
+
+  function syncHostChat() {
+    const want = isHost && outputs.channel;
+    els.hostChat.hidden = !want;
+    if (!want) {
+      hostChatWs?.close();
+      hostChatWs = null;
+      hostChatJoined = false;
+      return;
+    }
+    if (hostChatWs) return;
+    const proto = location.protocol === "https:" ? "wss" : "ws";
+    hostChatWs = new WebSocket(`${proto}://${location.host}/chat?room=${roomId}`);
+    hostChatWs.onmessage = (e) => {
+      let msg;
+      try { msg = JSON.parse(e.data); } catch { return; }
+      if (msg.id) {
+        const pnd = hostChatPending.get(msg.id);
+        if (pnd) { hostChatPending.delete(msg.id); msg.ok ? pnd.resolve(msg.data) : pnd.reject(new Error(msg.error)); }
+        return;
+      }
+      const { event, data } = msg;
+      if (event === "hello") {
+        els.hostChatList.innerHTML = "";
+        for (const m of data.history || []) hostChatAdd(m);
+        els.hostChatViewers.textContent = data.viewers ? `· ${data.viewers} watching` : "";
+        if (!hostChatJoined) hostChatJoin();
+      } else if (event === "message") {
+        hostChatAdd(data);
+      } else if (event === "viewers") {
+        els.hostChatViewers.textContent = data.viewers ? `· ${data.viewers} watching` : "";
+      } else if (event === "blocked") {
+        for (const el of els.hostChatList.querySelectorAll(`[data-name="${CSS.escape(data.name.toLowerCase())}"]`)) {
+          el.remove();
+        }
+      }
+    };
+    hostChatWs.onclose = () => {
+      hostChatJoined = false;
+      hostChatWs = null;
+      // Still live? The socket dropped, not the show - come back
+      if (isHost && outputs.channel) setTimeout(syncHostChat, 2000);
+    };
+  }
+  els.hostChatSend.onsubmit = async (e) => {
+    e.preventDefault();
+    const text = els.hostChatInput.value.trim();
+    if (!text) return;
+    try {
+      await hostChatRequest("message", { text });
+      els.hostChatInput.value = "";
+    } catch { /* rate limit or not joined; the input keeps the text */ }
+  };
+
+  const toggleOutput = (target) => async () => {
     try {
       // Banners must reach the server before launch: the stream graph is
       // fixed at start, and a late arrival would force a relaunch blip
-      if (!live) await sendBannerSnapshots(true).catch(() => {});
-      await request("hostControl", { action: "stream", start: !live });
+      if (!outputs[target]) await sendBannerSnapshots(true).catch(() => {});
+      await request("hostControl", { action: "stream", target, start: !outputs[target] });
     } catch (e) { alert(e.message); }
   };
+  els.hpLiveBtn.onclick = toggleOutput("channel");
+  els.hpYtBtn.onclick = toggleOutput("rtmp");
 
   // ---------- Consuming ----------
 
@@ -1734,15 +1986,14 @@
       eventHandlers.recordingStopped = () => {
         recorders.length ? stopSelfRecording() : setRecIndicator(false);
       };
-      eventHandlers.streaming = ({ live: isLive }) => setLiveIndicator(isLive);
+      eventHandlers.streaming = (outs) => setLiveIndicator(outs);
       eventHandlers.overlay = playDomOverlay;
       eventHandlers.intro = playDomIntro;
       // Server start times pre-seed the button timers, so a host who
       // reloads mid-take sees true elapsed, not zero - and a stale
       // local value never leaks into a new take
       recStartAt = info.recordingSince || null;
-      liveStartAt = info.streamingSince || null;
-      if (info.streaming) setLiveIndicator(true);
+      if (info.streaming) setLiveIndicator(info.streaming);
       // Replay anything that arrived while we were wiring up - a
       // recordingStarted for a mid-recording join must not be lost
       drainEarlyEvents();

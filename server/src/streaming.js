@@ -67,30 +67,95 @@ export function isStreaming(roomId) {
   return streams.has(roomId);
 }
 
-// When the stream started, for the host's elapsed timer (rejoin-safe)
-export function streamingSince(roomId) {
-  return streams.get(roomId)?.startedAt || null;
+// The two outputs are independent: "channel" is the studio's own watch
+// page (HLS + chat + DVR), "rtmp" is YouTube or any RTMP destination.
+// Each has its own button and its own clock in the host controls.
+export function liveOutputs(roomId) {
+  const state = streams.get(roomId);
+  return {
+    channel: !!state?.outputs.channel,
+    rtmp: !!state?.outputs.rtmp,
+    channelSince: state?.channelSince || null,
+    rtmpSince: state?.rtmpSince || null
+  };
 }
 
-export async function startStream(room, rtmpUrl) {
-  if (streams.has(room.id)) throw new Error("already streaming");
-  // The studio's own watch page always gets the stream (HLS on disk,
-  // served at /live/<session>); RTMP goes out too when a destination
-  // is configured. rtmpUrl may be null: own page only, no YouTube.
-  const liveDir = path.join(config.dataDir, "live", room.id);
-  await fs.rm(liveDir, { recursive: true, force: true });
-  await fs.mkdir(liveDir, { recursive: true });
-  const state = { room, rtmpUrl, liveDir, generation: 0, stopping: false, startedAt: Date.now() };
-  streams.set(room.id, state);
+// When the channel went live, for the watch page (rejoin-safe)
+export function streamingSince(roomId) {
+  return streams.get(roomId)?.channelSince || null;
+}
+
+// The session currently live on a host's permanent channel page
+// (/live/<username>), if any
+export function channelRoomForOwner(uid) {
+  for (const state of streams.values()) {
+    if (state.outputs.channel && state.room.ownerId === uid) return state.room.id;
+  }
+  return null;
+}
+
+// Turn one output on. The encode is shared: if the other output is
+// already running this relaunches the graph with both destinations (a
+// couple of seconds' blip, same as someone joining mid-stream).
+export async function startOutput(room, target, rtmpUrl) {
+  let state = streams.get(room.id);
+  if (state?.outputs[target]) throw new Error("already live there");
+  if (!state) {
+    state = {
+      room, rtmpUrl: null, liveDir: null,
+      outputs: { channel: false, rtmp: false },
+      generation: 0, stopping: false, startedAt: Date.now(),
+      channelSince: null, rtmpSince: null
+    };
+    streams.set(room.id, state);
+  }
+  if (target === "channel") {
+    state.liveDir = path.join(config.dataDir, "live", room.id);
+    await fs.rm(state.liveDir, { recursive: true, force: true });
+    await fs.mkdir(state.liveDir, { recursive: true });
+    state.outputs.channel = true;
+    state.channelSince = Date.now();
+  } else {
+    state.rtmpUrl = rtmpUrl;
+    state.outputs.rtmp = true;
+    state.rtmpSince = Date.now();
+  }
   try {
     await launch(state);
   } catch (err) {
-    streams.delete(room.id);
-    await fs.rm(liveDir, { recursive: true, force: true }).catch(() => {});
+    state.outputs[target] = false;
+    if (!state.outputs.channel && !state.outputs.rtmp) streams.delete(room.id);
+    if (target === "channel") {
+      await fs.rm(state.liveDir, { recursive: true, force: true }).catch(() => {});
+      state.channelSince = null;
+    } else {
+      state.rtmpSince = null;
+    }
     throw err;
   }
-  notifyLive(room.id, true);
+  if (target === "channel") notifyLive(room.id, true);
   return state;
+}
+
+// Turn one output off; the other keeps running on a fresh graph.
+// Stopping the channel stitches what the audience watched into a ready
+// recording, exactly as a full stop does.
+export async function stopOutput(roomId, target) {
+  const state = streams.get(roomId);
+  if (!state || !state.outputs[target]) return;
+  state.outputs[target] = false;
+  if (!state.outputs.channel && !state.outputs.rtmp) {
+    await stopStream(roomId);
+    return;
+  }
+  await refreshNow(state);
+  if (target === "channel") {
+    notifyLive(roomId, false);
+    await finalizeLive(state);
+    state.channelSince = null;
+  } else {
+    state.rtmpSince = null;
+  }
 }
 
 // Output arguments shared by the grid and intro launches: HLS for the
@@ -99,6 +164,12 @@ export async function startStream(room, rtmpUrl) {
 // discontinuity marker, so viewers ride through the blip and the
 // finished playlist is the whole show in order.
 async function destArgs(state, gen) {
+  // RTMP-only launches skip the HLS side entirely
+  if (!state.outputs.channel) {
+    return state.rtmpUrl.startsWith("file:")
+      ? [state.rtmpUrl.slice(5)]
+      : ["-f", "flv", "-y", state.rtmpUrl];
+  }
   const dir = state.liveDir;
   const playlist = path.join(dir, "live.m3u8");
   // fMP4 segments with one init per generation: append_list rewrites
@@ -109,7 +180,7 @@ async function destArgs(state, gen) {
   const init = `init-${gen}.mp4`;
   const appending = await fs.access(playlist).then(() => true, () => false);
   const flags = `omit_endlist${appending ? "+append_list+discont_start" : ""}`;
-  if (!state.rtmpUrl) {
+  if (!state.outputs.rtmp) {
     return ["-f", "hls", "-hls_time", "2", "-hls_list_size", "0",
       "-hls_flags", flags, "-hls_segment_type", "fmp4",
       "-hls_fmp4_init_filename", init,
@@ -506,6 +577,19 @@ async function teardown(cleanup) {
 }
 
 // Membership changed mid-stream: relaunch with the new grid (debounced)
+// Immediate relaunch with the current output set (used when one output
+// turns off while the other keeps going)
+async function refreshNow(state) {
+  clearTimeout(state.refreshTimer);
+  state.relaunching = true;
+  try {
+    await teardown(state.current);
+    await launch(state);
+  } finally {
+    state.relaunching = false;
+  }
+}
+
 export function refreshStream(roomId) {
   const state = streams.get(roomId);
   if (!state || state.stopping) return;
@@ -551,7 +635,9 @@ export async function stopStream(roomId) {
   clearTimeout(state.introTimer);
   streams.delete(roomId);
   await teardown(state.current);
-  notifyLive(roomId, false);
-  await finalizeLive(state);
+  if (state.outputs.channel || state.channelSince) {
+    notifyLive(roomId, false);
+    await finalizeLive(state);
+  }
   console.log(`stream stopped for ${roomId}`);
 }

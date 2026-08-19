@@ -52,15 +52,17 @@ dashboard.
   and the compositors, so the video is the picture people were on - the
   exception is a phone, which deliberately uses a two-column layout so
   faces stay big enough to see.
-- **Your own live page:** "Go live" streams the composited show to the
-  studio's built-in watch page at `/live/<session>` - your URL, your
-  server, no other platform involved. The page switches itself on the
-  moment the stream starts and back off when it ends, with an HLS
-  player (self-hosted hls.js, native on Safari) and a live viewer
-  count. To also stream to YouTube at the same time, set its RTMP
-  server and key in the dashboard and it rides along on the same
-  encode. When the stream ends, the exact video the audience watched
-  is stitched losslessly into a ready recording in the dashboard.
+- **Your own channel:** every host has a permanent watch page at
+  `/live/<username>` - one link to share, forever. "Go live" switches
+  it on (HLS player, self-hosted hls.js, native on Safari, live viewer
+  count); it shows "not live" between shows, switching itself without
+  anyone refreshing. A separate "YouTube" button pushes RTMP too -
+  either output alone or both at once, one shared encode, each with
+  its own clock. When the channel stream ends, the exact video the
+  audience watched is stitched losslessly into a ready recording.
+  While live, the chat docks into the host's session view so the host
+  reads and answers the room under their banner name without leaving
+  the studio.
 - **Live chat:** beside the video on the watch page. Viewers pick a
   name and join in - no accounts, and nobody leaves the window. Words
   on the banned list are masked, never deleted: first and last letter

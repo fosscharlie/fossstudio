@@ -3,7 +3,10 @@
 // stream state, so nobody ever needs to refresh.
 (() => {
   const $ = (id) => document.getElementById(id);
-  const roomId = location.pathname.split("/").filter(Boolean).pop();
+  // The page's slug is a session id or a host's permanent channel name;
+  // the status endpoint says which room actually carries the show
+  const slug = location.pathname.split("/").filter(Boolean).pop();
+  let roomId = null;
   const els = {
     title: $("showTitle"), badge: $("liveBadge"), viewers: $("viewerCount"),
     player: $("player"), offline: $("offline"),
@@ -14,7 +17,7 @@
 
   // ---------- player ----------
 
-  const src = `/live/${roomId}/media/live.m3u8`;
+  const src = () => `/live/${roomId}/media/live.m3u8`;
   let hls = null;
   let playing = false;
 
@@ -26,10 +29,10 @@
     els.badge.hidden = false;
     if (els.player.canPlayType("application/vnd.apple.mpegurl")) {
       // Safari plays HLS natively
-      els.player.src = src;
+      els.player.src = src();
     } else if (window.Hls && Hls.isSupported()) {
       hls = new Hls({ liveSyncDurationCount: 3, enableWorker: false });
-      hls.loadSource(src);
+      hls.loadSource(src());
       hls.attachMedia(els.player);
       hls.on(Hls.Events.ERROR, (_, data) => {
         // The playlist appears a few seconds after "live" flips on, so
@@ -133,6 +136,7 @@
   }
 
   function connect() {
+    if (!roomId) return; // channel page before its first show
     const proto = location.protocol === "https:" ? "wss" : "ws";
     ws = new WebSocket(`${proto}://${location.host}/chat?room=${roomId}`);
 
@@ -223,15 +227,31 @@
     if (saved) els.nameInput.value = saved;
   } catch { /* private browsing */ }
 
-  fetch(`/api/live/${roomId}`).then((r) => r.json()).then((s) => {
+  // The channel page has no room until a show is live, so it polls the
+  // status until one appears, then joins that room's chat and player
+  let polling = null;
+  function applyStatus(s) {
     if (s.title) {
       els.title.textContent = s.title;
       document.title = `${s.title} - live`;
       $("offlineTitle").textContent = `${s.title} isn't live right now`;
     }
     liveNow = !!s.live;
-    if (s.live) startPlayer();
-  }).catch(() => { /* the chat socket still carries state */ });
-
-  connect();
+    const room = s.roomId || null;
+    if (room && room !== roomId) {
+      roomId = room;
+      connect();
+    }
+    if (s.live) {
+      clearInterval(polling);
+      polling = null;
+      startPlayer();
+    } else if (!polling && !ws) {
+      polling = setInterval(() => {
+        fetch(`/api/live/${slug}`).then((r) => r.json()).then(applyStatus).catch(() => {});
+      }, 5000);
+    }
+  }
+  fetch(`/api/live/${slug}`).then((r) => r.json()).then(applyStatus)
+    .catch(() => { /* a later poll or the chat socket catches up */ });
 })();

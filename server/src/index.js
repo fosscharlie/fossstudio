@@ -117,13 +117,20 @@ app.get("/s/:roomId([a-zA-Z0-9_-]{4,32})", (req, res) => {
 });
 
 // The audience watch page: the live show with chat beside it. Public by
-// design, same trust as a session link - it can only ever receive.
-app.get("/live/:roomId([a-zA-Z0-9_-]{4,32})", async (req, res) => {
-  const session = await findSession(req.params.roomId);
+// design, same trust as a session link - it can only ever receive. The
+// slug is a session id, or a host's username: their permanent channel
+// page, one link that never changes between shows.
+app.get("/live/:slug([a-zA-Z0-9_-]{2,32})", async (req, res) => {
+  const slug = req.params.slug;
+  const session = await findSession(slug);
   if (!session) {
-    return res.status(404).sendFile(path.join(config.webDir, "404.html"), (err) => {
-      if (err) res.status(404).send("Not found");
-    });
+    const { findByUsername } = await import("./users.js");
+    const user = await findByUsername(slug.toLowerCase());
+    if (!user || user.role === "admin") {
+      return res.status(404).sendFile(path.join(config.webDir, "404.html"), (err) => {
+        if (err) res.status(404).send("Not found");
+      });
+    }
   }
   res.sendFile(path.join(config.webDir, "live.html"));
 });

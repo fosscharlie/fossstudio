@@ -82,11 +82,11 @@ await new Promise((r) => setTimeout(r, 1500));
 check("ad overlay appears in the session with the uploaded image",
   await guest.$eval(".live-overlay.ad img", (el) => el.complete && el.naturalWidth > 0).catch(() => false));
 await guest.evaluate(() => document.querySelector(".live-overlay")?.remove());
-await host.click("#hpStreamBtn");
+await host.click("#hpYtBtn");
 await new Promise((r) => setTimeout(r, 5000));
 await host.click("#hpSubBtn");
 await new Promise((r) => setTimeout(r, 19000)); // relaunch + startup + 7s window + clean tail
-await host.click("#hpStreamBtn"); // end stream
+await host.click("#hpYtBtn"); // end stream
 await new Promise((r) => setTimeout(r, 3000));
 const probe = (t) => {
   // average colour of the bottom-left strip region at time t
