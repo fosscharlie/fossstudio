@@ -2,7 +2,7 @@
 
 All notable changes to FOSSStudio are documented here.
 
-## Unreleased
+## 1.5.0 - 2026-08-19
 
 - Admin panel: setting a user's password now happens inline in the
   user's row - type it, press the tick - instead of a browser pop-up.
