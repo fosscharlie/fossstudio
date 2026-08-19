@@ -96,7 +96,7 @@ const chosen = await host.page.evaluate(() => {
   const t = [...document.querySelectorAll(".tile")].find((x) => !x.classList.contains("self"));
   return getComputedStyle(t.querySelector(".lower-third")).backgroundColor;
 });
-check(`guest's chosen colour shows for everyone (${chosen})`, chosen === "rgb(155, 38, 174)");
+check(`guest's chosen colour shows for everyone (${chosen})`, chosen === "rgb(139, 195, 74)");
 check("layout: grid and panel share the row (no overlap)",
   await host.page.evaluate(() => {
     const g = document.getElementById("grid").getBoundingClientRect();

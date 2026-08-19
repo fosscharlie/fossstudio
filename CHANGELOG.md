@@ -4,6 +4,14 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Both colour palettes now share one layout: fifteen colours in three
+  rows of six, with the hex box filling the right half of the third
+  row - the banner and title tools were laid out differently before.
+  The palette grew from eight to fifteen colours (guests picking their
+  own banner colour get the full set too).
+- The guest-card controls (noise reduction, microphone, spotlight) are
+  now icons; hovering shows a plain name for each - no more "click to
+  turn off" instructions.
 - Going live is now two independent buttons: "Go live" runs your own
   channel page (video, chat, and the saved copy), "YouTube" pushes the
   RTMP stream - either alone or both at once, on one shared encode,

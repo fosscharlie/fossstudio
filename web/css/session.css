@@ -840,13 +840,34 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-/* Colour tools open on demand under their buttons */
+/* Colour tools open on demand under their buttons. Both palettes are
+   the same shape: 6 + 6 + 3 swatches, the hex box on the right half of
+   the third row. */
 .hp-pop {
   margin: 0.15rem 0 0.45rem;
   padding: 0.45rem;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--lm-line);
   border-radius: 0.5rem;
+}
+.hp-palette {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.3rem;
+  align-items: center;
+}
+.hp-palette .hp-swatch { width: 100%; height: auto; aspect-ratio: 1; }
+.hp-hex {
+  grid-column: span 3;
+  font: inherit;
+  font-size: 0.72rem;
+  width: 100%;
+  min-width: 0;
+  color: var(--lm-fg);
+  background: var(--lm-muted);
+  border: 1px solid var(--lm-btn-border);
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.4rem;
 }
 /* On narrow screens the panel stacks under the grid */
 @media (max-width: 760px) {
@@ -985,6 +1006,9 @@ body.dim-ui .host-panel:hover { opacity: 1; }
 }
 .hp-guest .hp-btns { display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: center; }
 .hp-guest .hp-btns .hp-btn { flex: 0 1 auto; font-size: 0.64rem; padding: 0.2rem 0.34rem; border-radius: 0.45rem; }
+/* Guest-card controls are icons; the pill tooltip says what each is */
+.hp-guest .hp-guest-ico { display: grid; place-items: center; padding: 0.22rem 0.4rem; }
+.hp-guest .hp-guest-ico svg { width: 0.95rem; height: 0.95rem; }
 .you-ico { display: inline-grid; place-items: center; color: var(--lm-accent); flex: 0 0 auto; }
 .you-ico svg { width: 0.85rem; height: 0.85rem; }
 .hp-name-line > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FOSSStudio session</title>
-<link rel="stylesheet" href="/css/session.css?v=20260819c">
+<link rel="stylesheet" href="/css/session.css?v=20260819d">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -148,10 +148,12 @@
       <button id="hpBannerColorsBtn" class="hp-btn" data-tip="Colours for everyone's name banners">Banner colours</button>
       <button id="hpTitleColorsBtn" class="hp-btn" data-tip="Background colour of the logo/title block">Title colour</button>
     </div>
+    <!-- Both palettes share one layout: three rows of six, the hex box
+         filling the right half of the third row -->
     <div id="hpBannerPop" class="hp-pop" hidden>
-      <div class="hp-color-row">
-        <div class="hp-swatches" id="hpBannerSwatches"></div>
-        <input type="text" id="hpBannerHex" maxlength="7" spellcheck="false" aria-label="Banner colour hex code">
+      <div class="hp-palette">
+        <div id="hpBannerSwatches" style="display:contents"></div>
+        <input type="text" id="hpBannerHex" class="hp-hex" maxlength="7" spellcheck="false" placeholder="#hex" aria-label="Banner colour hex code">
       </div>
       <div class="hp-row" style="margin-top:0.4rem; margin-bottom:0">
         <button id="hpBannerMulti" class="hp-btn" data-tip="Give every person a different colour">Random</button>
@@ -159,9 +161,9 @@
       </div>
     </div>
     <div id="hpTitlePop" class="hp-pop" hidden>
-      <div class="hp-color-row">
-        <div class="hp-swatches" id="hpTitleSwatches"></div>
-        <input type="text" id="hpTitleHex" maxlength="7" spellcheck="false" aria-label="Title block colour hex code">
+      <div class="hp-palette">
+        <div id="hpTitleSwatches" style="display:contents"></div>
+        <input type="text" id="hpTitleHex" class="hp-hex" maxlength="7" spellcheck="false" placeholder="#hex" aria-label="Title block colour hex code">
       </div>
     </div>
     <hr class="hp-divider">
@@ -189,6 +191,6 @@
 </div>
 
 <script src="/assets/mediasoup-client.js?v=20260807e"></script>
-<script src="/js/session.js?v=20260819c"></script>
+<script src="/js/session.js?v=20260819d"></script>
 </body>
 </html>

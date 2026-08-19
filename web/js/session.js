@@ -680,9 +680,12 @@
   window.addEventListener("resize", () => applyLayout());
   matchMedia("(max-width: 700px)").addEventListener("change", applyLayout);
 
+  // One palette for both colour tools: 15 colours laid out 6 + 6 + 3,
+  // with the hex box filling the rest of the third row
   const BANNER_COLOURS = [
-    "#fbc711", "#f34236", "#e8207e", "#9b26ae",
-    "#3d51b4", "#2295f1", "#019587", "#1e2127"
+    "#f34236", "#fe9700", "#fbc711", "#8bc34a", "#4bae4f", "#019587",
+    "#00bcd3", "#2295f1", "#3d51b4", "#9b26ae", "#e8207e", "#795649",
+    "#607d8b", "#9e9d9e", "#1e2127"
   ];
 
   function sendBannerColor(c) {
@@ -738,7 +741,7 @@
   }
   function renderTitleSwatches() {
     els.hpTitleSwatches.innerHTML = "";
-    for (const hex of [TITLE_DEFAULT_BG, ...BANNER_COLOURS.filter((c) => c !== TITLE_DEFAULT_BG)]) {
+    for (const hex of BANNER_COLOURS) {
       const b = document.createElement("button");
       b.className = "hp-swatch" + (hex === titleBgColor() ? " active" : "");
       b.style.background = hex;
@@ -1217,10 +1220,10 @@
       row.innerHTML = `
         <div class="hp-name-line"></div>
         <div class="hp-btns">
-          <button class="hp-btn nr${nrOn ? " active" : ""}" data-tip="${nrOn ? "Noise reduction is on - click to turn off" : "Noise reduction is OFF - click to turn on"}">NR</button>
-          <button class="hp-btn mute">${muted ? "Unmute" : "Mute"}</button>
-          <button class="hp-btn spot">Spot</button>
-          ${hand ? '<button class="hp-btn lower" data-tip="Lower their hand">Lower</button>' : ""}
+          <button class="hp-btn hp-guest-ico nr${nrOn ? " active" : ""}" data-tip="Noise reduction" aria-label="Noise reduction" aria-pressed="${nrOn}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h2"/><path d="M7 9v6"/><path d="M11 5v14"/><path d="M15 8v8"/><path d="M19 12h2"/></svg></button>
+          <button class="hp-btn hp-guest-ico mute" data-tip="Microphone" aria-label="Microphone" aria-pressed="${muted}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
+          <button class="hp-btn hp-guest-ico spot" data-tip="Spotlight" aria-label="Spotlight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5.3 5.5.7-4 4 1 5.7-5-2.8-5 2.8 1-5.7-4-4 5.5-.7z"/></svg></button>
+          ${hand ? '<button class="hp-btn hp-guest-ico lower" data-tip="Lower their hand" aria-label="Lower their hand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V6a2 2 0 1 1 4 0v4V4.5a2 2 0 1 1 4 0V10v-3a2 2 0 1 1 4 0v7a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.5L3 13.5a2 2 0 0 1 3.4-2z"/><path d="M3 3l18 18"/></svg></button>' : ""}
         </div>
         <div class="hp-meter"><div class="hp-meter-fill"></div></div>
         <input type="range" min="0" max="150" value="${vol}" aria-label="Volume">
