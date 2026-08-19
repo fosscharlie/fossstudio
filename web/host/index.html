@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio - Host</title>
-<link rel="stylesheet" href="/host/host.css?v=20260818a">
+<link rel="stylesheet" href="/host/host.css?v=20260818b">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -283,6 +283,15 @@
         <div class="panel">
           <h2>Backups</h2>
           <p class="hint" style="margin-bottom:0.6rem">Settings and session history are backed up automatically every day. Recordings aren't included - download those from the Recordings tab.</p>
+          <div class="field" style="max-width:16rem">
+            <label for="backupKeep">Backups to keep</label>
+            <div style="display:flex; gap:0.6rem; align-items:center">
+              <input type="number" id="backupKeep" min="1" max="100" step="1" style="width:6rem">
+              <button class="btn" id="backupKeepSave">Save</button>
+              <span class="msg ok" id="backupKeepMsg" hidden>✓ Saved</span>
+            </div>
+            <p class="hint">Oldest backups beyond this are removed straight away and after each new backup.</p>
+          </div>
           <button class="btn primary" id="backupNowBtn">Back up now</button>
           <div id="backupList" style="margin-top:0.8rem"></div>
         </div>
@@ -329,6 +338,6 @@
   </div>
 </div>
 
-<script src="/host/host.js?v=20260818a"></script>
+<script src="/host/host.js?v=20260818b"></script>
 </body>
 </html>

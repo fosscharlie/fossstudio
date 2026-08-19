@@ -25,7 +25,8 @@ import {
 } from "./recording/manager.js";
 import {
   recentLogs, makeBackup, listBackups, backupPath,
-  restoreBackup, restartApp, streamFullExport
+  restoreBackup, restartApp, streamFullExport,
+  getBackupKeep, setBackupKeep
 } from "./ops.js";
 import { publicKey, addSubscription } from "./push.js";
 import { isStreaming, streamingSince } from "./streaming.js";
@@ -770,6 +771,17 @@ api.delete("/recordings/:id", requireAuth, async (req, res) => {
 
 api.get("/ops/logs", requireAdmin, (req, res) => {
   res.json({ lines: recentLogs() });
+});
+
+api.get("/ops/backup-keep", requireAdmin, async (req, res) => {
+  res.json({ keep: await getBackupKeep() });
+});
+api.put("/ops/backup-keep", requireAdmin, async (req, res) => {
+  try {
+    res.json({ keep: await setBackupKeep(req.body.keep) });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 api.post("/ops/backup", requireAdmin, async (req, res) => {

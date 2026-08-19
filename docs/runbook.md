@@ -52,7 +52,7 @@ cd /opt/fossstudio/current && docker compose -p fossstudio restart app
 
 ## What's backed up
 
-Daily, kept for 14 days: settings, theme, session list, login details,
+Daily, keeping the last 5 by default (set how many under System - Backups): settings, theme, session list, login details,
 recording index. **Not included:** the recording media files themselves
 (they're big) - download the ones you care about from the Recordings tab
 and keep them somewhere safe.

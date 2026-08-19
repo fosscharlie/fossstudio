@@ -4,6 +4,7 @@ import { spawn, execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "./config.js";
+import { readJson, writeJson } from "./storage.js";
 
 // ---------- log ring buffer ----------
 // Keeps the last 500 log lines in memory so the dashboard can show
@@ -28,6 +29,32 @@ export function recentLogs() {
 }
 
 // ---------- backups ----------
+
+// How many backups to keep is the admin's call (default 5): a small
+// box wants disk back, an archive-everything admin can raise it.
+export async function getBackupKeep() {
+  const v = (await readJson("ops-settings.json", {})).backupKeep;
+  return Number.isInteger(v) && v >= 1 && v <= 100 ? v : 5;
+}
+
+export async function setBackupKeep(n) {
+  const v = Math.round(Number(n));
+  if (!Number.isInteger(v) || v < 1 || v > 100) {
+    throw new Error("Keep between 1 and 100 backups.");
+  }
+  const cur = await readJson("ops-settings.json", {});
+  await writeJson("ops-settings.json", { ...cur, backupKeep: v });
+  // Lowering the number takes effect straight away, not at the next backup
+  await pruneBackups();
+  return v;
+}
+
+async function pruneBackups() {
+  const keep = await getBackupKeep();
+  const all = (await fs.readdir(backupDir()).catch(() => []))
+    .filter((f) => f.startsWith("backup-")).sort().reverse();
+  for (const old of all.slice(keep)) await fs.unlink(path.join(backupDir(), old));
+}
 // A backup is a tar.gz of everything except the recordings' media files
 // (those are large; they're downloadable/deletable from the dashboard).
 
@@ -47,8 +74,7 @@ export async function makeBackup() {
     ], (err) => (err ? reject(err) : resolve()));
   });
   // Rotate: keep the newest 14
-  const all = (await fs.readdir(backupDir())).filter((f) => f.startsWith("backup-")).sort().reverse();
-  for (const old of all.slice(14)) await fs.unlink(path.join(backupDir(), old));
+  await pruneBackups();
   console.log(`backup created: ${name}`);
   return name;
 }

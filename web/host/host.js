@@ -271,17 +271,36 @@
         </div>
         <span class="spacer"></span>`;
       row.querySelector(".title").textContent = u.username;
-      const reset = iconBtn("key", "Set a new password for this user", async () => {
-        const pw = prompt(`New password for ${u.username} (10+ characters):`);
-        if (!pw) return;
-        try {
-          await apiFetch(`/api/users/${u.id}/password`, {
-            method: "POST", body: JSON.stringify({ password: pw })
-          });
-          reset.classList.add("done");
-          reset.innerHTML = ICONS.tick;
-          setTimeout(() => { reset.classList.remove("done"); reset.innerHTML = ICONS.key; }, 1500);
-        } catch (err) { showUserMsg(err.message); }
+      // Set a new password inline in the row: no browser pop-up
+      const reset = iconBtn("key", "Set a new password for this user", () => {
+        if (row.querySelector(".pw-inline")) return;
+        const wrap = document.createElement("span");
+        wrap.className = "pw-inline";
+        const input = document.createElement("input");
+        input.type = "password";
+        input.placeholder = "New password (10+ characters)";
+        input.autocomplete = "new-password";
+        const done = () => wrap.remove();
+        const save = async () => {
+          if (!input.value) return done();
+          try {
+            await apiFetch(`/api/users/${u.id}/password`, {
+              method: "POST", body: JSON.stringify({ password: input.value })
+            });
+            done();
+            reset.classList.add("done");
+            reset.innerHTML = ICONS.tick;
+            setTimeout(() => { reset.classList.remove("done"); reset.innerHTML = ICONS.key; }, 1500);
+          } catch (err) { showUserMsg(err.message); input.focus(); }
+        };
+        const ok = iconBtn("tick", "Save the new password", save);
+        input.onkeydown = (e) => {
+          if (e.key === "Enter") save();
+          if (e.key === "Escape") done();
+        };
+        wrap.append(input, ok);
+        row.insertBefore(wrap, reset);
+        input.focus();
       });
       row.appendChild(reset);
       if (u.username !== me.username) {
@@ -360,7 +379,9 @@
     $("smtpUser").value = s.user || "";
     $("smtpFrom").value = s.from || "";
     $("smtpAlertTo").value = s.alertTo || "";
-    $("smtpPassHint").textContent = s.hasPass ? "(saved - leave blank to keep)" : "";
+    $("smtpPassHint").innerHTML = s.hasPass
+      ? '<span class="msg ok" style="display:inline">\u2713 saved</span> - leave blank to keep it'
+      : "";
   }
 
   $("saveSmtpBtn").onclick = async () => {
@@ -1021,9 +1042,44 @@
     $("logBox").scrollTop = $("logBox").scrollHeight;
   }
 
+  // ---------- backup retention ----------
+
+  async function loadBackupKeep() {
+    if (me.role !== "admin") return;
+    const { keep } = await apiFetch("/api/ops/backup-keep");
+    $("backupKeep").value = keep;
+  }
+
+  $("backupKeepSave").onclick = async () => {
+    try {
+      const { keep } = await apiFetch("/api/ops/backup-keep", {
+        method: "PUT", body: JSON.stringify({ keep: Number($("backupKeep").value) })
+      });
+      $("backupKeep").value = keep;
+      $("backupKeepMsg").hidden = false;
+      setTimeout(() => { $("backupKeepMsg").hidden = true; }, 2000);
+      loadBackups();
+    } catch (err) { sysMsg(err.message, false); }
+  };
+
   // ---------- push notifications ----------
 
+  // pushManager.subscribe wants the VAPID key as bytes: some browsers
+  // accept the base64url string directly, others throw - which is what
+  // made "Enable notifications" fail with no explanation
+  function vapidKeyBytes(b64url) {
+    const pad = "=".repeat((4 - (b64url.length % 4)) % 4);
+    const raw = atob((b64url + pad).replace(/-/g, "+").replace(/_/g, "/"));
+    return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+  }
+
   $("pushBtn").onclick = async () => {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+      return sysMsg("This browser doesn't support notifications.", false);
+    }
+    if (!("PushManager" in window)) {
+      return sysMsg("This browser doesn't support push notifications (Safari needs the app added to the Home Screen first).", false);
+    }
     try {
       const perm = await Notification.requestPermission();
       if (perm !== "granted") return sysMsg("Notifications were blocked in the browser.", false);
@@ -1031,12 +1087,14 @@
       const { key } = await apiFetch("/api/push/key");
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: key
+        applicationServerKey: vapidKeyBytes(key)
       });
       await apiFetch("/api/push/subscribe", { method: "POST", body: JSON.stringify(sub) });
       sysMsg("✓ You'll get a notification when a guest arrives or a recording is ready.");
-    } catch {
-      sysMsg("Couldn't enable notifications on this browser.", false);
+    } catch (err) {
+      // Say what actually went wrong - "couldn't" with no reason made
+      // this undebuggable from the other side of a bug report
+      sysMsg(`Couldn't enable notifications: ${err.message || err.name || "unknown error"}`, false);
     }
   };
 
@@ -1068,6 +1126,7 @@
     if (me.role === "admin") {
       loadUsers();
       loadBackups();
+      loadBackupKeep();
       loadLogs();
       loadSmtp();
     } else {

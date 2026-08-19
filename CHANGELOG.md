@@ -4,6 +4,19 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Admin panel: setting a user's password now happens inline in the
+  user's row - type it, press the tick - instead of a browser pop-up.
+- Admin panel: the email settings show a green tick beside the password
+  field once one is stored ("saved - leave blank to keep it"), instead
+  of a note you had to read.
+- Backups: how many to keep is now a setting (default 5, up to 100),
+  in System - Backups. Lowering it prunes the oldest straight away,
+  not just after the next backup. Previously a fixed 14 were kept.
+- "Enable notifications" now says what actually went wrong instead of
+  a blanket "couldn't enable notifications on this browser", and the
+  push key is handed to the browser as bytes rather than text - some
+  browsers refuse the text form, which is exactly the silent failure
+  that made the button appear broken.
 - The studio now has its own live watch page: "Go live" streams the
   composited show to `/live/<session>` on your domain, with an HLS
   player (self-hosted hls.js, native on Safari), a live viewer count,

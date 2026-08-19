@@ -490,3 +490,20 @@ input[type="email"], input[type="url"] {
 a.btn { text-decoration: none; display: inline-flex; align-items: center; }
 a.iconbtn { text-decoration: none; }
 .iconbtn:hover { border-color: var(--muted-fg); }
+
+/* Inline new-password editor on a user row (no browser pop-up) */
+.pw-inline {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.pw-inline input {
+  font: inherit;
+  font-size: 0.85rem;
+  width: 15rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--line, #d5d9e0);
+  border-radius: 8px;
+  background: var(--bg, #fff);
+  color: inherit;
+}

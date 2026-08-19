@@ -62,7 +62,8 @@ For self-hosters assessing the project:
   record. Deleting a host account purges everything that account owned -
   its recordings and their files, sessions, uploaded media and push
   subscription. (Rotating local backups may retain snapshots until they
-  age out of the last-14 window.)
+  age out of the retention window - 5 backups by default, admin-set
+  between 1 and 100.)
 - **Secrets** live in the server's `.env` and the data directory -
   never in the repository. That includes the optional FOSSCast
   publisher token: publishing runs server-side, so the token is never
