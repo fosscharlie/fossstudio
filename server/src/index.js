@@ -11,6 +11,7 @@ import { initPush } from "./push.js";
 import { resumeOrphanedRecordings, activeRenderCount } from "./recording/manager.js";
 import { diagnostics } from "./diagnostics.js";
 import { attachChat } from "./livechat.js";
+import { migrateIntros } from "./introcoder.js";
 import { findSession } from "./settings.js";
 
 const app = express();
@@ -182,6 +183,13 @@ resumeOrphanedRecordings().then((n) => {
     ).catch(() => {});
   }
 }).catch((err) => console.error("resumeOrphanedRecordings failed:", err.message));
+
+// Intros uploaded before the 720p bound existed get converted once,
+// quietly, after boot - so no guest's machine ever has to fight an
+// oversized fullscreen video mid-show again.
+migrateIntros().then((n) => {
+  if (n > 0) console.log(`${n} intro(s) converted to bounded 720p H.264`);
+}).catch((err) => console.error("intro migration failed:", err.message));
 
 process.on("uncaughtException", (err) => {
   console.error("uncaught exception:", err.stack || err.message);

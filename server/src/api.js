@@ -31,6 +31,7 @@ import {
 import { publicKey, addSubscription } from "./push.js";
 import { isStreaming, streamingSince } from "./streaming.js";
 import { listBlocked, unblock } from "./livechat.js";
+import { probeMedia, transcodeIntro, needsConversion } from "./introcoder.js";
 
 export const api = express.Router();
 api.use(express.json({ limit: "64kb" }));
@@ -532,27 +533,6 @@ function normalizeLoudness(src, dst, { copyVideo = false, ext } = {}) {
   });
 }
 
-// Probe length + whether there's an audio track, so the stream and the
-// recording know the window and never render a missing [0:a].
-function probeMedia(file) {
-  return new Promise((resolve) => {
-    let out = "";
-    const p = spawn("ffprobe",
-      ["-v", "error", "-print_format", "json", "-show_format", "-show_streams", file]);
-    p.stdout.on("data", (d) => { out += d; });
-    p.on("error", () => resolve({ durationMs: 0, hasAudio: true }));
-    p.on("close", () => {
-      try {
-        const j = JSON.parse(out);
-        resolve({
-          durationMs: Math.round(parseFloat(j.format?.duration || 0) * 1000) || 0,
-          hasAudio: (j.streams || []).some((s) => s.codec_type === "audio")
-        });
-      } catch { resolve({ durationMs: 0, hasAudio: true }); }
-    });
-  });
-}
-
 api.get("/intros", requireAuth, async (req, res) => res.json(await listIntros(req.user.uid)));
 
 api.post("/intros", requireAuth,
@@ -568,10 +548,20 @@ api.post("/intros", requireAuth,
     const tmp = path.join(dir, `intro-tmp-${req.user.uid}-${Date.now()}.${ext}`);
     try {
       await fs.writeFile(tmp, req.body);
-      const { durationMs, hasAudio } = await probeMedia(tmp);
-      const clip = await addIntro(req.user.uid, { name: req.query.name, ext, durationMs, hasAudio });
-      const dst = path.join(dir, `intro-${req.user.uid}-${clip.id}.${ext}`);
-      if (hasAudio) {
+      const probe = await probeMedia(tmp);
+      const { durationMs, hasAudio } = probe;
+      // Oversized or heavy-codec video is converted to bounded 720p
+      // H.264 once, here - decoding it fullscreen on top of WebRTC has
+      // frozen a real host's machine. Already-cheap uploads skip the
+      // encode entirely: audio levelling only, video untouched.
+      const convert = needsConversion(ext, probe);
+      const storedExt = convert ? "mp4" : ext;
+      const clip = await addIntro(req.user.uid, { name: req.query.name, ext: storedExt, durationMs, hasAudio });
+      const dst = path.join(dir, `intro-${req.user.uid}-${clip.id}.${storedExt}`);
+      if (convert) {
+        await transcodeIntro(tmp, dst, hasAudio);
+        await fs.unlink(tmp).catch(() => {});
+      } else if (hasAudio) {
         // Level the soundtrack to speech loudness; keep the video as-is
         try {
           await normalizeLoudness(tmp, dst, { copyVideo: true, ext });

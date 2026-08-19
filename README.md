@@ -29,7 +29,9 @@ dashboard.
   Carried on an always-on audio channel so a clip never interrupts the
   live stream; mixed into the recording and saved as a separate track.
 - **Intro videos:** upload short videos (soundtracks auto-levelled to
-  speech loudness) and fire one from the same bar -
+  speech loudness, video bounded at 720p H.264 - oversized or
+  heavy-codec uploads are converted once so they play smoothly on
+  every guest's machine) and fire one from the same bar -
   it takes over every screen fullscreen (in the session, the recording
   and on the stream), mutes everyone while it plays, then crossfades back
   to the grid.

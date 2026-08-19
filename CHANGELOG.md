@@ -4,6 +4,17 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Intro videos are now bounded at 720p H.264: an upload above that (or
+  in a heavy codec like VP9/HEVC/AV1) is converted once at upload, and
+  intros uploaded before this are converted automatically at the next
+  start-up. Uploads already within bounds keep their video untouched,
+  so the server only spends encode time when a file would otherwise be
+  expensive for guests. The whole pipeline is 720p (the stream and the
+  recording canvas both), so nothing visible is lost - what is gained
+  is that a fullscreen intro can no longer pin every core on a
+  participant's machine, which is exactly what froze a real host's
+  computer mid-test: the intro video decoding in software on top of
+  WebRTC and noise suppression.
 - Dedicated panel domains, zero configuration: point the DNS of
   admin.<your-domain> and host.<your-domain> at the server and each
   front door leads straight to its own login - the fleet panel on one,
