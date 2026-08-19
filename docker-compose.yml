@@ -22,6 +22,10 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ${CADDY_SITES_PATH:-./caddy-sites}:/etc/caddy/sites:ro
+      # Static web roots for those extra sites (see CADDY_WWW_PATH in
+      # .env.example): a site file serves files with root * /srv/www/<name>.
+      # The default empty folder is a no-op, like the sites folder above.
+      - ${CADDY_WWW_PATH:-./caddy-www}:/srv/www:ro
       - caddy_data:/data
       - caddy_config:/config
 

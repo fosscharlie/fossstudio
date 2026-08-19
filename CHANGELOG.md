@@ -2,6 +2,16 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased
+
+- The bundled Caddy can now serve static sites for the other apps that
+  share ports 80/443, not just proxy to them: `CADDY_WWW_PATH` mounts a
+  folder of web roots at `/srv/www` (read-only), so an imported `.caddy`
+  site file can use `root * /srv/www/<name>`. Companion to the existing
+  `CADDY_SITES_PATH`; the default empty folder is a no-op. Mounts that
+  were hand-added to a running compose file did not survive deploys -
+  this one is in the repo, so it does.
+
 ## 1.5.0 - 2026-08-19
 
 - Admin panel: setting a user's password now happens inline in the
