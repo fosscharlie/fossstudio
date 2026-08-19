@@ -88,10 +88,16 @@ app.get("/diagnostics.json", (req, res) => {
   res.json(diagnostics(req));
 });
 
-// The root goes to the dashboard: /host/ shows the login when signed
-// out and the dashboard when signed in. Guests never visit the root -
-// they arrive on /s/<id> links - so nothing is lost by forwarding it.
-app.get("/", (req, res) => res.redirect("/host/"));
+// The root goes to the dashboard: on the dedicated panel domains
+// (admin.example.com / host.example.com, when configured) straight to
+// that panel; anywhere else to the host side. Each shows its login when
+// signed out. Guests never visit the root - they arrive on /s/<id>
+// links - so nothing is lost by forwarding it.
+app.get("/", (req, res) => {
+  const target = config.adminDomain && req.hostname === config.adminDomain
+    ? "/admin/" : "/host/";
+  res.redirect(target);
+});
 
 // Session links guests receive: https://<domain>/s/<room-id>
 app.get("/s/:roomId([a-zA-Z0-9_-]{4,32})", (req, res) => {

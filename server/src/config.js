@@ -19,6 +19,10 @@ export const config = {
   publicIp: process.env.PUBLIC_IP || "",
   httpPort: Number(process.env.HTTP_PORT || 3000),
   bindHost: process.env.BIND_HOST || "127.0.0.1",
+  // Optional dedicated panel domains (e.g. admin.example.com and
+  // host.example.com): each leads straight to its own login
+  adminDomain: process.env.ADMIN_DOMAIN || "",
+  hostDomain: process.env.HOST_DOMAIN || "",
   turnHost: process.env.TURN_HOST || domain,
   dataDir: process.env.DATA_DIR || path.join(root, "..", "data"),
   webDir: process.env.WEB_DIR || path.join(root, "..", "web"),

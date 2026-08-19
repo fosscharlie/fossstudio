@@ -9,6 +9,21 @@ import /etc/caddy/sites/*.caddy
 	reverse_proxy 127.0.0.1:{$HTTP_PORT}
 }
 
+# Optional dedicated panel domains: admin.<domain> for the fleet panel,
+# host.<domain> for host dashboards. Same app either way - the app sends
+# each domain's root to its own login. Harmless no-ops when unset.
+{$ADMIN_DOMAIN::65533} {
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy 127.0.0.1:{$HTTP_PORT}
+}
+
+{$HOST_DOMAIN::65532} {
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy 127.0.0.1:{$HTTP_PORT}
+}
+
 # Optional old domain forwarding to the real one so old links keep
 # working; harmless no-op when LEGACY_DOMAIN is unset
 {$LEGACY_DOMAIN::65534} {

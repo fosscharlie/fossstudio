@@ -4,6 +4,12 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Optional dedicated panel domains: point `ADMIN_DOMAIN` (e.g.
+  admin.example.com) and `HOST_DOMAIN` (e.g. host.example.com) at the
+  server and each domain's front door leads straight to its own login -
+  the fleet panel on one, host dashboards on the other. The bundled
+  Caddy picks both up automatically (certificates included) once the
+  DNS records exist; unset, nothing changes.
 - The admin (fleet) panel and host dashboards are now separate
   sessions: admins sign in at `/admin/`, hosts at `/host/`, each with
   its own cookie - so the fleet panel and a host login can be open in
