@@ -16,9 +16,10 @@ dashboard.
   host sets their own password) and look after the system; each host
   owns their sessions, recordings, branding and stream key. The admin
   panel (`/admin/`) and host dashboards (`/host/`) are separate
-  sessions, so both can be open in one browser at once - optionally on
-  their own domains (`ADMIN_DOMAIN`/`HOST_DOMAIN` in `.env`, e.g.
-  admin.example.com and host.example.com).
+  sessions, so both can be open in one browser at once - each panel can
+  also have its own domain: point admin.<your-domain> and
+  host.<your-domain> at the server and they just work, certificates
+  included.
 - **In-session host controls:** spotlight/grid layout, per-guest volume,
   per-session auto level balancing, start/stop recording, go live.
 - **Soundboard:** upload short clips (laughs, applause, stings) in the

@@ -1,3 +1,13 @@
+# On-demand certificates for the dedicated panel domains
+# (admin.<domain> and host.<domain>): the app approves exactly those
+# names at /tls-allowed, so no other name pointed at this server can
+# ever mint a certificate.
+{
+	on_demand_tls {
+		ask http://127.0.0.1:{$HTTP_PORT}/tls-allowed
+	}
+}
+
 # Extra sites served by this Caddy instance (other apps sharing the same
 # host drop their own .caddy site files in the mounted sites folder; the
 # glob is harmless when the folder is empty).
@@ -9,16 +19,16 @@ import /etc/caddy/sites/*.caddy
 	reverse_proxy 127.0.0.1:{$HTTP_PORT}
 }
 
-# Optional dedicated panel domains: admin.<domain> for the fleet panel,
-# host.<domain> for host dashboards. Same app either way - the app sends
-# each domain's root to its own login. Harmless no-ops when unset.
-{$ADMIN_DOMAIN::65533} {
-	encode zstd gzip
-	header Strict-Transport-Security "max-age=31536000"
-	reverse_proxy 127.0.0.1:{$HTTP_PORT}
-}
-
-{$HOST_DOMAIN::65532} {
+# The dedicated panel domains (admin.<domain> for the fleet panel,
+# host.<domain> for host dashboards) need no configuration: point their
+# DNS here and this catch-all serves them, fetching each certificate on
+# demand - the app's /tls-allowed allowlist (derived from DOMAIN, plus
+# any explicit ADMIN_DOMAIN/HOST_DOMAIN) is the gate. The app sends each
+# domain's root to its own login.
+https:// {
+	tls {
+		on_demand
+	}
 	encode zstd gzip
 	header Strict-Transport-Security "max-age=31536000"
 	reverse_proxy 127.0.0.1:{$HTTP_PORT}

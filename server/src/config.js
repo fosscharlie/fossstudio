@@ -14,13 +14,32 @@ function required(name) {
 
 const domain = process.env.DOMAIN || "localhost";
 
+// The dedicated panel domains work out of the box: for each of
+// admin/host, the sibling of DOMAIN (app.example.com -> admin.example.com)
+// and the child (admin.<DOMAIN>) are both accepted, plus any explicit
+// ADMIN_DOMAIN/HOST_DOMAIN. Point their DNS at this server and Caddy
+// fetches their certificates on demand - nothing to configure.
+export function panelDomains(kind) {
+  const out = new Set();
+  const explicit = kind === "admin" ? process.env.ADMIN_DOMAIN : process.env.HOST_DOMAIN;
+  if (explicit) out.add(explicit.toLowerCase());
+  if (domain && domain !== "localhost") {
+    const labels = domain.split(".");
+    // Sibling: replace the first label (app.example.com -> admin.example.com)
+    if (labels.length >= 3) out.add([kind, ...labels.slice(1)].join(".").toLowerCase());
+    // Child: prefix the whole domain (example.com -> admin.example.com)
+    out.add(`${kind}.${domain}`.toLowerCase());
+  }
+  return out;
+}
+
 export const config = {
   domain,
   publicIp: process.env.PUBLIC_IP || "",
   httpPort: Number(process.env.HTTP_PORT || 3000),
   bindHost: process.env.BIND_HOST || "127.0.0.1",
-  // Optional dedicated panel domains (e.g. admin.example.com and
-  // host.example.com): each leads straight to its own login
+  // Optional explicit panel domains; the derived defaults below cover
+  // the common case with no configuration at all
   adminDomain: process.env.ADMIN_DOMAIN || "",
   hostDomain: process.env.HOST_DOMAIN || "",
   turnHost: process.env.TURN_HOST || domain,

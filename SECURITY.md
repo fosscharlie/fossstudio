@@ -73,7 +73,11 @@ For self-hosters assessing the project:
   rendering), `/diagnostics` (the setup check: the configured domain,
   the announced media IP, and the port ranges the media engine uses -
   no login by design, because a misconfigured install often cannot log
-  in at all), and the audience-facing live layer: `/live/<session>`
+  in at all), `/tls-allowed` (a yes/no answer Caddy consults before
+  fetching a certificate on demand; it approves only the panel domains
+  derived from `DOMAIN`, so a stranger pointing their name at the
+  server can never mint a certificate), and the audience-facing live
+  layer: `/live/<session>`
   (the watch page and its HLS media, which exists only while that
   session streams) plus its chat socket. The watch page carries the
   same trust as a session link - session ids are unguessable and the

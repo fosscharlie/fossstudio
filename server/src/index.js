@@ -1,7 +1,7 @@
 import express from "express";
 import http from "node:http";
 import path from "node:path";
-import { config } from "./config.js";
+import { config, panelDomains } from "./config.js";
 import { startMediasoup } from "./media.js";
 import { attachSignaling } from "./signaling.js";
 import { api } from "./api.js";
@@ -94,9 +94,20 @@ app.get("/diagnostics.json", (req, res) => {
 // signed out. Guests never visit the root - they arrive on /s/<id>
 // links - so nothing is lost by forwarding it.
 app.get("/", (req, res) => {
-  const target = config.adminDomain && req.hostname === config.adminDomain
+  const target = panelDomains("admin").has((req.hostname || "").toLowerCase())
     ? "/admin/" : "/host/";
   res.redirect(target);
+});
+
+// Caddy asks here before fetching a certificate on demand: only the
+// panel domains derived from DOMAIN (plus explicit ADMIN_DOMAIN /
+// HOST_DOMAIN) are approved, so pointing a random name at this server
+// can never mint a certificate. Same public posture as /healthz - the
+// answer reveals nothing beyond names any visitor already sees.
+app.get("/tls-allowed", (req, res) => {
+  const d = String(req.query.domain || "").toLowerCase();
+  const ok = panelDomains("admin").has(d) || panelDomains("host").has(d);
+  res.status(ok ? 200 : 404).end();
 });
 
 // Session links guests receive: https://<domain>/s/<room-id>
