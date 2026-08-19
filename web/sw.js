@@ -1,8 +1,8 @@
 /* FOSSStudio service worker: offline shell + push notifications.
    Live sessions always need the network, so requests pass straight
    through; only static shell files are cached as a fallback. */
-const CACHE = "fossstudio-v32";
-const SHELL = ["/", "/host/host.css", "/fonts/Manrope.woff2"];
+const CACHE = "fossstudio-v33";
+const SHELL = ["/host/login.html", "/host/host.css", "/fonts/Manrope.woff2"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));

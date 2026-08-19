@@ -4,6 +4,10 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- The site root now forwards to the dashboard: signed out you land on
+  the host login, signed in you land in the dashboard. The old static
+  landing page at / is gone - guests never saw it anyway, they arrive
+  on session links.
 - The bundled Caddy can now serve static sites for the other apps that
   share ports 80/443, not just proxy to them: `CADDY_WWW_PATH` mounts a
   folder of web roots at `/srv/www` (read-only), so an imported `.caddy`

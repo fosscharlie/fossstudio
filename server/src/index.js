@@ -81,6 +81,11 @@ app.get("/diagnostics.json", (req, res) => {
   res.json(diagnostics(req));
 });
 
+// The root goes to the dashboard: /host/ shows the login when signed
+// out and the dashboard when signed in. Guests never visit the root -
+// they arrive on /s/<id> links - so nothing is lost by forwarding it.
+app.get("/", (req, res) => res.redirect("/host/"));
+
 // Session links guests receive: https://<domain>/s/<room-id>
 app.get("/s/:roomId([a-zA-Z0-9_-]{4,32})", (req, res) => {
   res.sendFile(path.join(config.webDir, "session.html"));
@@ -115,7 +120,7 @@ app.get("/live/:roomId([a-zA-Z0-9_-]{4,32})/media/:file", (req, res) => {
 for (const dir of ["assets", "fonts", "icons"]) {
   app.use(`/${dir}`, express.static(path.join(config.webDir, dir), { maxAge: "7d" }));
 }
-app.use(express.static(config.webDir, { index: "index.html" }));
+app.use(express.static(config.webDir, { index: false }));
 
 app.use((req, res) => {
   res.status(404).sendFile(path.join(config.webDir, "404.html"), (err) => {
