@@ -35,18 +35,27 @@ import { listBlocked, unblock } from "./livechat.js";
 export const api = express.Router();
 api.use(express.json({ limit: "64kb" }));
 
+// Each panel names itself (X-Panel: admin|host) so account-level calls
+// like /me resolve the right one of the two coexisting sessions; calls
+// without the header accept either, host first.
+function panelPrefer(req) {
+  const p = req.headers["x-panel"];
+  return p === "admin" || p === "host" ? p : "any";
+}
+
 function requireAuth(req, res, next) {
-  const user = isAuthedRequest(req);
+  const user = isAuthedRequest(req, panelPrefer(req));
   if (!user) return res.status(401).json({ error: "not logged in" });
   req.user = user;
   next();
 }
 
 function requireAdmin(req, res, next) {
-  requireAuth(req, res, () => {
-    if (req.user.role !== "admin") return res.status(403).json({ error: "admin only" });
-    next();
-  });
+  const user = isAuthedRequest(req, "admin");
+  if (!user) return res.status(401).json({ error: "not logged in" });
+  if (user.role !== "admin") return res.status(403).json({ error: "admin only" });
+  req.user = user;
+  next();
 }
 
 // ---------- auth ----------
@@ -56,16 +65,18 @@ api.post("/login", async (req, res) => {
   const result = await tryLogin(ip, req.body.username, req.body.password, req.body.totp);
   if (!result.ok) return res.status(401).json({ error: result.error });
   setAuthCookie(res, result.user);
-  res.json({ ok: true });
+  // The login page sends admins to /admin/ and hosts to /host/
+  res.json({ ok: true, role: result.user.role });
 });
 
 api.post("/logout", (req, res) => {
-  clearAuthCookie(res);
+  // Only this panel's session ends; the other panel's tab stays in
+  clearAuthCookie(res, panelPrefer(req) === "any" ? "both" : panelPrefer(req));
   res.json({ ok: true });
 });
 
 api.get("/me", async (req, res) => {
-  const payload = isAuthedRequest(req);
+  const payload = isAuthedRequest(req, panelPrefer(req));
   if (!payload) return res.json({ authed: false });
   const user = await findById(payload.uid);
   res.json({ authed: !!user, uid: user?.id, role: user?.role, username: user?.username });

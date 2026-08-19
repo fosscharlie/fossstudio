@@ -3,11 +3,20 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
 
+  // Which of the two separate sessions this page runs as: the fleet
+  // panel lives at /admin/, host dashboards at /host/. Every API call
+  // names its panel so the server answers with the right identity even
+  // when both sessions are open in one browser.
+  const PANEL = location.pathname.startsWith("/admin") ? "admin" : "host";
+
   async function apiFetch(url, opts = {}) {
     const res = await fetch(url, {
-      headers: opts.body && !(opts.body instanceof Blob)
-        ? { "Content-Type": "application/json" } : undefined,
-      ...opts
+      ...opts,
+      headers: {
+        "X-Panel": PANEL,
+        ...(opts.body && !(opts.body instanceof Blob) ? { "Content-Type": "application/json" } : {}),
+        ...(opts.headers || {})
+      }
     });
     if (res.status === 401) { location.href = "/host/login.html"; throw new Error("logged out"); }
     const data = await res.json().catch(() => ({}));

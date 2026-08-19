@@ -3,7 +3,10 @@
 import crypto from "node:crypto";
 import { config } from "./config.js";
 
-const COOKIE = "fs_host";
+// Two separate cookies, so an admin session and a host session can
+// coexist in one browser: the fleet panel stays open while the same
+// person signs into a host dashboard in the next tab.
+const COOKIES = { host: "fs_host", admin: "fs_admin" };
 const SESSION_HOURS = 24 * 7;
 
 // ---------- password ----------
@@ -48,24 +51,45 @@ export function verifyToken(token) {
   } catch { return null; }
 }
 
-export function cookieFromReq(req) {
+function cookieValue(req, name) {
   const raw = req.headers.cookie || "";
-  const m = raw.match(new RegExp(`(?:^|;\\s*)${COOKIE}=([^;]+)`));
+  const m = raw.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
   return m ? m[1] : null;
 }
 
-// Returns {uid, role} or null
-export function isAuthedRequest(req) {
-  return verifyToken(cookieFromReq(req));
+// Returns {uid, role} or null. `prefer` picks which session to answer
+// with when both cookies are present: "admin" and "host" look only at
+// that session (each panel names itself via the X-Panel header), the
+// default tries host first then admin - shared surfaces like chat
+// moderation accept either.
+export function isAuthedRequest(req, prefer = "any") {
+  const host = () => {
+    const t = verifyToken(cookieValue(req, COOKIES.host));
+    return t && t.role !== "admin" ? t : null;
+  };
+  const admin = () => {
+    const t = verifyToken(cookieValue(req, COOKIES.admin));
+    return t && t.role === "admin" ? t : null;
+  };
+  if (prefer === "admin") return admin();
+  if (prefer === "host") return host();
+  return host() || admin();
 }
 
 export function setAuthCookie(res, user) {
+  const name = user.role === "admin" ? COOKIES.admin : COOKIES.host;
   res.setHeader("Set-Cookie",
-    `${COOKIE}=${makeToken(user)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_HOURS * 3600}`);
+    `${name}=${makeToken(user)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_HOURS * 3600}`);
 }
 
-export function clearAuthCookie(res) {
-  res.setHeader("Set-Cookie", `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
+// Clears one panel's session ("admin"/"host"), or both by default -
+// logging out of the dashboard never touches the other panel's tab.
+export function clearAuthCookie(res, which = "both") {
+  const gone = (name) => `${name}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+  const names = which === "admin" ? [COOKIES.admin]
+    : which === "host" ? [COOKIES.host]
+    : [COOKIES.host, COOKIES.admin];
+  res.setHeader("Set-Cookie", names.map(gone));
 }
 
 // ---------- TOTP (RFC 6238, standard authenticator apps) ----------

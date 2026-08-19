@@ -4,10 +4,17 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
-- The site root now forwards to the dashboard: signed out you land on
-  the host login, signed in you land in the dashboard. The old static
-  landing page at / is gone - guests never saw it anyway, they arrive
-  on session links.
+- The admin (fleet) panel and host dashboards are now separate
+  sessions: admins sign in at `/admin/`, hosts at `/host/`, each with
+  its own cookie - so the fleet panel and a host login can be open in
+  the same browser at the same time, and logging out of one leaves the
+  other signed in. The login page is shared and sends each account to
+  its own panel. Existing host sessions carry over; admins sign in
+  once more after updating.
+- The site root now forwards to the host login (or straight into the
+  host dashboard when signed in) - even when the admin panel is open
+  in another tab. The old static landing page at / is gone - guests
+  never saw it anyway, they arrive on session links.
 - The bundled Caddy can now serve static sites for the other apps that
   share ports 80/443, not just proxy to them: `CADDY_WWW_PATH` mounts a
   folder of web roots at `/srv/www` (read-only), so an imported `.caddy`

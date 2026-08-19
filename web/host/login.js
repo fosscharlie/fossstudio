@@ -12,7 +12,13 @@ form.onsubmit = async (e) => {
       totp: document.getElementById("totp").value
     })
   });
-  if (res.ok) { location.href = "/host/"; return; }
+  if (res.ok) {
+    // Admins run the fleet at /admin/, hosts run shows at /host/ -
+    // separate sessions, so both can be open at once
+    const { role } = await res.json();
+    location.href = role === "admin" ? "/admin/" : "/host/";
+    return;
+  }
   const { error } = await res.json();
   // If 2FA is on, reveal the code field for the next try
   if (/2FA/.test(error)) document.getElementById("totpField").hidden = false;

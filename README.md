@@ -14,7 +14,9 @@ dashboard.
   next time.
 - **Roles:** admins create and manage **hosts** (email invites; each
   host sets their own password) and look after the system; each host
-  owns their sessions, recordings, branding and stream key.
+  owns their sessions, recordings, branding and stream key. The admin
+  panel (`/admin/`) and host dashboards (`/host/`) are separate
+  sessions, so both can be open in one browser at once.
 - **In-session host controls:** spotlight/grid layout, per-guest volume,
   per-session auto level balancing, start/stop recording, go live.
 - **Soundboard:** upload short clips (laughs, applause, stings) in the

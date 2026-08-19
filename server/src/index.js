@@ -45,7 +45,7 @@ app.use((req, res, next) => {
   ].join("; "));
   // Pages and the service worker must always come from the server -
   // a cached copy pins old asset versions and serves stale app code
-  if (/^\/(s\/|host\/?$|sw\.js$)|\.html$|^\/$/.test(req.path)) {
+  if (/^\/(s\/|host\/?$|admin\/?$|sw\.js$)|\.html$|^\/$/.test(req.path)) {
     res.setHeader("Cache-Control", "no-store");
   }
   next();
@@ -53,9 +53,16 @@ app.use((req, res, next) => {
 
 app.use("/api", api);
 
-// The dashboard shell requires login; everything inside it is API-gated too
+// The two panels are separate sessions with separate cookies, so the
+// admin (fleet) panel and a host dashboard can be open side by side.
+// Same shell, gated by the matching cookie; everything inside is
+// API-gated too.
 app.get(["/host", "/host/"], (req, res) => {
-  if (!isAuthedRequest(req)) return res.redirect("/host/login.html");
+  if (!isAuthedRequest(req, "host")) return res.redirect("/host/login.html");
+  res.sendFile(path.join(config.webDir, "host", "index.html"));
+});
+app.get(["/admin", "/admin/"], (req, res) => {
+  if (!isAuthedRequest(req, "admin")) return res.redirect("/host/login.html");
   res.sendFile(path.join(config.webDir, "host", "index.html"));
 });
 

@@ -102,7 +102,7 @@ await admin.goto(`${B}/host/login.html`);
 await admin.fill("#username", "admin");
 await admin.fill("#password", PW);
 await admin.click("button[type=submit]");
-await admin.waitForURL("**/host/");
+await admin.waitForURL("**/admin/");
 await admin.waitForTimeout(700);
 await admin.click('#mainMenu button:has-text("Hosts")');
 await admin.waitForTimeout(500);
