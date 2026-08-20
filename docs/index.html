@@ -204,17 +204,6 @@
     transform: translateY(-3px);
     box-shadow: 0 14px 40px rgba(0,0,0,0.45);
   }
-  .card .dot {
-    display: inline-grid;
-    place-items: center;
-    width: 2.2rem;
-    height: 2.2rem;
-    border-radius: 10px;
-    margin-bottom: 0.8rem;
-    background: color-mix(in srgb, var(--c, var(--yellow)) 18%, transparent);
-    color: var(--c, var(--yellow));
-    font-size: 1.1rem;
-  }
   .card h3 { font-size: 1.05rem; font-weight: 800; margin-bottom: 0.35rem; }
   .card p { font-size: 0.92rem; color: var(--muted); }
 
@@ -393,17 +382,17 @@
   <h2>And the rest</h2>
   <p class="lead">Everything else that comes in the box.</p>
   <div class="grid">
-    <div class="card" style="--c:var(--yellow)"><span class="dot">🔍</span><h3>Camera zoom</h3><p>Guests can zoom their camera right on the preview screen: real lens zoom where the camera supports it, digital crop-zoom everywhere else. Rare even in the paid tools.</p></div>
-    <div class="card" style="--c:var(--red)"><span class="dot">●</span><h3>Lossless recording</h3><p>Browser-side per-person capture in raw PCM, converted to FLAC on the server, plus a combined video that matches the screen: every tile, name banners and overlays included.</p></div>
-    <div class="card" style="--c:var(--orange)"><span class="dot">🔊</span><h3>Soundboard &amp; intros</h3><p>Fire clips one-click: laughs and applause over the chat, or stings that mute everyone and bring them back. Plus fullscreen intro videos that take over every screen. Auto-levelled to speech loudness, all baked into the recording and the stream.</p></div>
-    <div class="card" style="--c:var(--pink)"><span class="dot">📡</span><h3>Your own live page</h3><p>Every host gets a permanent channel link - <code>/live/yourname</code> - that never changes between shows: share it once and it switches itself on when you go live, back to "not live" when you stop. HLS video, live chat beside it, word filtering and one-click blocking built in. The exact stream the audience watched is saved as a recording. YouTube can ride along on the same encode, and finished shows publish to <a href="https://github.com/lightmorphic/fosscast">FOSSCast</a> as episodes in one click.</p></div>
-    <div class="card" style="--c:var(--indigo)"><span class="dot">🎬</span><h3>OBS clean feed</h3><p>Every session has a view-only link with no join screen and no buttons: add it to OBS as a Browser Source and stream the show to any platform, with full audio. Invisible to your guests and never in the recording.</p></div>
-    <div class="card" style="--c:var(--blue)"><span class="dot">👥</span><h3>Up to 10 people</h3><p>A forwarding media engine (mediasoup) means a 2-core VPS handles a full grid comfortably.</p></div>
-    <div class="card" style="--c:var(--teal)"><span class="dot">🗂</span><h3>No database</h3><p>Flat JSON files in one folder. Back it up, export it as a zip, restore it with a click.</p></div>
-    <div class="card" style="--c:var(--green)"><span class="dot">🛡</span><h3>Privacy by default</h3><p>No CDNs, no trackers, no cookies for guests, no external calls. Even the font is self-hosted.</p></div>
-    <div class="card" style="--c:var(--cyan)"><span class="dot">🌐</span><h3>Strict-network friendly</h3><p>A built-in TURN relay gets guests through corporate and mobile networks.</p></div>
-    <div class="card" style="--c:var(--purple)"><span class="dot">📱</span><h3>Installable</h3><p>The dashboard is a PWA with push notifications, so you know when a guest arrives or a recording is ready.</p></div>
-    <div class="card" style="--c:var(--orange)"><span class="dot">🔧</span><h3>Operable by humans</h3><p>Daily backups with tested restore, uptime alerts by email, rollback deploys, and a plain-language runbook.</p></div>
+    <div class="card" style="--c:var(--yellow)"><h3>Camera zoom</h3><p>Guests can zoom their camera right on the preview screen: real lens zoom where the camera supports it, digital crop-zoom everywhere else. Rare even in the paid tools.</p></div>
+    <div class="card" style="--c:var(--red)"><h3>Lossless recording</h3><p>Browser-side per-person capture in raw PCM, converted to FLAC on the server, plus a combined video that matches the screen: every tile, name banners and overlays included.</p></div>
+    <div class="card" style="--c:var(--orange)"><h3>Soundboard &amp; intros</h3><p>Fire clips one-click: laughs and applause over the chat, or stings that mute everyone and bring them back. Plus fullscreen intro videos that take over every screen. Auto-levelled to speech loudness, all baked into the recording and the stream.</p></div>
+    <div class="card" style="--c:var(--pink)"><h3>Your own live page</h3><p>Every host gets a permanent channel link - <code>/live/yourname</code> - that never changes between shows: share it once and it switches itself on when you go live, back to "not live" when you stop. HLS video, live chat beside it, word filtering and one-click blocking built in. The exact stream the audience watched is saved as a recording. YouTube can ride along on the same encode, and finished shows publish to <a href="https://github.com/lightmorphic/fosscast">FOSSCast</a> as episodes in one click.</p></div>
+    <div class="card" style="--c:var(--indigo)"><h3>OBS clean feed</h3><p>Every session has a view-only link with no join screen and no buttons: add it to OBS as a Browser Source and stream the show to any platform, with full audio. Invisible to your guests and never in the recording.</p></div>
+    <div class="card" style="--c:var(--blue)"><h3>Up to 10 people</h3><p>A forwarding media engine (mediasoup) means a 2-core VPS handles a full grid comfortably.</p></div>
+    <div class="card" style="--c:var(--teal)"><h3>No database</h3><p>Flat JSON files in one folder. Back it up, export it as a zip, restore it with a click.</p></div>
+    <div class="card" style="--c:var(--green)"><h3>Privacy by default</h3><p>No CDNs, no trackers, no cookies for guests, no external calls. Even the font is self-hosted.</p></div>
+    <div class="card" style="--c:var(--cyan)"><h3>Strict-network friendly</h3><p>A built-in TURN relay gets guests through corporate and mobile networks.</p></div>
+    <div class="card" style="--c:var(--purple)"><h3>Installable</h3><p>The dashboard is a PWA with push notifications, so you know when a guest arrives or a recording is ready.</p></div>
+    <div class="card" style="--c:var(--orange)"><h3>Operable by humans</h3><p>Daily backups with tested restore, uptime alerts by email, rollback deploys, and a plain-language runbook.</p></div>
   </div>
 </section>
 
