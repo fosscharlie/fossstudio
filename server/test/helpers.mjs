@@ -3,6 +3,15 @@
 // with the admin credentials.
 export const TEST_HOST = { username: "testhost", password: "testhostpass123" };
 
+// Paths, worked out from this file rather than written down, so a
+// checkout that moves does not take the tests with it.
+export const REPO = new URL("../../", import.meta.url).pathname;
+
+// Fake camera clips (.y4m) for the tests that need moving faces. They
+// are generated locally, not carried in the repo; point CAMS_DIR at
+// wherever yours live.
+export const CAMS = process.env.CAMS_DIR || `${REPO}server/test/cams`;
+
 export async function apiLogin(base, password, username = "admin") {
   const res = await fetch(`${base}/api/login`, {
     method: "POST",

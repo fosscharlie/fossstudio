@@ -2,7 +2,7 @@
 
 All notable changes to FOSSStudio are documented here.
 
-## Unreleased
+## 1.6.0 - 2026-08-20
 
 - Both colour palettes now share one layout: fifteen colours in three
   rows of six, with the hex box filling the right half of the third

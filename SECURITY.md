@@ -21,7 +21,10 @@ For self-hosters assessing the project:
   cookies (`Secure`, `SameSite=Lax`), per-IP login rate limiting with
   lockout, optional TOTP two-factor per account.
 - **Roles**: admins never host; hosts only ever see their own sessions,
-  recordings and settings. Host powers in a session are granted from the
+  recordings and settings. The admin panel and the host dashboards are
+  separate sessions with separate cookies, so signing in to one grants
+  nothing in the other and logging out of one leaves the other
+  untouched. Host powers in a session are granted from the
   server-side session ownership check, never from client claims.
 - **Session links** must exist in the session registry - arbitrary room
   IDs are rejected. The OBS clean feed (`?output=1`) carries the same
@@ -81,7 +84,16 @@ For self-hosters assessing the project:
   (the watch page and its HLS media, which exists only while that
   session streams) plus its chat socket. The watch page carries the
   same trust as a session link - session ids are unguessable and the
-  page can only ever receive.
+  page can only ever receive. A host's permanent channel page
+  (`/live/<username>`) is public and guessable on purpose - it is the
+  link they hand to an audience. It answers only what an audience is
+  meant to see: whether that host is streaming right now and the title
+  of the show, and it resolves to the live session's media only while
+  one is running. It does mean a valid host username can be confirmed
+  from the outside (a real one answers, an unknown one 404s); usernames
+  are public-facing identifiers here, not a second secret, and login
+  still needs the password and any second factor. Admin accounts have
+  no channel page at all.
 - **Live chat** is nickname-only with no accounts: rate-limited per
   address, messages capped and filtered server-side, and moderation
   (blocking by name and address) restricted to logged-in hosts.

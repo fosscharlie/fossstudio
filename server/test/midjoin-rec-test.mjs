@@ -1,11 +1,10 @@
 // Regression test for the Charlie bug: a guest who joins while the
 // recording is already running must still upload their chunks.
 import { chromium } from "playwright";
-import { makeRoom } from "./helpers.mjs";
+import { makeRoom, REPO, CAMS } from "./helpers.mjs";
 import fs from "node:fs";
 
 const B = "http://127.0.0.1:3999";
-const CAMS = "/tmp/claude-1000/-home-charlie-GitHub-fossstudio/30aef10b-264b-4404-9752-f5d84c9a6596/scratchpad";
 const ROOM = await makeRoom(B, "testpass123");
 
 async function join(cam, name, asHost) {
@@ -39,8 +38,8 @@ await late.page.waitForTimeout(12000);           // long enough for 5s chunk upl
 await host.page.click("#hpRecordBtn");           // stop
 await host.page.waitForTimeout(4000);
 
-const recDir = fs.readdirSync("/home/charlie/GitHub/fossstudio/data/recordings").find((d) => d.includes(ROOM));
-const raw = `/home/charlie/GitHub/fossstudio/data/recordings/${recDir}/raw`;
+const recDir = fs.readdirSync(`${REPO}data/recordings`).find((d) => d.includes(ROOM));
+const raw = `${REPO}data/recordings/${recDir}/raw`;
 const files = fs.readdirSync(raw).filter((f) => f.endsWith(".webm"));
 const peers = new Set(files.map((f) => f.split("-audio")[0].split("-video")[0]));
 console.log("raw webm files:", files.length, "distinct peers:", peers.size);

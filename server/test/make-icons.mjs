@@ -1,5 +1,6 @@
 // Render the app icon at 192 and 512 px via headless Chromium.
 import { chromium } from "playwright";
+import { REPO } from "./helpers.mjs";
 
 const html = (size) => `<!doctype html><style>
   body { margin: 0; }
@@ -18,7 +19,7 @@ const browser = await chromium.launch();
 for (const size of [192, 512]) {
   const page = await browser.newPage({ viewport: { width: size, height: size } });
   await page.setContent(html(size));
-  await page.screenshot({ path: `/home/charlie/GitHub/fossstudio/web/icons/icon-${size}.png` });
+  await page.screenshot({ path: `${REPO}web/icons/icon-${size}.png` });
 }
 await browser.close();
 console.log("icons made");

@@ -45,7 +45,9 @@ dashboard.
   bundles of all audio or all files in one click. The combined video matches the
   screen: everyone's tile, their lower-third name banners, the podcast
   logo + episode title block (the host drags it anywhere, resizes it,
-  and can drop the logo or the title for a session), spotlight when the
+  and right-clicks it for the rest: put the logo left of the title,
+  right, above or below, pick the block's background colour, or drop
+  the logo or the title for a session), spotlight when the
   host has spotlit someone, and any subscribe/ad overlays you triggered,
   at the moment you triggered them. Tile sizes, spacing and corners all
   come from one set of frame-relative fractions shared by the browser
@@ -285,6 +287,11 @@ node test/fosscast-publish-test.mjs      # publish-to-FOSSCast flow against a st
 node test/live-watch-test.mjs            # watch page, chat, word filter, blocking, live DVR stitch
 node test/firefox-compat-test.mjs <url> <password>  # same flows, real Firefox engine
 ```
+
+The tests that need moving faces feed Chromium fake camera clips
+(`.y4m`). They are generated locally rather than carried in the repo:
+put them in `server/test/cams`, or point `CAMS_DIR` at wherever yours
+live.
 
 Day-to-day operations are dashboard buttons; see the
 [runbook](docs/runbook.md) for the rare terminal cases.

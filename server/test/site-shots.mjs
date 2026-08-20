@@ -2,12 +2,11 @@
 // generated face appears in more than one image on the site.
 import { chromium } from "playwright";
 import fs from "node:fs";
-import { hostLogin, TEST_HOST } from "./helpers.mjs";
+import { hostLogin, TEST_HOST, REPO, CAMS } from "./helpers.mjs";
 
 const B = "http://127.0.0.1:3999";
 const PW = "testpass123";
-const CAMS = "/tmp/claude-1000/-home-charlie-GitHub-fossstudio/30aef10b-264b-4404-9752-f5d84c9a6596/scratchpad";
-const OUT = "/home/charlie/GitHub/fossstudio/docs/shots";
+const OUT = `${REPO}docs/shots`;
 fs.mkdirSync(OUT, { recursive: true });
 
 const cookie = await hostLogin(B, PW);
