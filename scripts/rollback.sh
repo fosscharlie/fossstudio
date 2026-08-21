@@ -7,6 +7,6 @@
 set -euo pipefail
 
 HOST="${FOSSSTUDIO_HOST:?Set FOSSSTUDIO_HOST, e.g. root@1.2.3.4}"
-SSH_KEY="${FOSSSTUDIO_SSH_KEY:-/home/charlie/2-Data/SSH/lightmorphic-fossstudio-vps-deploy}"
+SSH_KEY="${FOSSSTUDIO_SSH_KEY:-/home/charlie/9-Claude/ssh/lightmorphic-fossstudio-vps-deploy}"
 
 ssh -i "$SSH_KEY" -o IdentitiesOnly=yes "$HOST" rollback
