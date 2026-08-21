@@ -283,7 +283,8 @@
     if (s.logo && $("offlineLogo").hidden) {
       $("offlineLogo").onload = () => {
         $("offlineLogo").hidden = false;
-        $("offlineIcon").hidden = true;
+        // an <svg> has no .hidden property - the attribute is the API
+        $("offlineIcon").setAttribute("hidden", "");
       };
       $("offlineLogo").src = s.logo;
     }
