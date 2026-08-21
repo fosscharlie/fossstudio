@@ -663,6 +663,14 @@ api.get("/recordings/:id/files/:file", requireAuth, async (req, res) => {
 // see on joining. The slug is either a session id (one show) or a
 // host's username - their permanent channel page (/live/fossnerds),
 // which switches to whichever of their sessions is live right now.
+// The owner's podcast logo, if they uploaded one - the offline watch
+// page wears it instead of the stock icon
+async function channelLogo(ownerId) {
+  if (!ownerId) return null;
+  const s = await getSettings(ownerId);
+  return s.logo ? `/api/logo/${ownerId}` : null;
+}
+
 api.get("/live/:slug", async (req, res) => {
   const slug = path.basename(req.params.slug);
   const session = await findSession(slug);
@@ -672,7 +680,8 @@ api.get("/live/:slug", async (req, res) => {
       live: outs.channel,
       since: outs.channelSince,
       roomId: slug,
-      title: session.title || ""
+      title: session.title || "",
+      logo: await channelLogo(session.ownerId)
     });
   }
   const user = await findByUsername(slug.toLowerCase());
@@ -683,7 +692,8 @@ api.get("/live/:slug", async (req, res) => {
     live: !!roomId,
     since: roomId ? streamingSince(roomId) : null,
     roomId: roomId || null,
-    title: live?.title || user.username
+    title: live?.title || user.username,
+    logo: await channelLogo(user.id)
   });
 });
 
@@ -696,6 +706,7 @@ api.get("/live-here", async (req, res) => {
   const roomId = channelRoomForOwner(user.id);
   const live = roomId ? await findSession(roomId) : null;
   res.json({
+    logo: await channelLogo(user.id),
     live: !!roomId,
     since: roomId ? streamingSince(roomId) : null,
     roomId: roomId || null,

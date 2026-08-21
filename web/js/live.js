@@ -245,6 +245,15 @@
       document.title = `${s.title} - live`;
       $("offlineTitle").textContent = `${s.title} isn't live right now`;
     }
+    // The show's own logo on the offline page, when one is uploaded;
+    // the stock icon stays for everyone else
+    if (s.logo && $("offlineLogo").hidden) {
+      $("offlineLogo").onload = () => {
+        $("offlineLogo").hidden = false;
+        $("offlineIcon").hidden = true;
+      };
+      $("offlineLogo").src = s.logo;
+    }
     liveNow = !!s.live;
     const room = s.roomId || null;
     if (room && room !== roomId) {

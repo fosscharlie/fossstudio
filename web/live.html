@@ -6,7 +6,7 @@
 <title>Live - FOSSStudio</title>
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
-<link rel="stylesheet" href="/css/live.css?v=20260822a">
+<link rel="stylesheet" href="/css/live.css?v=20260822e">
 </head>
 <body>
 <div class="watch">
@@ -20,11 +20,12 @@
     <main class="player-wrap">
       <video id="player" playsinline controls hidden></video>
       <div id="offline" class="offline">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <img id="offlineLogo" class="offline-logo" alt="" hidden>
+        <svg id="offlineIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M4.9 19.1a10 10 0 0 1 0-14.2M7.8 16.2a6 6 0 0 1 0-8.4M19.1 4.9a10 10 0 0 1 0 14.2M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="2"/>
         </svg>
         <p><b id="offlineTitle">Not live right now</b></p>
-        <p class="soft">This page switches on by itself the moment the show starts.</p>
+        <p class="soft">Do check back for the next show - this page switches itself on the moment it starts.</p>
         <canvas id="game" class="game" width="640" height="320" aria-label="Asteroids while you wait: arrow keys turn and thrust, space fires; on touch screens the corner buttons steer"></canvas>
       </div>
     </main>
@@ -46,6 +47,6 @@
 </div>
 <script src="/assets/hls.min.js"></script>
 <script src="/js/offair.js?v=20260822e"></script>
-<script src="/js/live.js?v=20260822a"></script>
+<script src="/js/live.js?v=20260822e"></script>
 </body>
 </html>

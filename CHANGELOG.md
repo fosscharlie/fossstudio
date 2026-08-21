@@ -4,6 +4,9 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- The offline watch page wears the show's own logo when the host has
+  uploaded one (the stock icon stays for everyone else), and asks the
+  visitor to check back for the next show.
 - The watch page off air is now a waiting room instead of a dead end:
   the chat is gone until the show actually starts (it used to sit
   there saying "not connected" if you typed), and in its place there's
