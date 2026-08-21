@@ -12,6 +12,7 @@ export const USER_SETTINGS_DEFAULTS = {
   logo: null,
   streamUrl: "rtmp://a.rtmp.youtube.com/live2",
   streamKey: "",
+  channelDomain: "",  // optional custom domain for the channel page (live.example.org)
   sounds: [],  // soundboard clips: [{ id, name, ext }]
   intros: []   // fullscreen intro videos: [{ id, name, ext }]
 };
@@ -59,6 +60,15 @@ export async function findByUsername(username) {
 export async function findById(id) {
   const users = await load();
   return users.find((u) => u.id === id) || null;
+}
+
+// The host whose custom channel domain this is, if any - how a request
+// arriving on live.fossnerds.org finds the channel it should show.
+export async function findByChannelDomain(hostname) {
+  const d = String(hostname || "").toLowerCase();
+  if (!d) return null;
+  const users = await load();
+  return users.find((u) => u.settings?.channelDomain === d) || null;
 }
 
 export async function listUsers() {

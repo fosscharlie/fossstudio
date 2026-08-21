@@ -16,7 +16,7 @@ import {
   listSounds, addSound, removeSound, findSound,
   listIntros, addIntro, removeIntro, findIntro
 } from "./settings.js";
-import { listUsers, createUser, deleteUser, findById, updateUser, findByUsername } from "./users.js";
+import { listUsers, createUser, deleteUser, findById, updateUser, findByUsername, findByChannelDomain } from "./users.js";
 import { hashPassword } from "./auth.js";
 import { getRoom } from "./rooms.js";
 import {
@@ -267,7 +267,13 @@ api.post("/users/:id/password", requireAdmin, async (req, res) => {
 // ---------- settings & theme ----------
 
 api.get("/settings", requireAuth, async (req, res) => res.json(await getSettings(req.user.uid)));
-api.put("/settings", requireAuth, async (req, res) => res.json(await updateSettings(req.user.uid, req.body)));
+api.put("/settings", requireAuth, async (req, res) => {
+  try {
+    res.json(await updateSettings(req.user.uid, req.body));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
 
 // Public: what a guest's session page needs, resolved via the room owner
 api.get("/theme", async (req, res) => {
@@ -671,6 +677,22 @@ api.get("/live/:slug", async (req, res) => {
   }
   const user = await findByUsername(slug.toLowerCase());
   if (!user || user.role === "admin") return res.status(404).json({ error: "not found" });
+  const roomId = channelRoomForOwner(user.id);
+  const live = roomId ? await findSession(roomId) : null;
+  res.json({
+    live: !!roomId,
+    since: roomId ? streamingSince(roomId) : null,
+    roomId: roomId || null,
+    title: live?.title || user.username
+  });
+});
+
+// The same status for a page served at the root of a host's custom
+// channel domain (live.fossnerds.org), where there is no slug in the
+// path - the Host header says whose channel this is.
+api.get("/live-here", async (req, res) => {
+  const user = await findByChannelDomain(req.hostname);
+  if (!user) return res.status(404).json({ error: "not found" });
   const roomId = channelRoomForOwner(user.id);
   const live = roomId ? await findSession(roomId) : null;
   res.json({

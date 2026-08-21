@@ -4,8 +4,11 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   // The page's slug is a session id or a host's permanent channel name;
-  // the status endpoint says which room actually carries the show
+  // the status endpoint says which room actually carries the show. On a
+  // host's custom channel domain the page sits at the root with no slug
+  // at all - the server resolves the domain instead.
   const slug = location.pathname.split("/").filter(Boolean).pop();
+  const statusUrl = slug ? `/api/live/${slug}` : "/api/live-here";
   let roomId = null;
   const els = {
     title: $("showTitle"), badge: $("liveBadge"), viewers: $("viewerCount"),
@@ -248,10 +251,10 @@
       startPlayer();
     } else if (!polling && !ws) {
       polling = setInterval(() => {
-        fetch(`/api/live/${slug}`).then((r) => r.json()).then(applyStatus).catch(() => {});
+        fetch(statusUrl).then((r) => r.json()).then(applyStatus).catch(() => {});
       }, 5000);
     }
   }
-  fetch(`/api/live/${slug}`).then((r) => r.json()).then(applyStatus)
+  fetch(statusUrl).then((r) => r.json()).then(applyStatus)
     .catch(() => { /* a later poll or the chat socket catches up */ });
 })();

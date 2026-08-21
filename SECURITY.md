@@ -78,8 +78,13 @@ For self-hosters assessing the project:
   no login by design, because a misconfigured install often cannot log
   in at all), `/tls-allowed` (a yes/no answer Caddy consults before
   fetching a certificate on demand; it approves only the panel domains
-  derived from `DOMAIN`, so a stranger pointing their name at the
-  server can never mint a certificate), and the audience-facing live
+  derived from `DOMAIN` and hosts' saved channel domains, so a stranger
+  pointing their name at the server can never mint a certificate. A
+  channel domain is host-entered, but only a logged-in host can save
+  one, each domain can belong to only one host, the studio's own names
+  are refused, and a certificate is only ever actually issued if the
+  domain's DNS really points at this server - the ACME challenge fails
+  otherwise), and the audience-facing live
   layer: `/live/<session>`
   (the watch page and its HLS media, which exists only while that
   session streams) plus its chat socket. The watch page carries the

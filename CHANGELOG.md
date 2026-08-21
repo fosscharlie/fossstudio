@@ -2,6 +2,18 @@
 
 All notable changes to FOSSStudio are documented here.
 
+## Unreleased
+
+- A host can put their channel page on their own domain: enter it under
+  Live streaming ("Channel domain", for example `live.fossnerds.org`),
+  point the domain's DNS at the server, done - the certificate is
+  fetched on demand exactly like the panel domains, and the audience
+  watches at the domain itself, no path needed. The `/live/<username>`
+  link keeps working, the dashboard's copy button hands out the custom
+  address once one is set, and clearing the field releases the domain.
+  A domain can only be claimed by one host, and the studio's own names
+  are off limits.
+
 ## 1.6.0 - 2026-08-20
 
 - Both colour palettes now share one layout: fifteen colours in three

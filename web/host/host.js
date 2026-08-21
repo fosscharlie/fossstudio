@@ -55,6 +55,7 @@
   let me = { role: "subadmin", username: "" };
   // Whether publishing recordings to FOSSCast is configured
   let canPublish = false;
+  let channelDomain = "";
   let currentMenu = null;
 
   function visibleMenus() {
@@ -243,7 +244,7 @@
         loadSessions();
       });
       const liveBtn = iconBtn("live", "Copy your channel link - one permanent page where the audience watches and chats whenever you go live", async () => {
-        await navigator.clipboard.writeText(`${location.origin}/live/${me.username}`);
+        await navigator.clipboard.writeText(channelDomain ? `https://${channelDomain}/` : `${location.origin}/live/${me.username}`);
         liveBtn.classList.add("done");
         liveBtn.innerHTML = ICONS.tick;
         setTimeout(() => { liveBtn.classList.remove("done"); liveBtn.innerHTML = ICONS.live; }, 1500);
@@ -550,15 +551,25 @@
   }
 
   $("saveStreamBtn").onclick = async () => {
-    await apiFetch("/api/settings", {
-      method: "PUT",
-      body: JSON.stringify({
-        streamUrl: $("streamUrl").value.trim() || "rtmp://a.rtmp.youtube.com/live2",
-        streamKey: $("streamKey").value.trim()
-      })
-    });
-    $("streamMsg").hidden = false;
-    setTimeout(() => { $("streamMsg").hidden = true; }, 2000);
+    $("streamErr").hidden = true;
+    try {
+      const s = await apiFetch("/api/settings", {
+        method: "PUT",
+        body: JSON.stringify({
+          streamUrl: $("streamUrl").value.trim() || "rtmp://a.rtmp.youtube.com/live2",
+          streamKey: $("streamKey").value.trim(),
+          channelDomain: $("channelDomain").value.trim()
+        })
+      });
+      channelDomain = s.channelDomain || "";
+      $("channelDomain").value = channelDomain;
+      $("streamMsg").hidden = false;
+      setTimeout(() => { $("streamMsg").hidden = true; }, 2000);
+    } catch (err) {
+      if (err.message === "logged out") throw err;
+      $("streamErr").textContent = err.message;
+      $("streamErr").hidden = false;
+    }
   };
 
   // ---------- chat block list ----------
@@ -644,6 +655,8 @@
     const s = await apiFetch("/api/settings");
     $("streamUrl").value = s.streamUrl || "";
     $("streamKey").value = s.streamKey || "";
+    channelDomain = s.channelDomain || "";
+    $("channelDomain").value = channelDomain;
     $("fosscastUrl").value = s.fosscastUrl || "";
     $("fosscastToken").value = s.fosscastToken || "";
     canPublish = !!(s.fosscastUrl && s.fosscastToken);

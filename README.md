@@ -55,7 +55,10 @@ dashboard.
   exception is a phone, which deliberately uses a two-column layout so
   faces stay big enough to see.
 - **Your own channel:** every host has a permanent watch page at
-  `/live/<username>` - one link to share, forever. "Go live" switches
+  `/live/<username>` - one link to share, forever. Or put it on your
+  own domain: enter it under Live streaming (say `live.fossnerds.org`),
+  point the DNS at the server, and your audience watches right at your
+  address - certificate included, nothing else to configure. "Go live" switches
   it on (HLS player, self-hosted hls.js, native on Safari, live viewer
   count); it shows "not live" between shows, switching itself without
   anyone refreshing. A separate "YouTube" button pushes RTMP too -
@@ -285,6 +288,7 @@ node test/geometry-test.mjs <url> <password>     # live tile layout matches the 
 node test/spotlight-record-test.mjs <url> <password>  # a spotlit session records as a spotlight
 node test/fosscast-publish-test.mjs      # publish-to-FOSSCast flow against a stub instance
 node test/live-watch-test.mjs            # watch page, chat, word filter, blocking, live DVR stitch
+node test/channel-domain-test.mjs        # custom channel domains: claiming, TLS gate, page at the root
 node test/firefox-compat-test.mjs <url> <password>  # same flows, real Firefox engine
 ```
 

@@ -58,8 +58,14 @@
             <label for="streamKey">Stream key</label>
             <input type="password" id="streamKey" autocomplete="off" placeholder="xxxx-xxxx-xxxx-xxxx">
           </div>
+          <div class="field">
+            <label for="channelDomain">Channel domain <span class="hint-inline">(optional)</span></label>
+            <input type="text" id="channelDomain" autocomplete="off" placeholder="live.example.org">
+            <p class="hint">Your channel page on your own address. Point the domain's DNS at this server, enter it here, and that's it - the certificate sorts itself out, and your audience watches at the domain itself, no path needed. Your <code>/live/</code> link keeps working either way.</p>
+          </div>
           <button class="btn primary" id="saveStreamBtn">Save streaming settings</button>
           <span class="msg ok" id="streamMsg" hidden>✓ Saved</span>
+          <span class="msg err" id="streamErr" hidden></span>
         </div>
         <div class="panel">
           <h2>Blocked from chat</h2>

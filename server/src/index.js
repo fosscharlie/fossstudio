@@ -13,6 +13,7 @@ import { diagnostics } from "./diagnostics.js";
 import { attachChat } from "./livechat.js";
 import { migrateIntros } from "./introcoder.js";
 import { findSession } from "./settings.js";
+import { findByChannelDomain } from "./users.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -94,9 +95,13 @@ app.get("/diagnostics.json", (req, res) => {
 // that panel; anywhere else to the host side. Each shows its login when
 // signed out. Guests never visit the root - they arrive on /s/<id>
 // links - so nothing is lost by forwarding it.
-app.get("/", (req, res) => {
-  const target = panelDomains("admin").has((req.hostname || "").toLowerCase())
-    ? "/admin/" : "/host/";
+app.get("/", async (req, res) => {
+  const name = (req.hostname || "").toLowerCase();
+  // A host's custom channel domain serves their channel page at the
+  // root: the audience visits live.fossnerds.org and is watching.
+  const channelOwner = await findByChannelDomain(name);
+  if (channelOwner) return res.sendFile(path.join(config.webDir, "live.html"));
+  const target = panelDomains("admin").has(name) ? "/admin/" : "/host/";
   res.redirect(target);
 });
 
@@ -105,9 +110,10 @@ app.get("/", (req, res) => {
 // HOST_DOMAIN) are approved, so pointing a random name at this server
 // can never mint a certificate. Same public posture as /healthz - the
 // answer reveals nothing beyond names any visitor already sees.
-app.get("/tls-allowed", (req, res) => {
+app.get("/tls-allowed", async (req, res) => {
   const d = String(req.query.domain || "").toLowerCase();
-  const ok = panelDomains("admin").has(d) || panelDomains("host").has(d);
+  const ok = panelDomains("admin").has(d) || panelDomains("host").has(d) ||
+    !!(await findByChannelDomain(d));
   res.status(ok ? 200 : 404).end();
 });
 

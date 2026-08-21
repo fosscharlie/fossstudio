@@ -3,8 +3,8 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { readJson, writeJson } from "./storage.js";
-import { getUserSettings, updateUserSettings } from "./users.js";
-import { config } from "./config.js";
+import { getUserSettings, updateUserSettings, findByChannelDomain } from "./users.js";
+import { config, panelDomains } from "./config.js";
 
 export async function getSettings(uid) {
   return getUserSettings(uid);
@@ -34,6 +34,30 @@ export async function updateSettings(uid, patch) {
   }
   if (typeof patch.streamKey === "string") {
     clean.streamKey = patch.streamKey.trim().slice(0, 200);
+  }
+  // Custom channel domain: the host's own address for their channel
+  // page (live.fossnerds.org). Point its DNS at this server and the
+  // certificate is fetched on demand, like the panel domains. Empty
+  // clears it.
+  if (typeof patch.channelDomain === "string") {
+    const d = patch.channelDomain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    if (d === "") {
+      clean.channelDomain = "";
+    } else {
+      if (!/^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/.test(d)) {
+        throw new Error("That doesn't look like a domain name (expected something like live.example.org).");
+      }
+      // The studio's own names stay the studio's
+      if (d === config.domain.toLowerCase() ||
+          panelDomains("admin").has(d) || panelDomains("host").has(d)) {
+        throw new Error("That domain is reserved for this studio.");
+      }
+      const holder = await findByChannelDomain(d);
+      if (holder && holder.id !== uid) {
+        throw new Error("Another host already uses that domain.");
+      }
+      clean.channelDomain = d;
+    }
   }
   // FOSSCast publish API, for pushing finished recordings as episodes
   if (typeof patch.fosscastUrl === "string") {
