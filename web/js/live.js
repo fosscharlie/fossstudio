@@ -12,7 +12,7 @@
   let roomId = null;
   const els = {
     title: $("showTitle"), badge: $("liveBadge"), viewers: $("viewerCount"),
-    player: $("player"), offline: $("offline"),
+    player: $("player"), offline: $("offline"), chat: $("chatPanel"),
     list: $("chatList"), joinBox: $("joinBox"), nameInput: $("nameInput"),
     joinBtn: $("joinBtn"), sendBox: $("sendBox"), msgInput: $("msgInput"),
     error: $("chatError")
@@ -30,6 +30,10 @@
     els.offline.hidden = true;
     els.player.hidden = false;
     els.badge.hidden = false;
+    // The chat exists while the show does; off air, the page is the
+    // waiting room and the game has the floor
+    els.chat.hidden = false;
+    OffAir.stop();
     if (els.player.canPlayType("application/vnd.apple.mpegurl")) {
       // Safari plays HLS natively
       els.player.src = src();
@@ -60,6 +64,8 @@
     els.player.hidden = true;
     els.badge.hidden = true;
     els.offline.hidden = false;
+    els.chat.hidden = true;
+    OffAir.start($("game"));
   }
 
   // ---------- chat ----------
@@ -257,4 +263,5 @@
   }
   fetch(statusUrl).then((r) => r.json()).then(applyStatus)
     .catch(() => { /* a later poll or the chat socket catches up */ });
+  OffAir.start($("game")); // the page opens off air; going live swaps it out
 })();

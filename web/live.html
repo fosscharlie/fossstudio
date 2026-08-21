@@ -6,7 +6,7 @@
 <title>Live - FOSSStudio</title>
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
-<link rel="stylesheet" href="/css/live.css?v=20260819a">
+<link rel="stylesheet" href="/css/live.css?v=20260822a">
 </head>
 <body>
 <div class="watch">
@@ -25,10 +25,11 @@
         </svg>
         <p><b id="offlineTitle">Not live right now</b></p>
         <p class="soft">This page switches on by itself the moment the show starts.</p>
+        <canvas id="game" class="game" width="640" height="200" aria-label="A little jumping game while you wait"></canvas>
       </div>
     </main>
 
-    <aside class="chat" aria-label="Live chat">
+    <aside id="chatPanel" class="chat" aria-label="Live chat" hidden>
       <div class="chat-head">Chat</div>
       <div id="chatList" class="chat-list" aria-live="polite"></div>
       <div id="joinBox" class="join-box">
@@ -44,6 +45,7 @@
   </div>
 </div>
 <script src="/assets/hls.min.js"></script>
-<script src="/js/live.js?v=20260819a"></script>
+<script src="/js/offair.js?v=20260822a"></script>
+<script src="/js/live.js?v=20260822a"></script>
 </body>
 </html>

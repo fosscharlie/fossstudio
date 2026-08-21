@@ -76,6 +76,16 @@ body {
 .offline svg { width: 3rem; height: 3rem; margin-bottom: 1rem; color: #565d6b; }
 .offline b { color: var(--text); font-size: 1.1rem; }
 .offline .soft { margin-top: 0.4rem; font-size: 0.9rem; }
+.offline .game {
+  display: block;
+  width: min(92vw, 40rem);
+  margin: 1.6rem auto 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  touch-action: manipulation;
+  cursor: pointer;
+}
 
 /* ---------- chat ---------- */
 .chat {

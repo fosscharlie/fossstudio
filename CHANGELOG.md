@@ -4,6 +4,13 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- The watch page off air is now a waiting room instead of a dead end:
+  the chat is gone until the show actually starts (it used to sit
+  there saying "not connected" if you typed), and in its place there's
+  a tiny one-button game - a microphone hopping over amps and mic
+  stands, tap or press space. Drawn in the page's own look, no assets,
+  no storage, nothing leaves the page. The moment the stream starts
+  the game steps aside and the player and chat take over.
 - A host can put their channel page on their own domain: enter it under
   Live streaming ("Channel domain", for example `live.fossnerds.org`),
   point the domain's DNS at the server, done - the certificate is
