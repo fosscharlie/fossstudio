@@ -15,8 +15,10 @@ window.OffAir = (() => {
 
   let dots = [], pulses = [], level = 1, best = 0, caught = 0, quota = 0, t = 0;
 
-  const need = (l) => Math.min(5 + l * 5, 55);   // quota per level
-  const count = (l) => Math.min(10 + l * 5, 60); // dots on screen
+  // Dots on screen and the one-click quota: an easy first win, then a
+  // climb - the late levels ask for most of the field in one chain
+  const count = (l) => Math.min(10 + l * 5, 60);
+  const need = (l) => Math.min(Math.round(count(l) * Math.min(0.85, 0.15 + l * 0.07)), count(l) - 2);
 
   function newLevel() {
     caught = 0;
@@ -26,7 +28,7 @@ window.OffAir = (() => {
     const n = count(level);
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
-      const v = 0.5 + Math.random() * 0.7;
+      const v = 0.35 + Math.random() * 0.55;
       dots.push({
         x: 20 + Math.random() * (W - 40),
         y: 20 + Math.random() * (H - 40),
@@ -38,7 +40,7 @@ window.OffAir = (() => {
   }
 
   // life: grow ~0.5s, hold ~1.6s, fade ~0.6s
-  const GROW = 30, HOLD = 96, FADE = 36, RMAX = 42;
+  const GROW = 26, HOLD = 130, FADE = 40, RMAX = 62;
   function radius(p) {
     if (p.age < GROW) return RMAX * (p.age / GROW);
     if (p.age < GROW + HOLD) return RMAX;
@@ -62,7 +64,7 @@ window.OffAir = (() => {
     for (let i = dots.length - 1; i >= 0; i--) {
       const d = dots[i];
       for (const p of pulses) {
-        if (Math.hypot(d.x - p.x, d.y - p.y) < radius(p) + 4) {
+        if (Math.hypot(d.x - p.x, d.y - p.y) < radius(p) + 5) {
           dots.splice(i, 1);
           caught++;
           plant(d.x, d.y, d.c);
@@ -99,7 +101,7 @@ window.OffAir = (() => {
     ctx.globalAlpha = 1;
     for (const d of dots) {
       ctx.fillStyle = d.c;
-      ctx.beginPath(); ctx.arc(d.x, d.y, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(d.x, d.y, 5, 0, Math.PI * 2); ctx.fill();
     }
     // HUD
     ctx.fillStyle = MUTED;
