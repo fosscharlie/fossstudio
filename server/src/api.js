@@ -720,7 +720,7 @@ api.get("/chat/blocked", requireAuth, async (req, res) => {
   res.json(await listBlocked());
 });
 api.delete("/chat/blocked/:id", requireAuth, async (req, res) => {
-  const ok = await unblock(path.basename(req.params.id));
+  const ok = await unblock(path.basename(req.params.id), req.user.uid);
   if (!ok) return res.status(404).json({ error: "not found" });
   res.json({ ok: true });
 });

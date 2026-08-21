@@ -78,10 +78,14 @@ dashboard.
   containing them are never touched. A default English list ships in
   `server/assets/banned-words.txt`; copy it to `data/banned-words.txt`
   to customise. Hosts appear under their own name and can block anyone
-  from their messages - blocking bans the username AND the address, the
-  person's messages vanish for everyone instantly, and the block list
-  in the dashboard is visible and reversible (a mistake, or an accepted
-  apology, is one click to undo). Viewer addresses never reach any
+  from their messages: right-click (or click) a message for the menu.
+  "Hide this message" quietly removes that one message for everyone
+  except its author - who still sees it and is told nothing - and
+  "Ban" blocks the username AND the address, so the person's messages
+  vanish for everyone instantly. The block list in the dashboard is
+  visible and reversible (a mistake, or an accepted apology, is one
+  click to undo), and every ban, unban and hide is logged server-side
+  with the time, name and address. Viewer addresses never reach any
   client.
 - **Publish to FOSSCast:** one click on a finished recording (live
   streams included) pushes the video to your

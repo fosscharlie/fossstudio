@@ -1726,33 +1726,64 @@
     });
   }
 
+  // Moderation is a right-click menu on the message (a plain click
+  // works too): hide the one message, or ban the person outright -
+  // the same menu the watch page gives a host
+  let hostChatMenu = null;
+  function hideHostChatMenu() { if (hostChatMenu) { hostChatMenu.remove(); hostChatMenu = null; } }
+  document.addEventListener("pointerdown", (e) => {
+    if (hostChatMenu && !hostChatMenu.contains(e.target)) hideHostChatMenu();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideHostChatMenu(); });
+
+  function openHostChatMenu(e, m) {
+    e.preventDefault();
+    hideHostChatMenu();
+    hostChatMenu = document.createElement("div");
+    hostChatMenu.className = "chat-menu";
+    const mk = (label, cls, fn) => {
+      const b = document.createElement("button");
+      b.textContent = label;
+      if (cls) b.className = cls;
+      b.onclick = fn;
+      hostChatMenu.appendChild(b);
+      return b;
+    };
+    mk("Hide this message", "", () => {
+      hostChatRequest("hide", { id: m.id }).catch(() => {});
+      hideHostChatMenu();
+    });
+    if (!m.host) {
+      const ban = mk(`Ban ${m.name}`, "danger", () => {
+        if (!ban.classList.contains("confirm")) {
+          ban.classList.add("confirm");
+          ban.textContent = `Ban ${m.name} - click again`;
+          return;
+        }
+        hostChatRequest("block", { name: m.name }).catch(() => {});
+        hideHostChatMenu();
+      });
+    }
+    document.body.appendChild(hostChatMenu);
+    const mw = hostChatMenu.offsetWidth, mh = hostChatMenu.offsetHeight;
+    hostChatMenu.style.left = `${Math.min(e.clientX, window.innerWidth - mw - 8)}px`;
+    hostChatMenu.style.top = `${Math.min(e.clientY, window.innerHeight - mh - 8)}px`;
+  }
+
   function hostChatAdd(m) {
     const row = document.createElement("div");
     row.className = "chat-msg" + (m.host ? " host" : "");
     row.dataset.name = m.name.toLowerCase();
+    row.dataset.id = m.id;
     const who = document.createElement("span");
     who.className = "who";
     who.textContent = m.name;
     const text = document.createElement("span");
     text.textContent = m.text;
     row.append(who, text);
-    if (!m.host) {
-      const block = document.createElement("button");
-      block.className = "block";
-      block.dataset.tip = "Block this person";
-      block.setAttribute("aria-label", `Block ${m.name}`);
-      block.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>';
-      block.onclick = () => {
-        if (!block.classList.contains("confirm")) {
-          block.classList.add("confirm");
-          block.dataset.tip = "Click again to block";
-          setTimeout(() => { block.classList.remove("confirm"); block.dataset.tip = "Block this person"; }, 4000);
-          return;
-        }
-        hostChatRequest("block", { name: m.name }).catch(() => {});
-      };
-      row.appendChild(block);
-    }
+    row.classList.add("moderatable");
+    row.addEventListener("contextmenu", (e) => openHostChatMenu(e, m));
+    row.addEventListener("click", (e) => openHostChatMenu(e, m));
     els.hostChatList.appendChild(row);
     while (els.hostChatList.children.length > 200) els.hostChatList.firstChild.remove();
     els.hostChatList.scrollTop = els.hostChatList.scrollHeight;
@@ -1800,6 +1831,8 @@
         hostChatAdd(data);
       } else if (event === "viewers") {
         els.hostChatViewers.textContent = data.viewers ? `· ${data.viewers} watching` : "";
+      } else if (event === "hidden") {
+        els.hostChatList.querySelector(`[data-id="${CSS.escape(data.id)}"]`)?.remove();
       } else if (event === "blocked") {
         for (const el of els.hostChatList.querySelectorAll(`[data-name="${CSS.escape(data.name.toLowerCase())}"]`)) {
           el.remove();

@@ -1070,3 +1070,32 @@ body.output-mode #hostPanel { display: none; }
 body.output-mode .media-warning { display: none; }
 body.output-mode [data-tip]::after,
 body.output-mode [data-tip]::before { display: none; }
+
+/* Right-click moderation menu on chat messages (hosts only) */
+.chat-msg.moderatable { cursor: context-menu; }
+.chat-menu {
+  position: fixed;
+  z-index: 100;
+  min-width: 12rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.3rem;
+  box-shadow: 0 12px 34px rgba(0,0,0,0.5);
+}
+.chat-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 0.86rem;
+  color: var(--text);
+  background: none;
+  border: 0;
+  border-radius: 7px;
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+}
+.chat-menu button:hover { background: rgba(232,234,237,0.06); }
+.chat-menu button.danger { color: #ff6b60; }
+.chat-menu button.confirm { background: rgba(243,66,54,0.14); }

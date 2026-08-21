@@ -4,7 +4,7 @@
 // assets, no storage, no requests - the best score lives only as long
 // as the tab.
 window.OffAir = (() => {
-  const W = 640, H = 320;
+  const W = 800, H = 400;
   let canvas = null, ctx = null, raf = 0, running = false;
   let state = "idle"; // idle | play | over
 

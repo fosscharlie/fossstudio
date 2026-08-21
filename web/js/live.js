@@ -91,34 +91,65 @@
     showError.t = setTimeout(() => { els.error.hidden = true; }, 4000);
   }
 
+  // Host moderation lives in a right-click menu on the message (a
+  // plain click opens it too, for touch screens): hide the one
+  // message, or ban the person outright
+  let chatMenu = null;
+  function hideChatMenu() { if (chatMenu) { chatMenu.remove(); chatMenu = null; } }
+  document.addEventListener("pointerdown", (e) => {
+    if (chatMenu && !chatMenu.contains(e.target)) hideChatMenu();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideChatMenu(); });
+
+  function openChatMenu(e, m) {
+    e.preventDefault();
+    hideChatMenu();
+    chatMenu = document.createElement("div");
+    chatMenu.className = "chat-menu";
+    const mk = (label, cls, fn) => {
+      const b = document.createElement("button");
+      b.textContent = label;
+      if (cls) b.className = cls;
+      b.onclick = fn;
+      chatMenu.appendChild(b);
+      return b;
+    };
+    mk("Hide this message", "", () => {
+      request("hide", { id: m.id }).catch((err) => showError(err.message));
+      hideChatMenu();
+    });
+    if (!m.host) {
+      const ban = mk(`Ban ${m.name}`, "danger", () => {
+        if (!ban.classList.contains("confirm")) {
+          ban.classList.add("confirm");
+          ban.textContent = `Ban ${m.name} - click again`;
+          return;
+        }
+        request("block", { name: m.name }).catch((err) => showError(err.message));
+        hideChatMenu();
+      });
+    }
+    document.body.appendChild(chatMenu);
+    const mw = chatMenu.offsetWidth, mh = chatMenu.offsetHeight;
+    chatMenu.style.left = `${Math.min(e.clientX, window.innerWidth - mw - 8)}px`;
+    chatMenu.style.top = `${Math.min(e.clientY, window.innerHeight - mh - 8)}px`;
+  }
+
   function addMessage(m) {
     const row = document.createElement("div");
     row.className = "chat-msg" + (m.host ? " host" : "");
     row.dataset.name = m.name.toLowerCase();
+    row.dataset.id = m.id;
     const who = document.createElement("span");
     who.className = "who";
     who.textContent = m.name;
     const text = document.createElement("span");
     text.textContent = m.text;
     row.append(who, text);
-    // Hosts moderate right from the message: two clicks blocks the
-    // person (name and address) and removes everything they said
-    if (isHost && !m.host) {
-      const block = document.createElement("button");
-      block.className = "block";
-      block.title = "Block this person";
-      block.setAttribute("aria-label", `Block ${m.name}`);
-      block.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>';
-      block.onclick = () => {
-        if (!block.classList.contains("confirm")) {
-          block.classList.add("confirm");
-          block.title = "Click again to block";
-          setTimeout(() => { block.classList.remove("confirm"); block.title = "Block this person"; }, 4000);
-          return;
-        }
-        request("block", { name: m.name }).catch((e) => showError(e.message));
-      };
-      row.appendChild(block);
+    if (isHost) {
+      row.classList.add("moderatable");
+      row.addEventListener("contextmenu", (e) => openChatMenu(e, m));
+      row.addEventListener("click", (e) => openChatMenu(e, m));
     }
     els.list.appendChild(row);
     while (els.list.children.length > 200) els.list.firstChild.remove();
@@ -177,6 +208,8 @@
         note(data.live ? "The show is live." : "The show has ended.");
       } else if (event === "viewers") {
         setViewers(data.viewers);
+      } else if (event === "hidden") {
+        els.list.querySelector(`[data-id="${CSS.escape(data.id)}"]`)?.remove();
       } else if (event === "blocked") {
         for (const el of els.list.querySelectorAll(`[data-name="${CSS.escape(data.name.toLowerCase())}"]`)) {
           el.remove();

@@ -101,8 +101,12 @@ For self-hosters assessing the project:
   no channel page at all.
 - **Live chat** is nickname-only with no accounts: rate-limited per
   address, messages capped and filtered server-side, and moderation
-  (blocking by name and address) restricted to logged-in hosts.
-  Viewer IP addresses are stored server-side only (owner-only files)
-  and are never exposed by any endpoint, including to hosts.
+  (hiding a message, blocking by name and address) restricted to
+  logged-in hosts. Every ban, unban and hide is appended to a
+  server-side moderation log (`data/chat-modlog.json`, owner-only)
+  with the moment, name and address; the log is never served by any
+  endpoint. Viewer IP addresses are stored server-side only
+  (owner-only files) and are never exposed by any endpoint, including
+  to hosts.
 - **Headers**: `X-Content-Type-Options`, `X-Frame-Options: DENY`,
   `Referrer-Policy`, and a restrictive `Permissions-Policy`.

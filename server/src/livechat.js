@@ -32,6 +32,17 @@ const rooms = new Map(); // roomId -> { clients:Set, history:[], live:bool }
 const BLOCKLIST_FILE = "chat-blocklist.json";
 let blocklist = null; // [{id, name, ip, by, blockedAt}]
 
+// Append-only moderation log (data/chat-modlog.json): every ban,
+// unban and hide, with the moment, the name and the address. It is
+// deliberately not served by any endpoint - the reversible blocklist
+// is the UI; this is the durable record for when one is needed.
+const MODLOG_FILE = "chat-modlog.json";
+async function modlog(entry) {
+  const log = await readJson(MODLOG_FILE, []);
+  log.push({ at: new Date().toISOString(), ...entry });
+  await writeJson(MODLOG_FILE, log);
+}
+
 async function loadBlocklist() {
   if (blocklist === null) blocklist = await readJson(BLOCKLIST_FILE, []);
   return blocklist;
@@ -43,12 +54,13 @@ export async function listBlocked() {
   return (await loadBlocklist()).map(({ id, name, by, blockedAt }) => ({ id, name, by, blockedAt }));
 }
 
-export async function unblock(id) {
+export async function unblock(id, by) {
   const list = await loadBlocklist();
   const i = list.findIndex((b) => b.id === id);
   if (i === -1) return false;
-  list.splice(i, 1);
+  const [gone] = list.splice(i, 1);
   await writeJson(BLOCKLIST_FILE, list);
+  await modlog({ action: "unban", name: gone.name, ip: gone.ip, by: by || null });
   return true;
 }
 
@@ -138,7 +150,7 @@ export function attachChat() {
       r.clients.add(client);
       send({
         event: "hello",
-        data: { isHost: client.isHost, live: r.live, viewers: viewerCount(r), history: r.history }
+        data: { isHost: client.isHost, live: r.live, viewers: viewerCount(r), history: r.history.filter((m) => !m.hidden) }
       });
       return true;
     })();
@@ -190,6 +202,24 @@ export function attachChat() {
             reply({});
             break;
           }
+          case "hide": {
+            // Shadow-hide one message: it vanishes for everyone except
+            // the person who wrote it - they still see it and are told
+            // nothing, so a nuisance quietly talks to an empty room
+            if (!client.isHost) return fail("host only");
+            const msgId = String(data.id || "");
+            const entry = r.history.find((m) => m.id === msgId);
+            if (!entry) return fail("that message is gone already");
+            entry.hidden = true;
+            const raw = JSON.stringify({ event: "hidden", data: { id: msgId } });
+            for (const c of r.clients) {
+              if (c.name && c.name.toLowerCase() === entry.name.toLowerCase()) continue; // the author keeps seeing it
+              if (c.ws.readyState === 1) c.ws.send(raw);
+            }
+            await modlog({ action: "hide", name: entry.name, text: entry.text, by: auth.uid, room: roomId });
+            reply({});
+            break;
+          }
           case "block": {
             if (!client.isHost) return fail("host only");
             const name = String(data.name || "").trim();
@@ -200,6 +230,7 @@ export function attachChat() {
               c.name && c.name.toLowerCase() === name.toLowerCase());
             if (target?.isHost) return fail("Hosts can't be blocked.");
             await addBlock({ name: target?.name || name, ip: target?.ip || null, by: auth.uid });
+            await modlog({ action: "ban", name: target?.name || name, ip: target?.ip || null, by: auth.uid, room: roomId });
             if (target) {
               target.ws.close(4403, "blocked");
               r.clients.delete(target);

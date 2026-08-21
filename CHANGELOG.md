@@ -4,6 +4,17 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- Chat moderation is now a right-click menu on the message (a plain
+  click opens it too): "Hide this message" quietly removes that one
+  message for everyone except the person who wrote it - they still
+  see it and are told nothing - and "Ban" is the existing full block
+  (name and address, reversible from the dashboard). Every ban, unban
+  and hide is also recorded server-side in `data/chat-modlog.json`
+  with the moment, the name and the address - a durable record even
+  after a ban is lifted, never served by any endpoint. Works the same
+  on the watch page and in the docked session-view chat.
+- The waiting-room game is bigger: a larger field, shown at up to
+  twice the old width.
 - The offline watch page wears the show's own logo when the host has
   uploaded one (the stock icon stays for everyone else), and asks the
   visitor to check back for the next show.
