@@ -4,6 +4,11 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- The live stream reaches the audience in roughly 2-3 seconds instead
+  of about 7: one-second segments (keyframes to match) and a player
+  that sits two segments behind the newest instead of three. The
+  YouTube leg shares the same encode and is unaffected beyond the
+  keyframe cadence, which stays well within what RTMP ingest accepts.
 - Chat moderation is now a right-click menu on the message (a plain
   click opens it too): "Hide this message" quietly removes that one
   message for everyone except the person who wrote it - they still

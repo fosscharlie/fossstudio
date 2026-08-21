@@ -181,7 +181,7 @@ async function destArgs(state, gen) {
   const appending = await fs.access(playlist).then(() => true, () => false);
   const flags = `omit_endlist${appending ? "+append_list+discont_start" : ""}`;
   if (!state.outputs.rtmp) {
-    return ["-f", "hls", "-hls_time", "2", "-hls_list_size", "0",
+    return ["-f", "hls", "-hls_time", "1", "-hls_list_size", "0",
       "-hls_flags", flags, "-hls_segment_type", "fmp4",
       "-hls_fmp4_init_filename", init,
       "-hls_segment_filename", seg, "-y", playlist];
@@ -191,7 +191,7 @@ async function destArgs(state, gen) {
   const rtmpLeg = state.rtmpUrl.startsWith("file:")
     ? `[f=flv:onfail=ignore]${state.rtmpUrl.slice(5)}`
     : `[f=flv:onfail=ignore]${state.rtmpUrl}`;
-  const hlsLeg = `[f=hls:hls_time=2:hls_list_size=0:hls_flags=${flags}:` +
+  const hlsLeg = `[f=hls:hls_time=1:hls_list_size=0:hls_flags=${flags}:` +
     `hls_segment_type=fmp4:hls_fmp4_init_filename=${init}:hls_segment_filename=${seg}]${playlist}`;
   return ["-f", "tee", "-use_fifo", "1", "-y", `${hlsLeg}|${rtmpLeg}`];
 }
@@ -453,7 +453,7 @@ async function launch(state) {
     "-map", finalLabel, "-map", "[aout]",
     "-pix_fmt", "yuv420p",
     "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
-    "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k", "-g", "60",
+    "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k", "-g", "30",
     "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
     ...dest
   ];
@@ -508,7 +508,7 @@ async function launchIntro(state, gen) {
       `pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[vout];${aLabel}`,
     "-map", "[vout]", "-map", "[aout]",
     "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
-    "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k", "-g", "60",
+    "-b:v", "2500k", "-maxrate", "2500k", "-bufsize", "5000k", "-g", "30",
     "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
     ...dest
   ];

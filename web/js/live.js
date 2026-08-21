@@ -38,7 +38,9 @@
       // Safari plays HLS natively
       els.player.src = src();
     } else if (window.Hls && Hls.isSupported()) {
-      hls = new Hls({ liveSyncDurationCount: 3, enableWorker: false });
+      // Two one-second segments behind the newest: ~2-3s from studio
+      // to audience instead of the ~7s the old 2s x 3 buffer cost
+      hls = new Hls({ liveSyncDurationCount: 2, liveMaxLatencyDurationCount: 6, enableWorker: false });
       hls.loadSource(src());
       hls.attachMedia(els.player);
       hls.on(Hls.Events.ERROR, (_, data) => {
