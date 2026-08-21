@@ -7,12 +7,11 @@ All notable changes to FOSSStudio are documented here.
 - The watch page off air is now a waiting room instead of a dead end:
   the chat is gone until the show actually starts (it used to sit
   there saying "not connected" if you typed), and in its place there's
-  a little chain-reaction game: coloured dots drift across the screen,
-  one click plants a pulse, everything the pulse touches pulses too -
-  catch the level's quota with your single click. Drawn in the page's
-  own look, no assets, no storage, nothing leaves the page. The moment
-  the stream starts the game steps aside and the player and chat take
-  over.
+  Asteroids: arrow keys turn and thrust, space fires, rocks split,
+  the screen wraps, waves build - and on a phone the corners grow
+  steer/thrust/fire buttons. Drawn in the page's own look, no assets,
+  no storage, nothing leaves the page. The moment the stream starts
+  the game steps aside and the player and chat take over.
 - A host can put their channel page on their own domain: enter it under
   Live streaming ("Channel domain", for example `live.fossnerds.org`),
   point the domain's DNS at the server, done - the certificate is
