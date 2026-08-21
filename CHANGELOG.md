@@ -4,6 +4,19 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- What you see is what records, verified end-to-end and fixed where
+  it wasn't: your own tile in the session now shows your true
+  orientation (the mirror is preview-only, so the screen, the
+  recording and the stream all agree which way you're facing); name
+  banners no longer lose their last letters to a rounding slip
+  ("charl…"); moving the logo/title block while live now moves it on
+  the stream too (a brief relaunch blip, same as resizing always
+  did); and with co-hosts, tiles sit in the same order on screen as
+  in the output.
+- Tooltips are a proper bubble now - rounded, colour-inverted, with
+  the little arrow pointing at the control - floated over the page
+  rather than trapped inside the host panel, so long ones no longer
+  get cut off at the panel's edges. They wrap instead of running on.
 - The live stream reaches the audience in roughly 2-3 seconds instead
   of about 7: one-second segments (keyframes to match) and a player
   that sits two segments behind the newest instead of three. The

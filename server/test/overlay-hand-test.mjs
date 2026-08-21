@@ -90,12 +90,12 @@ await host.click("#hpYtBtn"); // end stream
 await new Promise((r) => setTimeout(r, 3000));
 const probe = (t) => {
   // average colour of the bottom-left strip region at time t
-  const raw = execFileSync(`${process.env.HOME}/.local/bin/ffmpeg`,
+  const raw = execFileSync("ffmpeg",
     ["-v", "quiet", "-ss", String(t), "-i", `${OUT}/live.flv`, "-frames:v", "1",
      "-vf", "crop=640:150:0:ih-160,scale=1:1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]);
   return [raw[0], raw[1], raw[2]];
 };
-const lastPts = Number(execFileSync(`${process.env.HOME}/.local/bin/ffprobe`,
+const lastPts = Number(execFileSync("ffprobe",
   ["-v", "quiet", "-select_streams", "v", "-show_entries", "packet=pts_time", "-of", "csv=p=0", `${OUT}/live.flv`]
 ).toString().trim().split("\n").pop());
 const during = probe(3);

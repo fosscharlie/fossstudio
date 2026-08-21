@@ -13,7 +13,7 @@ let pass = true;
 const check = (label, ok) => { console.log(`${ok ? "OK  " : "FAIL"} ${label}`); pass &&= ok; };
 
 const logoPng = path.join(os.tmpdir(), "fossstudio-testlogo.png");
-execFileSync(`${process.env.HOME}/.local/bin/ffmpeg`, ["-y", "-loglevel", "error",
+execFileSync("ffmpeg", ["-y", "-loglevel", "error",
   "-f", "lavfi", "-i", "color=c=0xfbc711:size=360x100", "-frames:v", "1", logoPng]);
 
 const cookie = await hostLogin(B, PW);

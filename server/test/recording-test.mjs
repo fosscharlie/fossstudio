@@ -48,6 +48,8 @@ const guest = await join(guestCtx, "Guest Greta", false);
 await new Promise((r) => setTimeout(r, 2000));
 
 // Turn the shared banner red so its pixels are easy to probe later
+// The colour tools sit behind a button since the panel redesign
+await host.click('#hpBannerColorsBtn');
 await host.click('.hp-swatch[aria-label="Banner colour #f34236"]');
 await new Promise((r) => setTimeout(r, 500));
 
@@ -89,8 +91,9 @@ check(`recording named after the episode (${rec?.title})`, rec?.title === "Autom
 
 // The host's browser should have uploaded a lower-third PNG per person
 if (rec) {
-  const banners = fs.readdirSync(`../data/recordings/${rec.id}/raw`)
-    .filter((f) => f.startsWith("banner-"));
+  const dataDir = process.env.DATA_DIR || "../data";
+  const banners = fs.readdirSync(`${dataDir}/recordings/${rec.id}/raw`)
+    .filter((f) => f.startsWith("banner-") && !f.includes("theme-logo")); // the baked logo is its own file
   check(`banner PNGs uploaded for both peers (${banners.length})`, banners.length === 2);
 }
 
@@ -109,7 +112,7 @@ if (rec?.status === "ready") {
     if (!dl.b64) continue;
     fs.writeFileSync(`${OUT}/${f}`, Buffer.from(dl.b64, "base64"));
     try {
-      const probe = JSON.parse(execFileSync(`${process.env.HOME}/.local/bin/ffprobe`,
+      const probe = JSON.parse(execFileSync("ffprobe",
         ["-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", `${OUT}/${f}`]));
       const dur = Number(probe.format.duration || 0);
       const codecs = probe.streams.map((s) => s.codec_name).join("+");
@@ -121,7 +124,7 @@ if (rec?.status === "ready") {
 
   // The episode-title chip is baked in top-centre: dark chip pixels
   try {
-    const rgb = execFileSync(`${process.env.HOME}/.local/bin/ffmpeg`, [
+    const rgb = execFileSync("ffmpeg", [
       "-loglevel", "error", "-ss", "5", "-i", `${OUT}/combined.mp4`,
       "-vf", "crop=40:10:620:40", "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"
     ]);
@@ -140,7 +143,7 @@ if (rec?.status === "ready") {
   // Lower-thirds are baked in: the bottom-left of the first tile
   // (inside the compact banner) should be the red we picked, not video
   try {
-    const rgb = execFileSync(`${process.env.HOME}/.local/bin/ffmpeg`, [
+    const rgb = execFileSync("ffmpeg", [
       "-loglevel", "error", "-ss", "5", "-i", `${OUT}/combined.mp4`,
       "-vf", "crop=30:8:40:505", "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"
     ]);

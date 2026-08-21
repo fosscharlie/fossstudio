@@ -291,13 +291,63 @@
     setTimeout(() => { audio.srcObject = null; }, 1500);
   };
 
+  // ---------- Tooltips ----------
+  // One fixed bubble on <body>: tips inside the scrolling host panel
+  // used to be wider than the panel and got clipped on both sides
+  const tipEl = document.createElement("div");
+  tipEl.id = "tipBubble";
+  tipEl.hidden = true;
+  document.body.appendChild(tipEl);
+  let tipFor = null;
+  const tipWatch = new MutationObserver(() => { if (tipFor) showTip(tipFor); });
+  function showTip(el) {
+    const text = el.dataset.tip;
+    if (!text) return hideTip();
+    if (tipFor !== el) {
+      tipWatch.disconnect();
+      tipWatch.observe(el, { attributes: true, attributeFilter: ["data-tip"] });
+    }
+    tipFor = el;
+    tipEl.textContent = text;
+    tipEl.hidden = false;
+    const r = el.getBoundingClientRect();
+    const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    let x = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 8));
+    let y = r.top - h - 9;
+    const below = y < 4;
+    tipEl.classList.toggle("below", below);
+    if (below) y = r.bottom + 9;
+    tipEl.style.left = `${x}px`;
+    tipEl.style.top = `${y}px`;
+    tipEl.style.setProperty("--arrow-x", `${Math.max(12, Math.min(r.left + r.width / 2 - x, w - 12))}px`);
+  }
+  function hideTip() {
+    tipEl.hidden = true;
+    tipFor = null;
+    tipWatch.disconnect();
+  }
+  document.addEventListener("pointerover", (e) => {
+    const el = e.target.closest?.("[data-tip]");
+    el ? showTip(el) : hideTip();
+  });
+  document.addEventListener("focusin", (e) => {
+    const el = e.target.closest?.("[data-tip]");
+    if (el && el.matches(":focus-visible")) showTip(el);
+  });
+  document.addEventListener("focusout", () => { if (tipFor) hideTip(); });
+  window.addEventListener("scroll", () => { if (tipFor) showTip(tipFor); }, true);
+
   // ---------- Mirror ----------
 
   let mirrored = true;
   function applyMirror() {
+    // The mirror is for the preview only - checking yourself works
+    // like a mirror. Your tile in the session shows your true
+    // orientation, exactly what guests, the recording and the stream
+    // see, so the screen and the output never disagree.
     els.previewVideo.style.transform = mirrored ? "scaleX(-1)" : "none";
     const self = tiles.get(selfId);
-    if (self) self.video.style.transform = mirrored ? "scaleX(-1)" : "none";
+    if (self) self.video.style.transform = "none";
     els.mirrorBtn.classList.toggle("active", mirrored);
     els.mirrorBtn.setAttribute("aria-pressed", String(mirrored));
     els.mirrorBtn.dataset.tip = mirrored ? "Stop mirroring my preview" : "Mirror my preview";
@@ -535,9 +585,17 @@
       third.appendChild(tagEl);
     }
     el.append(video, third);
-    // The host always sits top-left; everyone else in join order
-    if (isHostPeer) els.grid.insertBefore(el, els.banner.nextSibling);
-    else els.grid.appendChild(el);
+    // Hosts first (in join order among themselves - the compositors
+    // stable-sort the same way, so screen and output agree even with
+    // co-hosts), then everyone else in join order
+    if (isHostPeer) {
+      el.dataset.hostTile = "1";
+      const hostTiles = els.grid.querySelectorAll("[data-host-tile]");
+      const after = hostTiles.length ? hostTiles[hostTiles.length - 1] : els.banner;
+      els.grid.insertBefore(el, after.nextSibling);
+    } else {
+      els.grid.appendChild(el);
+    }
     const stream = new MediaStream();
     video.srcObject = stream;
     tiles.set(peerId, { el, video, stream, name, gain: null });
@@ -1176,7 +1234,9 @@
       x.font = tagFont;
       textW = Math.max(textW, x.measureText(tagline).width);
     }
-    const W = Math.round(Math.min(92 * S, textW + 2 * padX));
+    // ceil, not round: half a pixel under the measured width made the
+    // ellipsizer fire on names that actually fit ("charl…")
+    const W = Math.ceil(Math.min(92 * S, textW + 2 * padX));
     c.width = W; c.height = H; // resizing resets the context state
     x.beginPath();
     x.moveTo(0, 0);

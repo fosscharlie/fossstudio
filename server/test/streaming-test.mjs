@@ -70,10 +70,10 @@ check("LIVE indicator cleared",
 const outFile = `${OUT}/stream.flv`;
 check("stream file exists", fs.existsSync(outFile));
 try {
-  const probe = JSON.parse(execFileSync(`${process.env.HOME}/.local/bin/ffprobe`,
+  const probe = JSON.parse(execFileSync("ffprobe",
     ["-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", outFile]));
   // A live FLV never gets its duration patched in; use the last packet time
-  const lastPts = execFileSync(`${process.env.HOME}/.local/bin/ffprobe`,
+  const lastPts = execFileSync("ffprobe",
     ["-v", "quiet", "-select_streams", "v", "-show_entries", "packet=pts_time",
      "-of", "csv=p=0", outFile]).toString().trim().split("\n").pop();
   const dur = Number(lastPts || 0);
@@ -88,7 +88,7 @@ try {
 
   // Lower-third banners are composited bottom-left of each tile, in
   // the default dark banner colour (banners no longer follow accents)
-  const rgb = execFileSync(`${process.env.HOME}/.local/bin/ffmpeg`, [
+  const rgb = execFileSync("ffmpeg", [
     "-loglevel", "quiet", "-err_detect", "ignore_err", "-i", outFile,
     "-vf", "crop=30:8:6:710", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"
   ]);
@@ -100,7 +100,7 @@ try {
     r < 70 && g < 70 && b < 70);
 
   // Episode-title chip top-centre: dark pixels against the bright feed
-  const trgb = execFileSync(`${process.env.HOME}/.local/bin/ffmpeg`, [
+  const trgb = execFileSync("ffmpeg", [
     "-loglevel", "quiet", "-err_detect", "ignore_err", "-i", outFile,
     "-vf", "crop=40:10:620:40", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"
   ]);

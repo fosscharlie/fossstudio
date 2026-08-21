@@ -180,7 +180,7 @@ const browser = await firefox.launch({ firefoxUserPrefs: FF_PREFS });
     const buf = Buffer.from(await fetch(url, { headers: { Cookie: cookie } }).then((r) => r.arrayBuffer()));
     fs.writeFileSync(`${OUT}/combined.mp4`, buf);
     try {
-      const probe = JSON.parse(execFileSync(`${process.env.HOME}/.local/bin/ffprobe`,
+      const probe = JSON.parse(execFileSync("ffprobe",
         ["-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", `${OUT}/combined.mp4`]));
       const dur = Number(probe.format.duration || 0);
       check(`combined.mp4 from Firefox source is valid and full-length (${dur.toFixed(1)}s)`, dur > 6);

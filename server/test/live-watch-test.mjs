@@ -231,14 +231,12 @@ try {
   await page.waitForSelector("#offline:not([hidden])", { timeout: 10000 });
   check("page shows the offline state with the show's name",
     (await page.textContent("#offlineTitle")).includes("Live Watch Test"));
-  await page.fill("#nameInput", "Visitor");
-  await page.click("#joinBtn");
-  await page.waitForSelector("#sendBox:not([hidden])", { timeout: 5000 });
-  await page.fill("#msgInput", "hello from the page");
-  await page.press("#msgInput", "Enter");
-  await page.waitForSelector(".chat-msg", { timeout: 5000 });
-  check("chatting works from the page itself",
-    (await page.textContent(".chat-msg")).includes("hello from the page"));
+  // Off air there is no chat - the page is a waiting room with the
+  // game instead (the chat protocol itself is covered above, over ws)
+  check("chat panel hidden while off air",
+    await page.$eval("#chatPanel", (el) => el.hidden));
+  check("the waiting-room game is on screen",
+    await page.$eval("#game", (el) => !el.hidden && el.getBoundingClientRect().width > 100));
   check("page has no console errors", errors.length === 0, errors.join("; "));
 } catch (err) {
   check(`test run: ${err.message}`, false);

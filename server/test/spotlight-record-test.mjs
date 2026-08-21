@@ -15,7 +15,7 @@ import { tileLayout } from "../src/composite.js";
 
 const B = process.argv[2] || "http://127.0.0.1:3993";
 const PASS = process.argv[3] || "testpass123";
-const FFMPEG = `${process.env.HOME}/.local/bin/ffmpeg`;
+const FFMPEG = "ffmpeg";
 const DATA = process.env.DATA_DIR || "../data";
 const OUT = fs.mkdtempSync(path.join(os.tmpdir(), "fossstudio-spot-test-"));
 

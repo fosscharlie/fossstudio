@@ -316,6 +316,9 @@ export function attachSignaling() {
                 c.titlePos = { x: clamp(data.x), y: clamp(data.y) };
                 const recPos = activeRecording(room.id);
                 if (recPos) recPos.titlePos = c.titlePos;
+                // The stream bakes the position into its filter graph,
+                // so a move relaunches it (debounced) - same as resize
+                if (isStreaming(room.id)) refreshStream(room.id);
                 break;
               }
               case "titleScale": {

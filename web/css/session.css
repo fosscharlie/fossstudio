@@ -1042,25 +1042,41 @@ body.dim-ui .host-panel:hover { opacity: 1; }
   .grid { align-content: flex-start; gap: 12px; padding: 12px; padding-top: 84px; }
 }
 
-/* ---------- Tooltips: lozenge, background-coloured, outlined ---------- */
+/* ---------- Tooltips ----------
+   One fixed bubble on <body> (#tipBubble, run by session.js), so a
+   long tip is never clipped by the scrolling panel it points into.
+   Inverted colours - a light bubble with dark text on this dark app -
+   with the classic arrow pointing at the control. */
 
-[data-tip] { position: relative; }
-[data-tip]:hover::after, [data-tip]:focus-visible::after {
-  content: attr(data-tip);
-  position: absolute;
-  bottom: calc(100% + 7px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  white-space: nowrap;
-  z-index: 60;
+#tipBubble {
+  position: fixed;
+  z-index: 200;
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 10px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
+  max-width: 18rem;
+  width: max-content;
   pointer-events: none;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.35);
+}
+#tipBubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: var(--arrow-x, 50%);
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--text);
+}
+#tipBubble.below::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--text);
 }
 
 /* OBS clean feed (?output=1): nothing on screen but the show itself */
@@ -1068,8 +1084,7 @@ body.output-mode .controls { display: none; }
 body.output-mode #hostPanel { display: none; }
 /* OBS captures this page as the clean feed: nothing but the show */
 body.output-mode .media-warning { display: none; }
-body.output-mode [data-tip]::after,
-body.output-mode [data-tip]::before { display: none; }
+body.output-mode #tipBubble { display: none; }
 
 /* Right-click moderation menu on chat messages (hosts only) */
 .chat-msg.moderatable { cursor: context-menu; }
