@@ -83,8 +83,8 @@ body {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
-  touch-action: manipulation;
-  cursor: pointer;
+  touch-action: none; /* the game aims by dragging - don't scroll the page */
+  cursor: crosshair;
 }
 
 /* ---------- chat ---------- */

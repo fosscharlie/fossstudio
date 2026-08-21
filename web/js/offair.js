@@ -1,180 +1,191 @@
-// A tiny one-button runner for the watch page while the show is off
-// air: a microphone hops over amps and mic stands. Something to fiddle
-// with while waiting. Pure canvas, no assets, no storage - the best
-// score lives only as long as the tab.
+// Chain reaction, for the watch page while the show is off air: dots
+// drift across the screen and you get ONE click - it plants a pulse,
+// every dot it touches pulses too, and the chain does the rest. Catch
+// the quota to move up a level. Pure canvas, no assets, no storage,
+// no requests - progress lives only as long as the tab.
 window.OffAir = (() => {
-  const W = 640, H = 200, GROUND = 168;
+  const W = 640, H = 320;
   let canvas = null, ctx = null, raf = 0, running = false;
-  let state = "idle"; // idle | run | dead
-  let best = 0;
+  let state = "idle"; // idle | aim | burst | cleared | failed
 
-  // Palette matched to the page
-  const C = {
-    line: "#2c3038", panel: "#1e2127", text: "#e8eaed",
-    muted: "#9aa0a8", accent: "#fbc711", faint: "rgba(232,234,237,0.05)"
-  };
+  // The site's card palette on the page's dark ground
+  const HUES = ["#fbc711", "#2295f1", "#019587", "#e8207e", "#4bae4f",
+                "#fe9700", "#9b26ae", "#00bcd3", "#f34236"];
+  const TEXT = "#e8eaed", MUTED = "#9aa0a8";
 
-  const player = { x: 74, y: GROUND, vy: 0, w: 22, h: 40 };
-  let obstacles = [], waves = [], speed = 0, dist = 0, spawnAt = 0, t = 0;
+  let dots = [], pulses = [], level = 1, best = 0, caught = 0, quota = 0, t = 0;
 
-  function reset() {
-    player.y = GROUND; player.vy = 0;
-    obstacles = []; speed = 4.4; dist = 0; spawnAt = W + 80; t = 0;
-    if (!waves.length) {
-      for (let i = 0; i < 6; i++) {
-        waves.push({ x: Math.floor((i * 137) % W), y: 24 + ((i * 53) % 96), r: 10 + ((i * 29) % 26) });
-      }
+  const need = (l) => Math.min(5 + l * 5, 55);   // quota per level
+  const count = (l) => Math.min(10 + l * 5, 60); // dots on screen
+
+  function newLevel() {
+    caught = 0;
+    quota = need(level);
+    dots = [];
+    pulses = [];
+    const n = count(level);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const v = 0.5 + Math.random() * 0.7;
+      dots.push({
+        x: 20 + Math.random() * (W - 40),
+        y: 20 + Math.random() * (H - 40),
+        vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+        c: HUES[i % HUES.length]
+      });
     }
+    state = "aim";
   }
 
-  function jump() {
-    if (state === "idle") { state = "run"; reset(); return; }
-    if (state === "dead") { state = "run"; reset(); return; }
-    if (player.y >= GROUND - 0.5) player.vy = -10.6;
+  // life: grow ~0.5s, hold ~1.6s, fade ~0.6s
+  const GROW = 30, HOLD = 96, FADE = 36, RMAX = 42;
+  function radius(p) {
+    if (p.age < GROW) return RMAX * (p.age / GROW);
+    if (p.age < GROW + HOLD) return RMAX;
+    return RMAX * Math.max(0, 1 - (p.age - GROW - HOLD) / FADE);
   }
 
-  function spawn() {
-    const roll = Math.random();
-    if (roll < 0.45) {           // amp cabinet
-      const s = 26 + Math.random() * 12;
-      obstacles.push({ kind: "amp", x: W + 40, w: s, h: s });
-    } else if (roll < 0.7) {     // stacked amps
-      const s = 24 + Math.random() * 8;
-      obstacles.push({ kind: "stack", x: W + 40, w: s, h: s * 1.8 });
-    } else {                     // mic stand
-      obstacles.push({ kind: "stand", x: W + 40, w: 16, h: 52 });
-    }
-    spawnAt = 230 + Math.random() * 320;
+  function plant(x, y, c) {
+    pulses.push({ x, y, c, age: 0 });
   }
 
   function step() {
     t++;
-    speed = Math.min(9.5, speed + 0.0016);
-    dist += speed;
-    for (const w of waves) { w.x -= speed * 0.25; if (w.x < -40) { w.x += W + 80; } }
-    spawnAt -= speed;
-    if (spawnAt <= 0) spawn();
-    player.vy += 0.52;
-    player.y = Math.min(GROUND, player.y + player.vy);
-    for (const o of obstacles) o.x -= speed;
-    obstacles = obstacles.filter((o) => o.x + o.w > -20);
-    // Collision, a touch forgiving on purpose
-    const px = player.x - player.w / 2 + 3, pw = player.w - 6;
-    const py = player.y - player.h + 4, ph = player.h - 6;
-    for (const o of obstacles) {
-      const ox = o.x - o.w / 2 + 2, ow = o.w - 4;
-      const oy = GROUND - o.h + 2, oh = o.h - 2;
-      if (px < ox + ow && px + pw > ox && py < oy + oh && py + ph > oy) {
-        state = "dead";
-        best = Math.max(best, score());
-        break;
+    for (const d of dots) {
+      d.x += d.vx; d.y += d.vy;
+      if (d.x < 6 || d.x > W - 6) d.vx *= -1;
+      if (d.y < 6 || d.y > H - 6) d.vy *= -1;
+    }
+    if (state !== "burst") return;
+    for (const p of pulses) p.age++;
+    pulses = pulses.filter((p) => p.age < GROW + HOLD + FADE);
+    for (let i = dots.length - 1; i >= 0; i--) {
+      const d = dots[i];
+      for (const p of pulses) {
+        if (Math.hypot(d.x - p.x, d.y - p.y) < radius(p) + 4) {
+          dots.splice(i, 1);
+          caught++;
+          plant(d.x, d.y, d.c);
+          break;
+        }
       }
     }
-  }
-
-  const score = () => Math.floor(dist / 12);
-
-  function drawMic(x, y) {
-    // A hand mic standing on its tail: rounded body, round grille head
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.fillStyle = C.text;
-    const bw = player.w, bh = player.h - bw; // body below the head
-    ctx.beginPath();
-    ctx.roundRect(-bw / 2 + 3, -bh, bw - 6, bh, 4);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(0, -bh - bw / 2 + 4, bw / 2 + 2, 0, Math.PI * 2);
-    ctx.fillStyle = C.accent;
-    ctx.fill();
-    ctx.strokeStyle = C.panel;
-    ctx.lineWidth = 1.5;
-    for (let i = -1; i <= 1; i++) {
-      ctx.beginPath();
-      ctx.moveTo(i * 5 - 3, -bh - bw + 2);
-      ctx.lineTo(i * 5 + 3, -bh + 1);
-      ctx.stroke();
+    if (!pulses.length) {
+      if (caught >= quota) {
+        best = Math.max(best, level);
+        level++;
+        state = "cleared";
+      } else {
+        state = "failed";
+      }
+      setTimeout(() => { if (running && (state === "cleared" || state === "failed")) newLevel(); }, 1800);
     }
-    ctx.restore();
-  }
-
-  function drawObstacle(o) {
-    const x = o.x - o.w / 2, y = GROUND - o.h;
-    ctx.strokeStyle = C.muted;
-    ctx.fillStyle = C.panel;
-    ctx.lineWidth = 2;
-    if (o.kind === "stand") {
-      ctx.beginPath();
-      ctx.moveTo(o.x - o.w / 2, GROUND); ctx.lineTo(o.x + o.w / 2, GROUND); // base
-      ctx.moveTo(o.x, GROUND); ctx.lineTo(o.x, y + 8);                      // pole
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(o.x, y + 5, 5, 0, Math.PI * 2);                               // mic clip
-      ctx.fillStyle = C.muted;
-      ctx.fill();
-      return;
-    }
-    const one = (bx, by, bw, bh) => {
-      ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 3); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.arc(bx + bw / 2, by + bh / 2, Math.min(bw, bh) * 0.28, 0, Math.PI * 2); ctx.stroke();
-    };
-    if (o.kind === "stack") { one(x, y + o.h / 2, o.w, o.h / 2); one(x + 1, y, o.w - 2, o.h / 2); }
-    else one(x, y, o.w, o.h);
   }
 
   function draw() {
     ctx.clearRect(0, 0, W, H);
-    // Drifting sound-ripple arcs, very faint
-    ctx.strokeStyle = C.faint;
-    ctx.lineWidth = 2;
-    for (const w of waves) {
-      for (let r = w.r; r > 0; r -= 9) {
-        ctx.beginPath();
-        ctx.arc(w.x, w.y, r, -0.6, 0.6);
-        ctx.stroke();
-      }
+    // Pulses first, soft glow under the dots
+    for (const p of pulses) {
+      const r = radius(p);
+      if (r <= 0) continue;
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = p.c;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.8;
+      ctx.strokeStyle = p.c;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.stroke();
     }
-    // Ground
-    ctx.strokeStyle = C.line;
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(0, GROUND + 1); ctx.lineTo(W, GROUND + 1); ctx.stroke();
-    for (const o of obstacles) drawObstacle(o);
-    drawMic(player.x, player.y);
-    ctx.fillStyle = C.muted;
+    ctx.globalAlpha = 1;
+    for (const d of dots) {
+      ctx.fillStyle = d.c;
+      ctx.beginPath(); ctx.arc(d.x, d.y, 4, 0, Math.PI * 2); ctx.fill();
+    }
+    // HUD
+    ctx.fillStyle = MUTED;
     ctx.font = "600 13px system-ui, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(`Level ${level}`, 14, 24);
     ctx.textAlign = "right";
-    if (state !== "idle") ctx.fillText(String(score()).padStart(4, "0"), W - 14, 24);
-    if (best > 0) ctx.fillText(`best ${best}`, W - 14, state === "idle" ? 24 : 42);
+    ctx.fillText(best ? `caught ${caught}/${quota} · best level ${best}` : `caught ${caught}/${quota}`, W - 14, 24);
     ctx.textAlign = "center";
     if (state === "idle") {
-      ctx.fillStyle = C.text;
-      ctx.font = "700 15px system-ui, sans-serif";
-      ctx.fillText("Sound check while you wait?", W / 2, 78);
-      ctx.fillStyle = C.muted;
+      ctx.fillStyle = "rgba(20,22,26,0.55)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = TEXT;
+      ctx.font = "700 16px system-ui, sans-serif";
+      ctx.fillText("One click. Start a chain.", W / 2, H / 2 - 14);
+      ctx.fillStyle = MUTED;
       ctx.font = "600 13px system-ui, sans-serif";
-      ctx.fillText("Tap or press space to jump", W / 2, 100);
-    } else if (state === "dead") {
-      ctx.fillStyle = C.text;
+      ctx.fillText(`Anything your pulse touches pulses too. Catch ${need(1)} of ${count(1)}.`, W / 2, H / 2 + 10);
+      ctx.fillText("Tap anywhere to begin.", W / 2, H / 2 + 30);
+    } else if (state === "aim") {
+      ctx.fillStyle = MUTED;
+      ctx.font = "600 13px system-ui, sans-serif";
+      ctx.fillText(`One click: catch ${quota} of ${dots.length}`, W / 2, H - 14);
+    } else if (state === "cleared") {
+      ctx.fillStyle = TEXT;
       ctx.font = "700 15px system-ui, sans-serif";
-      ctx.fillText(`Off air! ${score()} - tap to go again`, W / 2, 78);
+      ctx.fillText(`Beautiful - ${caught} caught. Level ${level} coming up.`, W / 2, 52);
+    } else if (state === "failed") {
+      ctx.fillStyle = TEXT;
+      ctx.font = "700 15px system-ui, sans-serif";
+      ctx.fillText(`${caught} of ${quota} - the chain fizzled. Again?`, W / 2, 52);
     }
   }
 
-  function loop() {
-    if (!running) return;
-    if (state === "run") step();
-    else for (const w of waves) { w.x -= 0.35; if (w.x < -40) w.x += W + 80; }
-    draw();
-    raf = requestAnimationFrame(loop);
-  }
-
-  const onKey = (e) => {
-    if (e.code !== "Space" && e.code !== "ArrowUp") return;
-    if (!canvas || canvas.offsetParent === null) return; // page is live, game hidden
-    e.preventDefault();
-    jump();
+  const toLocal = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (W / r.width), y: (e.clientY - r.top) * (H / r.height) };
   };
-  const onPointer = (e) => { e.preventDefault(); jump(); };
+  const onDown = (e) => {
+    e.preventDefault();
+    if (state === "idle") { newLevel(); return; }
+    if (state !== "aim") return;
+    const p = toLocal(e);
+    plant(p.x, p.y, TEXT);
+    state = "burst";
+  };
+  // Keyboard: arrows drift a crosshair, Space plants the pulse
+  const cross = { x: W / 2, y: H / 2, on: false };
+  const onKey = (e) => {
+    if (!canvas || canvas.offsetParent === null) return; // page is live, game hidden
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space", "Enter"].includes(e.code)) return;
+    e.preventDefault();
+    if (state === "idle") { newLevel(); return; }
+    if (state !== "aim") return;
+    cross.on = true;
+    const s = 18;
+    if (e.code === "ArrowLeft") cross.x = Math.max(0, cross.x - s);
+    if (e.code === "ArrowRight") cross.x = Math.min(W, cross.x + s);
+    if (e.code === "ArrowUp") cross.y = Math.max(0, cross.y - s);
+    if (e.code === "ArrowDown") cross.y = Math.min(H, cross.y + s);
+    if (e.code === "Space" || e.code === "Enter") {
+      plant(cross.x, cross.y, TEXT);
+      state = "burst";
+      cross.on = false;
+    }
+  };
+  // The crosshair rides on top of draw() so it needs its own pass
+  const drawCross = () => {
+    if (!cross.on || state !== "aim") return;
+    ctx.strokeStyle = TEXT;
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(cross.x - 8, cross.y); ctx.lineTo(cross.x + 8, cross.y);
+    ctx.moveTo(cross.x, cross.y - 8); ctx.lineTo(cross.x, cross.y + 8);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  };
+  const baseDraw = draw;
+  const drawAll = () => { baseDraw(); drawCross(); };
+
+  function loopAll() {
+    if (!running) return;
+    step();
+    drawAll();
+    raf = requestAnimationFrame(loopAll);
+  }
 
   function start(el) {
     if (running) return;
@@ -185,18 +196,23 @@ window.OffAir = (() => {
     ctx = canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     state = "idle";
-    reset();
+    level = 1; best = 0;
+    // A living background even before the first click
+    quota = need(1);
+    dots = [];
+    newLevel();
+    state = "idle";
     running = true;
-    canvas.addEventListener("pointerdown", onPointer);
+    canvas.addEventListener("pointerdown", onDown);
     window.addEventListener("keydown", onKey);
-    loop();
+    loopAll();
   }
 
   function stop() {
     if (!running) return;
     running = false;
     cancelAnimationFrame(raf);
-    canvas.removeEventListener("pointerdown", onPointer);
+    canvas.removeEventListener("pointerdown", onDown);
     window.removeEventListener("keydown", onKey);
     state = "idle";
   }
