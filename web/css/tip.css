@@ -43,3 +43,11 @@
 #tipBubble.below.tail-right::after {
   clip-path: polygon(0 100%, 100% 100%, 100% 0);
 }
+
+/* Multi-item tips (newline-separated data-tip) render as bullets */
+#tipBubble ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  text-align: left;
+}
+#tipBubble li { margin: 0.18rem 0; }

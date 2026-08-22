@@ -864,8 +864,7 @@
       const allMuted = everyone.length > 0 && everyone.every((id) => control.muted?.[id]);
       els.hpMuteAllBtn.classList.toggle("active", allMuted);
       els.hpMuteAllBtn.textContent = allMuted ? "Unmute all" : "Mute all";
-      els.hpMuteAllBtn.dataset.tip = allMuted
-        ? "Unmute everyone at once" : "Mute everyone at once, including you";
+      updateServerRecTip(); // the row dot's mute line follows
     }
     applyLayout();
     applyTitleBg();
@@ -1351,12 +1350,20 @@
     updateServerRecTip();
   }
   function updateServerRecTip() {
+    // The row's info dot describes all three controls as bullets; the
+    // recording-mode and mute lines follow the current state
     const server = els.hpServerRec.classList.contains("active");
-    els.hpServerRec.dataset.tip = (recording || live())
-      ? "Recording mode is locked while recording or live"
+    const modeLine = (recording || live())
+      ? "Recording mode is locked while recording or live."
       : server
-        ? "Recording on the server (click for browser recording)"
-        : "Recording in the browser (click for server recording - best for 2-3 guests)";
+        ? "Recording mode: server - the server captures everyone (best for 2-3 guests). Click to switch to browser."
+        : "Recording mode: browser - each person captures their own track (best for bigger sessions). Click to switch to server.";
+    const allMuted = els.hpMuteAllBtn.classList.contains("active");
+    $("hpRowInfo").dataset.tip = [
+      modeLine,
+      "Auto level: evens out quiet and loud voices for everyone.",
+      allMuted ? "Unmute all: unmutes everyone at once." : "Mute all: mutes everyone at once, including you."
+    ].join("\n");
   }
 
   function startSelfRecording(upload) {

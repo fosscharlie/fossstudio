@@ -27,7 +27,21 @@
       watch.observe(el, { attributes: true, attributeFilter: ["data-tip"] });
     }
     tipFor = el;
-    tip.textContent = text;
+    // A tip describing several things carries newline-separated lines
+    // and renders as bullets
+    tip.textContent = "";
+    const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+    if (lines.length > 1) {
+      const ul = document.createElement("ul");
+      for (const l of lines) {
+        const li = document.createElement("li");
+        li.textContent = l;
+        ul.appendChild(li);
+      }
+      tip.appendChild(ul);
+    } else {
+      tip.textContent = text;
+    }
     tip.hidden = false;
     const r = el.getBoundingClientRect();
     const w = tip.offsetWidth, h = tip.offsetHeight;

@@ -13,6 +13,10 @@ All notable changes to FOSSStudio are documented here.
   the stream too (a brief relaunch blip, same as resizing always
   did); and with co-hosts, tiles sit in the same order on screen as
   in the output.
+- Info popups that describe several controls list them as bullet
+  points now, and the Mute all row gained its own info dot covering
+  the recording-mode switch, Auto level and Mute all - its wording
+  follows the current state (which mode is on, mute vs unmute).
 - The host panel's explainers moved onto little info dots, the same
   as the join screen's: one beside each of Record, Go live and
   YouTube (whose wording follows the state - starting vs ending a
