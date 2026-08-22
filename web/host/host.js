@@ -394,7 +394,16 @@
       : "";
   }
 
-  $("saveSmtpBtn").onclick = async () => {
+  // Settings save themselves when a field changes - no Save buttons.
+  // 'change' fires on blur (or enter), so nothing saves mid-keystroke.
+  function autoSave(ids, save) {
+    for (const id of ids) {
+      $(id).addEventListener("change", () => { save().catch(() => {}); });
+    }
+  }
+
+  async function saveSmtp() {
+    const hadPass = !!$("smtpPass").value;
     await apiFetch("/api/smtp", {
       method: "PUT",
       body: JSON.stringify({
@@ -406,10 +415,16 @@
         alertTo: $("smtpAlertTo").value
       })
     });
-    $("smtpPass").value = "";
+    // Don't reload the form here - a reload mid-tab would overwrite
+    // whatever field the user is typing in next
+    if (hadPass) {
+      $("smtpPass").value = "";
+      $("smtpPassHint").innerHTML =
+        '<span class="msg ok" style="display:inline">\u2713 saved</span> - leave blank to keep it';
+    }
     smtpMsg("✓ Saved");
-    loadSmtp();
-  };
+  }
+  autoSave(["smtpHost", "smtpPort", "smtpUser", "smtpPass", "smtpFrom", "smtpAlertTo"], saveSmtp);
 
   $("testSmtpBtn").onclick = async () => {
     try {
@@ -550,7 +565,7 @@
     }
   }
 
-  $("saveStreamBtn").onclick = async () => {
+  async function saveStream() {
     $("streamErr").hidden = true;
     try {
       const s = await apiFetch("/api/settings", {
@@ -570,7 +585,8 @@
       $("streamErr").textContent = err.message;
       $("streamErr").hidden = false;
     }
-  };
+  }
+  autoSave(["streamUrl", "streamKey", "channelDomain"], saveStream);
 
   // ---------- chat block list ----------
 
@@ -601,7 +617,7 @@
     }
   }
 
-  $("saveFosscastBtn").onclick = async () => {
+  async function saveFosscast() {
     await apiFetch("/api/settings", {
       method: "PUT",
       body: JSON.stringify({
@@ -613,7 +629,8 @@
     loadRecordings().catch(() => {});
     $("fosscastMsg").hidden = false;
     setTimeout(() => { $("fosscastMsg").hidden = true; }, 2000);
-  };
+  }
+  autoSave(["fosscastUrl", "fosscastToken"], saveFosscast);
 
   // ---------- theme ----------
 
@@ -1072,7 +1089,7 @@
     $("backupKeep").value = keep;
   }
 
-  $("backupKeepSave").onclick = async () => {
+  async function saveBackupKeep() {
     try {
       const { keep } = await apiFetch("/api/ops/backup-keep", {
         method: "PUT", body: JSON.stringify({ keep: Number($("backupKeep").value) })
@@ -1082,7 +1099,8 @@
       setTimeout(() => { $("backupKeepMsg").hidden = true; }, 2000);
       loadBackups();
     } catch (err) { sysMsg(err.message, false); }
-  };
+  }
+  autoSave(["backupKeep"], saveBackupKeep);
 
   // ---------- push notifications ----------
 

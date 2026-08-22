@@ -4,6 +4,14 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- The dashboard's Save buttons are gone where a save can just
+  happen: streaming settings (RTMP address, stream key, channel
+  domain), FOSSCast, backups-to-keep and the email settings all save
+  themselves the moment you leave a field, flashing the same green
+  tick. A rejected value (a bad channel domain, say) shows its error
+  inline exactly as before. Buttons remain only where they should:
+  real actions (test email, back up now, invites) and identity
+  changes (name, password).
 - A four-way review (correctness, security, performance, dead code)
   of everything since 1.6.0, with fixes: the live playlist now keeps
   a sliding window instead of growing forever (on long shows its

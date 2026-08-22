@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOSSStudio - Host</title>
-<link rel="stylesheet" href="/host/host.css?v=20260823e">
-<link rel="stylesheet" href="/css/tip.css?v=20260823e">
+<link rel="stylesheet" href="/host/host.css?v=20260823f">
+<link rel="stylesheet" href="/css/tip.css?v=20260823f">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -64,7 +64,6 @@
             <input type="text" id="channelDomain" autocomplete="off" placeholder="live.example.org">
             <p class="hint">Your channel page on your own address. Point the domain's DNS at this server, enter it here, and that's it - the certificate sorts itself out, and your audience watches at the domain itself, no path needed. Your <code>/live/</code> link keeps working either way.</p>
           </div>
-          <button class="btn primary" id="saveStreamBtn">Save streaming settings</button>
           <span class="msg ok" id="streamMsg" hidden>✓ Saved</span>
           <span class="msg err" id="streamErr" hidden></span>
         </div>
@@ -84,7 +83,6 @@
             <label for="fosscastToken">Publisher token</label>
             <input type="password" id="fosscastToken" autocomplete="off">
           </div>
-          <button class="btn primary" id="saveFosscastBtn">Save FOSSCast settings</button>
           <span class="msg ok" id="fosscastMsg" hidden>✓ Saved</span>
         </div>
       </section>
@@ -294,7 +292,6 @@
             <label for="backupKeep">Backups to keep</label>
             <div style="display:flex; gap:0.6rem; align-items:center">
               <input type="number" id="backupKeep" min="1" max="100" step="1" style="width:6rem">
-              <button class="btn" id="backupKeepSave">Save</button>
               <span class="msg ok" id="backupKeepMsg" hidden>✓ Saved</span>
             </div>
             <p class="hint">Oldest backups beyond this are removed straight away and after each new backup.</p>
@@ -316,8 +313,7 @@
           <div class="field"><label for="smtpPass">Password <span class="hint" id="smtpPassHint"></span></label><input type="password" id="smtpPass" autocomplete="new-password" placeholder=""></div>
           <div class="field"><label for="smtpFrom">Send from (address)</label><input type="text" id="smtpFrom" placeholder="studio@example.com"></div>
           <div class="field"><label for="smtpAlertTo">Send warnings to</label><input type="text" id="smtpAlertTo" placeholder="you@example.com"></div>
-          <div style="display:flex; gap:0.6rem">
-            <button class="btn primary" id="saveSmtpBtn">Save email settings</button>
+          <div style="display:flex; gap:0.6rem; align-items:center">
             <button class="btn" id="testSmtpBtn">Send a test email</button>
           </div>
           <p class="msg" id="smtpMsg" hidden></p>
@@ -345,7 +341,7 @@
   </div>
 </div>
 
-<script src="/js/tip.js?v=20260823e"></script>
-<script src="/host/host.js?v=20260823e"></script>
+<script src="/js/tip.js?v=20260823f"></script>
+<script src="/host/host.js?v=20260823f"></script>
 </body>
 </html>
