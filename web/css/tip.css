@@ -1,0 +1,45 @@
+/* The house tooltip bubble (see js/tip.js): solid blue with white
+   text - readable on light and dark alike - with a pointed corner
+   tail towards the control it describes. Fixed to the viewport and
+   above everything, so it can never be clipped or covered. */
+
+#tipBubble {
+  position: fixed;
+  z-index: 2147483647;
+  background: #2295f1;
+  color: #fff;
+  border-radius: 12px;
+  padding: 0.4rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  max-width: 19rem;
+  width: max-content;
+  pointer-events: none;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.3);
+}
+
+/* The tail: a slanted right-triangle hanging off the bubble's bottom
+   edge, leaning towards its nearer side (tip.js flips the classes) */
+#tipBubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: var(--tail-x, 1rem);
+  width: 12px;
+  height: 12px;
+  background: #2295f1;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+#tipBubble.tail-right::after {
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+#tipBubble.below::after {
+  top: auto;
+  bottom: 100%;
+  clip-path: polygon(0 100%, 100% 100%, 0 0);
+}
+#tipBubble.below.tail-right::after {
+  clip-path: polygon(0 100%, 100% 100%, 100% 0);
+}

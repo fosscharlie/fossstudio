@@ -19,10 +19,14 @@ All notable changes to FOSSStudio are documented here.
   stream), one for Sub and Ad together, one for the two colour
   tools. Hover the dot and the bubble appears; the buttons stay
   clean. Sub and Ad sit on their own row now to make room.
-- Tooltips are a proper bubble now - rounded, colour-inverted, with
-  the little arrow pointing at the control - floated over the page
-  rather than trapped inside the host panel, so long ones no longer
-  get cut off at the panel's edges. They wrap instead of running on.
+- Every tooltip and info popup across the app is now one house
+  bubble: solid blue with white text (readable on any background), a
+  rounded rectangle with a pointed tail that relocates to whichever
+  corner faces the control. It floats over the whole page at the top
+  of the stack, clamped to the viewport - so it can never be covered
+  by other elements, clipped by a scrolling panel, or pushed off
+  screen. The join screen's info panels and the dashboard's pill
+  tooltips both ride it now, in place of their own styles.
 - The live stream reaches the audience in roughly 2-3 seconds instead
   of about 7: one-second segments (keyframes to match) and a player
   that sits two segments behind the newest instead of three. The

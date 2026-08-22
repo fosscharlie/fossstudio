@@ -369,26 +369,7 @@ input[type="email"], input[type="url"] {
   font-size: 0.85rem;
 }
 
-/* ---------- Tooltips: lozenge, background-coloured, outlined ---------- */
-
-[data-tip] { position: relative; }
-[data-tip]:hover::after, [data-tip]:focus-visible::after {
-  content: attr(data-tip);
-  position: absolute;
-  bottom: calc(100% + 7px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg);
-  color: var(--fg);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  white-space: nowrap;
-  z-index: 60;
-  pointer-events: none;
-}
+/* Tooltips ride the shared #tipBubble (css/tip.css + js/tip.js) */
 
 /* ---------- Intro preview modal ---------- */
 .video-modal {

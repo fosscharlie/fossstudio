@@ -291,52 +291,6 @@
     setTimeout(() => { audio.srcObject = null; }, 1500);
   };
 
-  // ---------- Tooltips ----------
-  // One fixed bubble on <body>: tips inside the scrolling host panel
-  // used to be wider than the panel and got clipped on both sides
-  const tipEl = document.createElement("div");
-  tipEl.id = "tipBubble";
-  tipEl.hidden = true;
-  document.body.appendChild(tipEl);
-  let tipFor = null;
-  const tipWatch = new MutationObserver(() => { if (tipFor) showTip(tipFor); });
-  function showTip(el) {
-    const text = el.dataset.tip;
-    if (!text) return hideTip();
-    if (tipFor !== el) {
-      tipWatch.disconnect();
-      tipWatch.observe(el, { attributes: true, attributeFilter: ["data-tip"] });
-    }
-    tipFor = el;
-    tipEl.textContent = text;
-    tipEl.hidden = false;
-    const r = el.getBoundingClientRect();
-    const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
-    let x = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 8));
-    let y = r.top - h - 9;
-    const below = y < 4;
-    tipEl.classList.toggle("below", below);
-    if (below) y = r.bottom + 9;
-    tipEl.style.left = `${x}px`;
-    tipEl.style.top = `${y}px`;
-    tipEl.style.setProperty("--arrow-x", `${Math.max(12, Math.min(r.left + r.width / 2 - x, w - 12))}px`);
-  }
-  function hideTip() {
-    tipEl.hidden = true;
-    tipFor = null;
-    tipWatch.disconnect();
-  }
-  document.addEventListener("pointerover", (e) => {
-    const el = e.target.closest?.("[data-tip]");
-    el ? showTip(el) : hideTip();
-  });
-  document.addEventListener("focusin", (e) => {
-    const el = e.target.closest?.("[data-tip]");
-    if (el && el.matches(":focus-visible")) showTip(el);
-  });
-  document.addEventListener("focusout", () => { if (tipFor) hideTip(); });
-  window.addEventListener("scroll", () => { if (tipFor) showTip(tipFor); }, true);
-
   // ---------- Mirror ----------
 
   let mirrored = true;
@@ -2234,12 +2188,6 @@
   };
 
   window.addEventListener("beforeunload", () => { try { ws && ws.close(); } catch { /* ignore */ } });
-
-  // House style: custom pill tooltips, never the browser's native ones
-  for (const el of document.querySelectorAll("[title]")) {
-    el.dataset.tip = el.getAttribute("title");
-    el.removeAttribute("title");
-  }
 
   try {
     if (localStorage.getItem(JOINING_KEY) === "rnnoise") {
