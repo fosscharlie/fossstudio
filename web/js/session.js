@@ -1335,7 +1335,11 @@
       els.hpRecordBtn.textContent = on
         ? `■ ${fmtElapsed(Date.now() - recStartAt)}`
         : "● Record";
-      els.hpRecordBtn.dataset.tip = on ? "Stop the recording" : "Start recording";
+      // The info dot beside the button carries the wording; the
+      // button itself stays tooltip-free
+      $("hpRecordInfo").dataset.tip = on
+        ? "Stop the recording. The files render and appear in the dashboard, ready to download."
+        : "Records the show: one combined video plus lossless audio per person, ready in the dashboard when you stop.";
       els.hpRecordBtn.classList.toggle("rec-on", on);
       updateServerRecLock();
       if (on) scheduleBannerSnapshots();

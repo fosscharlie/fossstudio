@@ -4,6 +4,10 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- The Record button no longer pops its own hover tooltip - its info
+  dot carries the wording instead, switching between "records the
+  show" and "stop the recording" with the state, like Go live and
+  YouTube already did. Buttons beside an info dot stay silent.
 - The dashboard's Save buttons are gone where a save can just
   happen: streaming settings (RTMP address, stream key, channel
   domain), FOSSCast, backups-to-keep and the email settings all save
