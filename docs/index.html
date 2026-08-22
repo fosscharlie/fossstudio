@@ -488,6 +488,19 @@
     font-size: 0.85rem;
   }
   .foot { display: flex; gap: 1.4rem; align-items: center; flex-wrap: wrap; }
+  .sister {
+    flex-basis: 100%;
+    text-align: center;
+    order: -1;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel);
+    margin-bottom: 0.8rem;
+  }
+  .sister b { color: var(--text); }
+  .sister a { color: var(--accent); font-weight: 700; text-decoration: none; }
+  .sister a:hover { text-decoration: underline; }
   .lightmorphic-badge {
     display: inline-flex;
     align-items: center;
@@ -791,7 +804,10 @@
       <span>Created by</span>
       <img src="lightmorphic-dark-tb-250x50-sq.webp" alt="Lightmorphic" width="125" height="25" loading="lazy">
     </a>
-    <span>Sister project: <a href="https://fosscast.org">FOSSCast</a>, the archive &amp; RSS half.</span>
+    <p class="sister">The studio records the show - <a href="https://fosscast.org" translate="no">FOSSCast</a> takes it to the world:
+    <b>self-hosted podcast hosting, done properly.</b> Your own podcast website, host pages,
+    membership links, and RSS feeds built to what Apple, Spotify and Podcast Index actually want.
+    One click publishes a finished recording straight from this studio.</p>
     <span class="gpl">Free software &middot; <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a> &middot; <a href="https://github.com/lightmorphic/fossstudio">Source</a></span>
   </div>
 </footer>
