@@ -436,6 +436,17 @@
     font-size: 0.8rem;
   }
   .steps b { color: var(--text); }
+  .aside {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel);
+    padding: 0.9rem 1.1rem;
+    margin-top: 1.1rem;
+  }
+  .aside h4 { font-size: 0.92rem; font-weight: 800; margin-bottom: 0.3rem; }
+  .aside p { font-size: 0.86rem; color: var(--muted); }
+  .aside a { color: var(--accent); }
+  .aside code { font-family: var(--mono); font-size: 0.82em; }
   .compose {
     background: var(--code-bg);
     border: 1px solid var(--line);
@@ -708,7 +719,24 @@
           <li><span><b>Save this file</b> as <code>docker-compose.yml</code> and fill in the five values at the top.</span></li>
           <li><span><b><code>docker compose up -d</code></b> - the app builds straight from GitHub, the pages ship inside the image, Caddy fetches your certificate by itself. Sign in as <code>admin</code> and change the password.</span></li>
         </ol>
-        <p style="color:var(--muted); font-size:0.9rem">No clone, no <code>.env</code>, no other files. What this installs is exactly what development runs. Prefer your own reverse proxy, or a full checkout? <a href="https://github.com/lightmorphic/fossstudio#running-it" style="color:var(--accent)">The README has both.</a></p>
+        <p style="color:var(--muted); font-size:0.9rem">No clone, no <code>.env</code>, no other files. What this installs is exactly what development runs.</p>
+        <div class="aside">
+          <h4>Already running a proxy?</h4>
+          <p>Delete the <code>caddy</code> service from the pasted file and point
+          nginx, Apache, a Cloudflare Tunnel or Tailscale at
+          <code>127.0.0.1:3000</code> - the app binds only to loopback, and
+          never assumes it owns ports 80 and 443. Your proxy must pass
+          WebSocket upgrades and add HSTS; the
+          <a href="https://github.com/lightmorphic/fossstudio#bring-your-own-reverse-proxy-nginx-apache-etc">README
+          has a ready nginx config</a>, plus Cloudflare Tunnel and
+          Tailscale-only setups.</p>
+        </div>
+        <div class="aside">
+          <h4>Updating</h4>
+          <p><code>docker compose build app &amp;&amp; docker compose up -d</code> -
+          the build fetches the newest code from GitHub; your data lives in a
+          named volume and is left alone.</p>
+        </div>
       </div>
       <div class="compose">
         <div class="bar">docker-compose.yml<button id="copyBtn" type="button">COPY</button></div>
