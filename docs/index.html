@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0d11" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
 <title>FOSSStudio: self-hosted video podcast studio</title>
 <meta name="description" content="FOSSStudio is a free, open-source, self-hosted video podcast studio. Guests join by link with no account. Lossless recordings, live streaming to your own domain with chat, one-paste Docker install.">
 <link rel="canonical" href="https://fossstudio.org/">
@@ -43,6 +45,7 @@
      Dark is the studio at night; light is the morning edit. The toggle
      stamps data-theme; with no stamp the system preference decides. */
   :root {
+    color-scheme: dark;
     --bg: #0b0d11;
     --bg2: #10131a;
     --panel: #161a22;
@@ -63,6 +66,7 @@
     --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
   }
   :root[data-theme="light"] {
+    color-scheme: light;
     --bg: #f6f5f1;
     --bg2: #efede7;
     --panel: #ffffff;
@@ -78,6 +82,7 @@
   }
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]) {
+      color-scheme: light;
       --bg: #f6f5f1;
       --bg2: #efede7;
       --panel: #ffffff;
@@ -94,6 +99,26 @@
   }
 
   * { margin: 0; box-sizing: border-box; }
+  section[id] { scroll-margin-top: 4.2rem; }
+  h1, h2, h3 { text-wrap: balance; }
+  button, a { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .skip {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    background: var(--accent);
+    color: var(--accent-ink);
+    padding: 0.6rem 1rem;
+    border-radius: 0 0 10px 0;
+    font-weight: 700;
+  }
+  .skip:focus-visible { left: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .onair i { animation: none; }
+    body, .card { transition: none; }
+  }
   html { scroll-behavior: smooth; scrollbar-gutter: stable; }
   body {
     background: var(--bg);
@@ -485,10 +510,11 @@
 </style>
 </head>
 <body>
+<a class="skip" href="#show">Skip to content</a>
 
 <div class="desk">
   <div class="desk-in">
-    <a class="wordmark" href="/"><b>FOSS</b>Studio</a>
+    <a class="wordmark" href="/" translate="no"><b>FOSS</b>Studio</a>
     <span class="onair"><i></i>SELF&#8209;HOSTED</span>
     <nav>
       <a href="#show">The show</a>
@@ -517,7 +543,7 @@
     </div>
     <figure class="monitor" id="pgm">
       <div class="strip"><i></i><span id="pgmLabel">PGM &middot; GRID &middot; 3 LIVE</span><span class="tc">00:41:07</span></div>
-      <img id="pgmImg" src="shots/session.jpg" alt="A live FOSSStudio session: three guests in a tidy grid with name banners and the episode title block" width="1560" height="975" fetchpriority="high">
+      <img id="pgmImg" src="shots/session.jpg" alt="A live FOSSStudio session: three guests in a tidy grid with name banners and the episode title block" width="2000" height="1250" fetchpriority="high">
       <div class="pgm-tabs" role="tablist" aria-label="Switch the program monitor">
         <button class="active" data-shot="shots/session.jpg" data-label="PGM &middot; GRID &middot; 3 LIVE" role="tab" aria-selected="true">Grid</button>
         <button data-shot="shots/spotlight.jpg" data-label="PGM &middot; SPOTLIGHT &middot; MARCO" role="tab" aria-selected="false">Spotlight</button>
@@ -528,6 +554,7 @@
   </div>
 </header>
 
+<main>
 <section class="cue" id="show">
   <div class="wrap">
     <div class="cue-mark"><span class="tc">CUE 01</span><h2>The show itself</h2><span class="side">GUESTS / HOSTS / RECORDING</span></div>
@@ -547,7 +574,7 @@
       </div>
       <figure class="monitor">
         <div class="strip"><i style="background:var(--green)"></i>PREVIEW &middot; CAM 1<span class="tc">READY</span></div>
-        <img src="shots/preview.jpg" alt="The guest preview screen: camera check, zoom, microphone, speaker test and noise suppression" loading="lazy">
+        <img src="shots/preview.jpg" alt="The guest preview screen: camera check, zoom, microphone, speaker test and noise suppression" width="2000" height="1250" loading="lazy">
       </figure>
     </div>
 
@@ -566,7 +593,7 @@
       </div>
       <figure class="monitor">
         <div class="strip"><i></i>HOST PANEL &middot; REC<span class="tc">00:12:33</span></div>
-        <img src="shots/host-panel.jpg" alt="A live session with the host panel open: record, go live, YouTube, mute all, colours" loading="lazy">
+        <img src="shots/host-panel.jpg" alt="A live session with the host panel open: record, go live, YouTube, mute all, colours" width="2000" height="1250" loading="lazy">
       </figure>
     </div>
 
@@ -587,7 +614,7 @@
       </div>
       <figure class="monitor">
         <div class="strip"><i style="background:var(--teal)"></i>LIBRARY<span class="tc">READY</span></div>
-        <img src="shots/dashboard.png" alt="The dashboard listing sessions and processed recordings ready to download" loading="lazy">
+        <img src="shots/dashboard.png" alt="The dashboard listing sessions and processed recordings ready to download" width="2000" height="1154" loading="lazy">
       </figure>
     </div>
   </div>
@@ -756,6 +783,7 @@
     </div>
   </div>
 </section>
+</main>
 
 <footer>
   <div class="wrap foot">
@@ -780,6 +808,10 @@
       ? root.dataset.theme === "dark"
       : matchMedia("(prefers-color-scheme: dark)").matches || !matchMedia("(prefers-color-scheme: light)").matches;
     root.dataset.theme = dark ? "light" : "dark";
+    for (const m of document.querySelectorAll('meta[name="theme-color"]')) {
+      m.content = root.dataset.theme === "light" ? "#f6f5f1" : "#0b0d11";
+      m.removeAttribute("media");
+    }
     try { localStorage.setItem("fossstudio-theme", root.dataset.theme); } catch { /* private browsing */ }
   };
 
@@ -813,9 +845,17 @@
   // parked again when it leaves - a page should not burn frames for
   // something off screen
   const gameEl = document.getElementById("game");
-  new IntersectionObserver((entries) => {
-    for (const e of entries) e.isIntersecting ? OffAir.start(gameEl) : OffAir.stop();
-  }, { threshold: 0.2 }).observe(gameEl);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // No motion until asked for: paint one still frame, and only a
+    // deliberate press starts the game
+    OffAir.start(gameEl);
+    requestAnimationFrame(() => OffAir.stop());
+    gameEl.addEventListener("pointerdown", () => OffAir.start(gameEl), { once: true });
+  } else {
+    new IntersectionObserver((entries) => {
+      for (const e of entries) e.isIntersecting ? OffAir.start(gameEl) : OffAir.stop();
+    }, { threshold: 0.2 }).observe(gameEl);
+  }
 </script>
 </body>
 </html>
