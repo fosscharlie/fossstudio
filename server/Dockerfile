@@ -8,7 +8,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY server/package.json server/package-lock.json ./
 RUN npm ci --omit=dev
 
 FROM node:22-bookworm-slim
@@ -27,15 +27,22 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
-COPY package.json ./
-COPY src ./src
-COPY assets ./assets
+COPY server/package.json ./
+COPY server/src ./src
+COPY server/assets ./assets
+# The web pages ship inside the image, so a compose file alone - no
+# clone - is a complete install. The repo compose still mounts ./web
+# over this for instant page updates between image rebuilds.
+COPY web ./web
 
 # Run as the unprivileged built-in "node" user (uid 1000), never root.
 # The app binds only high ports and writes to /data (mounted volume,
 # owned by uid 1000 on the host), so no root capability is needed.
-RUN chown -R node:node /app
+RUN chown -R node:node /app \
+    && mkdir /data && chown node:node /data
 USER node
 
 ENV NODE_ENV=production
+ENV WEB_DIR=/app/web
+ENV DATA_DIR=/data
 CMD ["node", "src/index.js"]

@@ -132,10 +132,27 @@ no external calls from any page.
 
 ## Running it
 
-You need a Linux server with a public IP, a domain pointed at it, and
-ports 80/443 (TCP) plus the media ranges 40000-40100 and 49160-49200
-(UDP) open. There is no prebuilt image; the app container is built
-from this repo.
+You need a Linux server with Docker, a public IP, a domain pointed at
+it, and ports 80/443 (TCP) plus 3478 and the media ranges 40000-40100
+and 49160-49200 (UDP) open.
+
+**The one-paste install.** Save
+[`quickstart-compose.yml`](quickstart-compose.yml) as
+`docker-compose.yml` anywhere on the server, fill in the five values
+at the top (domain, IP, a password, two random secrets), and:
+
+```bash
+docker compose up -d
+```
+
+Nothing else: no clone, no `.env`, no config files. The app image
+builds straight from this repository (the web pages ship inside it),
+Caddy fetches your HTTPS certificate by itself, and the studio is at
+your domain - sign in as `admin` with the password you set, then
+change it in the dashboard.
+
+**The full checkout** (for hacking on it, or the deploy-from-a-dev-box
+flow): clone the repo, and then
 
 1. On a fresh server, `bash scripts/server-setup.sh` installs Docker,
    sets the firewall and creates the folder layout.

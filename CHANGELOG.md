@@ -4,6 +4,16 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- A true one-paste install: `quickstart-compose.yml` is a single
+  Docker Compose file - fill in five values at the top and
+  `docker compose up -d` does the rest. No clone, no `.env`, no other
+  files: the app image now builds straight from the GitHub repository
+  with the web pages inside it, the Caddyfile travels inline in the
+  compose file, and coturn reads its settings from the container
+  environment. The image also owns `/data`, so a named volume works
+  out of the box. The repo's own compose files build from the same
+  root context, so what the quickstart installs is exactly what
+  development runs.
 - The Record button no longer pops its own hover tooltip - its info
   dot carries the wording instead, switching between "records the
   show" and "stop the recording" with the state, like Go live and

@@ -1,0 +1,12 @@
+# Root build context (server/Dockerfile): ship only what the image needs
+.git
+data
+docs
+scripts
+server/test
+server/client
+server/node_modules
+caddy-sites
+caddy-www
+*.md
+.env*

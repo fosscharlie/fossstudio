@@ -1,6 +1,8 @@
 services:
   app:
-    build: ./server
+    build:
+      context: .
+      dockerfile: server/Dockerfile
     restart: unless-stopped
     # Host networking: the media engine hands out many UDP ports (40000-40100)
     # and needs to see real client addresses; mapping them one-by-one is slower

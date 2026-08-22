@@ -1,0 +1,96 @@
+# FOSSStudio in one paste.
+#
+#   1. Save this file as docker-compose.yml on a Linux server whose
+#      DNS (your domain) points at it, with ports 80/443 (TCP) and
+#      3478 + 40000-40100 + 49160-49200 (UDP) open.
+#   2. Fill in the five values just below.
+#   3. docker compose up -d
+#
+# That's the whole install: the app image builds straight from GitHub,
+# the web pages are inside it, Caddy fetches your HTTPS certificate by
+# itself, and your studio is at https://<your domain>. Sign in with
+# username "admin" and the password below, then change it in the
+# dashboard.
+
+x-config: &config
+  DOMAIN: studio.example.com          # your domain (DNS already pointing here)
+  PUBLIC_IP: "203.0.113.7"            # this server's public IPv4
+  HOST_PASSWORD: change-me            # first-login password for "admin"
+  SESSION_SECRET: change-me-too       # random; e.g. openssl rand -hex 32
+  TURN_SECRET: change-me-three        # random; e.g. openssl rand -hex 32
+  HTTP_PORT: "3000"
+
+services:
+  app:
+    build:
+      context: https://github.com/lightmorphic/fossstudio.git
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    # Host networking: the media engine hands out many UDP ports and
+    # needs real client addresses. The app itself binds to 127.0.0.1.
+    network_mode: host
+    environment:
+      <<: *config
+    volumes:
+      - fossstudio_data:/data
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      <<: *config
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+  coturn:
+    image: coturn/coturn:4-alpine
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      <<: *config
+    # sh -c so the values come from the container's own environment
+    # (this file has no .env for compose-time substitution)
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        turnserver
+        --realm="$$DOMAIN"
+        --use-auth-secret
+        --static-auth-secret="$$TURN_SECRET"
+        --listening-port=3478
+        --min-port=49160 --max-port=49200
+        --no-cli
+        --no-multicast-peers
+
+configs:
+  caddyfile:
+    # $$ keeps the {$VAR} placeholders for Caddy instead of compose
+    content: |
+      {
+        on_demand_tls {
+          ask http://127.0.0.1:{$$HTTP_PORT}/tls-allowed
+        }
+      }
+      {$$DOMAIN} {
+        encode zstd gzip
+        header Strict-Transport-Security "max-age=31536000"
+        reverse_proxy 127.0.0.1:{$$HTTP_PORT}
+      }
+      https:// {
+        tls {
+          on_demand
+        }
+        encode zstd gzip
+        header Strict-Transport-Security "max-age=31536000"
+        reverse_proxy 127.0.0.1:{$$HTTP_PORT}
+      }
+
+volumes:
+  fossstudio_data:
+  caddy_data:
+  caddy_config:
