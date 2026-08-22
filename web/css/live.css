@@ -90,8 +90,7 @@ body {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
-  touch-action: none; /* the game aims by dragging - don't scroll the page */
-  cursor: crosshair;
+  touch-action: none; /* the touch pads must never scroll the page */
 }
 
 /* ---------- chat ---------- */
@@ -123,26 +122,6 @@ body {
 .chat-msg { display: flex; gap: 0.4rem; align-items: baseline; }
 .chat-msg .who { font-weight: 700; flex: none; }
 .chat-msg.host .who { color: #fbc711; }
-.chat-msg .block {
-  margin-left: auto;
-  flex: none;
-  align-self: center;
-  width: 1.35rem;
-  height: 1.35rem;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  background: none;
-  border: 0;
-  border-radius: 999px;
-  color: var(--muted);
-  cursor: pointer;
-  opacity: 0;
-}
-.chat-msg:hover .block, .chat-msg .block:focus-visible { opacity: 1; }
-.chat-msg .block:hover { color: #ff6b60; }
-.chat-msg .block.confirm { color: #ff6b60; opacity: 1; }
-.chat-msg .block svg { width: 0.95rem; height: 0.95rem; }
 .chat-note { color: var(--muted); font-size: 0.8rem; text-align: center; }
 
 .join-box, .send-box {

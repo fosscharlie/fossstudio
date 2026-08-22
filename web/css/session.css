@@ -113,10 +113,8 @@ body {
   cursor: pointer;
   white-space: nowrap;
 }
-/* Field explainers on the join screen. The pill [data-tip] tooltips
-   elsewhere are single-line labels; these carry a sentence or two, so
-   they are a real panel beside the field rather than a pill above it. */
-.info { position: relative; display: inline-flex; vertical-align: -0.15em; }
+/* Info dots on the join screen; their text rides the shared bubble */
+.info { display: inline-flex; vertical-align: -0.15em; }
 .info-btn {
   display: grid;
   place-items: center;
@@ -131,34 +129,8 @@ body {
 }
 .info-btn svg { width: 1.05rem; height: 1.05rem; }
 .info-btn:hover, .info-btn:focus-visible { color: var(--text); }
-.info-panel { display: none; } /* superseded by the shared #tipBubble */
-/* Fields in the right-hand column open leftwards so the panel stays
-   on screen instead of running off the edge of the card */
-.info[data-side="left"] .info-panel {
-  left: auto;
-  right: calc(100% + 0.5rem);
-}
-.info:hover .info-panel,
-.info-btn:focus-visible + .info-panel {
-  opacity: 1;
-  visibility: visible;
-}
-/* Narrow screens: no room either side, so the panel drops under the
-   field. It anchors to the label rather than the icon (position:static
-   hands the containing block up a level) - anchored to the icon it
-   would hang off whichever edge the icon happens to sit near. */
 @media (max-width: 700px) {
   #bannerRow { flex-direction: column; }
-  .preview-card label { position: relative; }
-  .info { position: static; }
-  .info-panel,
-  .info[data-side="left"] .info-panel {
-    top: calc(100% + 0.4rem);
-    left: 0;
-    right: 0;
-    width: auto;
-    transform: none;
-  }
 }
 .preview-card select, .preview-card input {
   font: inherit;
@@ -259,25 +231,6 @@ body {
 .host-chat .chat-msg { display: flex; gap: 0.35rem; align-items: baseline; }
 .host-chat .chat-msg .who { font-weight: 700; flex: none; }
 .host-chat .chat-msg.host .who { color: #9aa0a8; }
-.host-chat .chat-msg .block {
-  margin-left: auto;
-  flex: none;
-  align-self: center;
-  width: 1.2rem;
-  height: 1.2rem;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  background: none;
-  border: 0;
-  border-radius: 999px;
-  color: var(--muted);
-  cursor: pointer;
-  opacity: 0;
-}
-.host-chat .chat-msg:hover .block { opacity: 1; }
-.host-chat .chat-msg .block:hover, .host-chat .chat-msg .block.confirm { color: #ff6b60; }
-.host-chat .chat-msg .block svg { width: 0.85rem; height: 0.85rem; }
 .host-chat .send-box {
   display: flex;
   gap: 0.35rem;
@@ -314,7 +267,7 @@ body {
    title (up to 30px) underneath; text-only titles fill the space.
    The host drags it anywhere; recordings and streams mirror it. */
 #grid .banner {
-  /* #grid prefix: outranks the [data-tip] position:relative helper,
+  /* #grid prefix keeps this ahead of generic .banner rules,
      which otherwise knocks the host's block out of absolute layout */
   position: absolute;
   top: 14px;
@@ -456,9 +409,7 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   padding: 0 0.35em;
   margin-left: 0.6em;
 }
-@keyframes recblink { 50% { opacity: 0.35; } }
-.hp-btn.record { border-color: #7a2e2e; white-space: nowrap; font-size: 0.72rem; padding-left: 0.45rem; padding-right: 0.45rem; }
-.hp-btn.rec-on { background: #7a2e2e; color: #fff; }
+.hp-btn.record { white-space: nowrap; font-size: 0.72rem; padding-left: 0.45rem; padding-right: 0.45rem; }
 .grid {
   position: relative;
   flex: 1;
@@ -802,7 +753,6 @@ body.is-guest.rec-dim .controls:hover { opacity: 1; }
   padding: 0.3rem 0.5rem;
 }
 .hp-btn.hp-icon svg { width: 1.1rem; height: 1.1rem; }
-.hp-btn.active { border-color: var(--lm-accent); color: var(--lm-fg); background: var(--lm-accent); }
 .hp-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .hp-divider {
   border: 0;
@@ -899,40 +849,6 @@ body.dim-ui .host-panel:hover { opacity: 1; }
 .hp-btn.record { border-color: rgba(243, 66, 54, 0.45); }
 .hp-btn.mute.active { background: var(--lm-accent); color: var(--lm-on-accent); border-color: transparent; }
 .hp-btn.rec-on { background: var(--lm-danger); color: #fff; border-color: transparent; }
-.hp-toggle {
-  display: flex;
-  gap: 0.45rem;
-  align-items: center;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin: 0;
-  cursor: pointer;
-}
-.host-panel .toggle input { position: absolute; opacity: 0; }
-.host-panel .toggle .track {
-  width: 2.1rem;
-  height: 1.2rem;
-  border-radius: 999px;
-  background: var(--lm-muted);
-  border: 1px solid var(--lm-btn-border);
-  position: relative;
-  transition: background 150ms;
-  flex-shrink: 0;
-}
-.host-panel .toggle .track::after {
-  content: "";
-  position: absolute;
-  top: 2px; left: 2px;
-  width: 0.85rem; height: 0.85rem;
-  border-radius: 50%;
-  background: var(--lm-muted-fg);
-  transition: transform 150ms, background 150ms;
-}
-.host-panel .toggle input:checked + .track { background: var(--lm-accent); border-color: transparent; }
-.host-panel .toggle input:checked + .track::after { transform: translateX(0.9rem); background: var(--lm-on-accent); }
-.hp-color { margin: 0.5rem 0 0.35rem; }
-.hp-color-row { display: flex; gap: 0.5rem; align-items: center; }
-.hp-swatches { display: flex; gap: 0.25rem; flex-wrap: wrap; }
 .hp-swatch {
   flex-shrink: 0;
   width: 1.45rem; height: 1.45rem;
@@ -944,18 +860,6 @@ body.dim-ui .host-panel:hover { opacity: 1; }
 .hp-swatch.active {
   border-color: var(--lm-fg);
   box-shadow: 0 0 0 2px var(--lm-panel), 0 0 0 4px var(--lm-fg);
-}
-#hpBannerHex {
-  font: inherit;
-  font-size: 0.85rem;
-  flex: 1;
-  min-width: 5.4rem;
-  width: 5.4rem;
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--lm-btn-border);
-  border-radius: 0.6rem;
-  background: var(--lm-muted);
-  color: var(--lm-fg);
 }
 #hpGuests {
   display: grid;
@@ -985,7 +889,7 @@ body.dim-ui .host-panel:hover { opacity: 1; }
 }
 .hp-guest .hp-btns { display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: center; }
 .hp-guest .hp-btns .hp-btn { flex: 0 1 auto; font-size: 0.64rem; padding: 0.2rem 0.34rem; border-radius: 0.45rem; }
-/* Guest-card controls are icons; the pill tooltip says what each is */
+/* Guest-card controls are icons; hovering shows the shared bubble */
 .hp-guest .hp-guest-ico { display: grid; place-items: center; padding: 0.22rem 0.4rem; }
 .hp-guest .hp-guest-ico svg { width: 0.95rem; height: 0.95rem; }
 .you-ico { display: inline-grid; place-items: center; color: var(--lm-accent); flex: 0 0 auto; }

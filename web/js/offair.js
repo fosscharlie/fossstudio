@@ -235,10 +235,16 @@ window.OffAir = (() => {
 
   function loop() {
     if (!running) return;
-    step();
-    draw();
+    // Off-play screens (idle card, game over) animate slow drifts
+    // only - half the frame rate is invisible and halves the burn
+    frame++;
+    if (state === "play" || (frame & 1)) {
+      step();
+      draw();
+    }
     raf = requestAnimationFrame(loop);
   }
+  let frame = 0;
 
   // ---------- input ----------
 
@@ -290,15 +296,18 @@ window.OffAir = (() => {
     ctx = canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     state = "idle";
-    best = 0;
+    // (best is deliberately NOT reset: it lives as long as the tab,
+    // surviving the game being swapped out while the show is live)
     // A living background under the idle card
     rocks = []; shots = []; sparks = [];
     score = 0; lives = 3; wave = 0;
     newWave();
     running = true;
     canvas.addEventListener("pointerdown", onDown);
-    canvas.addEventListener("pointerup", onUp);
-    canvas.addEventListener("pointercancel", onUp);
+    // pointerup on window, not the canvas: the pads sit at the edges,
+    // and a finger that slides off before lifting must still release
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
     loop();
@@ -309,8 +318,8 @@ window.OffAir = (() => {
     running = false;
     cancelAnimationFrame(raf);
     canvas.removeEventListener("pointerdown", onDown);
-    canvas.removeEventListener("pointerup", onUp);
-    canvas.removeEventListener("pointercancel", onUp);
+    window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onUp);
     window.removeEventListener("keydown", onKeyDown);
     window.removeEventListener("keyup", onKeyUp);
     keys.left = keys.right = keys.up = false;

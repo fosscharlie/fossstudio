@@ -84,7 +84,10 @@ For self-hosters assessing the project:
   one, each domain can belong to only one host, the studio's own names
   are refused, and a certificate is only ever actually issued if the
   domain's DNS really points at this server - the ACME challenge fails
-  otherwise), and the audience-facing live
+  otherwise), the watch page's status endpoints `/api/live/<slug>` and
+  `/api/live-here` (live flag, show title, and the host's logo URL -
+  the URL embeds the host's internal uid, a random identifier that
+  grants nothing), and the audience-facing live
   layer: `/live/<session>`
   (the watch page and its HLS media, which exists only while that
   session streams) plus its chat socket. The watch page carries the
@@ -103,10 +106,18 @@ For self-hosters assessing the project:
   address, messages capped and filtered server-side, and moderation
   (hiding a message, blocking by name and address) restricted to
   logged-in hosts. Every ban, unban and hide is appended to a
-  server-side moderation log (`data/chat-modlog.json`, owner-only)
-  with the moment, name and address; the log is never served by any
-  endpoint. Viewer IP addresses are stored server-side only
-  (owner-only files) and are never exposed by any endpoint, including
-  to hosts.
+  server-side moderation log (`data/chat-modlog.jsonl`, owner-only,
+  one entry per line): bans and unbans carry the moment, name and
+  address; hides carry the moment, name and the hidden text. The log
+  is never served by any endpoint. Viewer IP addresses are stored
+  server-side only (owner-only files) and are never exposed by any
+  endpoint, including to hosts. One honest limit on "hide": it holds
+  for the author's current connection - an author who refreshes the
+  page sees the room's true state, like everyone else.
+- **Custom channel domains** are claimed first-come-first-served by a
+  logged-in host with no proof they control the DNS name; a claim
+  only matters once that name's DNS actually points at this server.
+  On a multi-host server, hosts are trusted not to squat each other's
+  names; the admin can clear any host's domain.
 - **Headers**: `X-Content-Type-Options`, `X-Frame-Options: DENY`,
   `Referrer-Policy`, and a restrictive `Permissions-Policy`.

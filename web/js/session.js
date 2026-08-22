@@ -2011,6 +2011,13 @@
       if (isHost) await setupSoundboard(info.sounds || [], info.intros || [], info.ownerId)
         .catch((e) => console.error("soundboard setup failed:", e.message));
 
+      // Everyone already here joined before us, so their tiles come
+      // first and our own goes after them - the same join order the
+      // compositors use, so every screen agrees with the output (a
+      // self-first grid looked right to its owner and nobody else)
+      for (const p of info.peers) {
+        makeTile(p.id, p.name, false, p.tagline, p.role === "host");
+      }
       const selfTile = makeTile(selfId, selfName, true, els.taglineInput.value.trim(), isHost);
       selfTile.stream.addTrack(videoTrack);
       if (isHost) {
@@ -2022,7 +2029,6 @@
       }
       applyMirror();
       for (const p of info.peers) {
-        makeTile(p.id, p.name, false, p.tagline, p.role === "host");
         for (const prod of p.producers) await consumeProducer(p.id, prod.id, prod.source);
       }
 

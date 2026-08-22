@@ -4,6 +4,25 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- A four-way review (correctness, security, performance, dead code)
+  of everything since 1.6.0, with fixes: the live playlist now keeps
+  a sliding window instead of growing forever (on long shows its
+  refetch traffic would have overtaken the video itself); moving the
+  logo/title mid-stream skips no-op drags and relaunches far less
+  eagerly; idle channel pages cost the server almost nothing (status
+  answers are cached for a few seconds); the moderation log is a true
+  append that can never lose an entry to a race (and is now
+  `chat-modlog.jsonl`, one entry per line); a game touch-pad no
+  longer sticks down when a finger slides off the edge before
+  lifting; your own tile now sits in true join order on your own
+  screen too (it used to jump to front for you alone, quietly
+  disagreeing with the recording); the game's best score survives the
+  show going live; stale live-stream folders from crashes are swept a
+  week after start-up; and several hundred lines of orphaned styles
+  from superseded designs are gone. The security pass found no
+  critical or high issues; SECURITY.md now documents the public
+  status endpoints, the moderation log's exact contents, and the
+  honest limits of message-hiding and channel-domain claims.
 - What you see is what records, verified end-to-end and fixed where
   it wasn't: your own tile in the session now shows your true
   orientation (the mirror is preview-only, so the screen, the

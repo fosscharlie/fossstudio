@@ -1,5 +1,6 @@
 import express from "express";
 import http from "node:http";
+import fs from "node:fs";
 import path from "node:path";
 import { config, panelDomains } from "./config.js";
 import { startMediasoup } from "./media.js";
@@ -99,7 +100,9 @@ app.get("/", async (req, res) => {
   const name = (req.hostname || "").toLowerCase();
   // A host's custom channel domain serves their channel page at the
   // root: the audience visits live.fossnerds.org and is watching.
-  const channelOwner = await findByChannelDomain(name);
+  // (try/catch: Express 4 does not catch a rejecting async handler,
+  // and an unreadable users.json must not hang the front door)
+  const channelOwner = await findByChannelDomain(name).catch(() => null);
   if (channelOwner) return res.sendFile(path.join(config.webDir, "live.html"));
   const target = panelDomains("admin").has(name) ? "/admin/" : "/host/";
   res.redirect(target);
@@ -112,8 +115,10 @@ app.get("/", async (req, res) => {
 // answer reveals nothing beyond names any visitor already sees.
 app.get("/tls-allowed", async (req, res) => {
   const d = String(req.query.domain || "").toLowerCase();
+  // .catch: this is the endpoint Caddy consults for on-demand TLS -
+  // it must answer (with a no) even if the user store is unreadable
   const ok = panelDomains("admin").has(d) || panelDomains("host").has(d) ||
-    !!(await findByChannelDomain(d));
+    !!(await findByChannelDomain(d).catch(() => null));
   res.status(ok ? 200 : 404).end();
 });
 
@@ -165,6 +170,24 @@ app.use((req, res) => {
     if (err) res.status(404).send("Not found");
   });
 });
+
+// A crash mid-stream leaves data/live/<room> orphaned (a clean stop
+// removes it, a failed finalize keeps it deliberately for recovery).
+// Sweep anything a week old at boot so the disk cannot fill forever;
+// a week is ample time for an operator to rescue kept segments.
+(async () => {
+  const liveRoot = path.join(config.dataDir, "live");
+  try {
+    for (const d of await fs.promises.readdir(liveRoot)) {
+      const dir = path.join(liveRoot, d);
+      const age = Date.now() - (await fs.promises.stat(dir)).mtimeMs;
+      if (age > 7 * 24 * 3600 * 1000) {
+        await fs.promises.rm(dir, { recursive: true, force: true });
+        console.log(`swept stale live dir ${d} (${Math.round(age / 86400000)} days old)`);
+      }
+    }
+  } catch { /* no live dir yet */ }
+})();
 
 const server = http.createServer(app);
 // Two WebSocket endpoints share the server: /ws (session signaling) and

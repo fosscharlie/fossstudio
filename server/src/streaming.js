@@ -181,7 +181,12 @@ async function destArgs(state, gen) {
   const appending = await fs.access(playlist).then(() => true, () => false);
   const flags = `omit_endlist${appending ? "+append_list+discont_start" : ""}`;
   if (!state.outputs.rtmp) {
-    return ["-f", "hls", "-hls_time", "1", "-hls_list_size", "0",
+    // A 60-entry sliding window keeps the manifest ~2KB however long
+    // the show runs - with 1s segments an all-entries playlist grows
+    // ~126KB/hour and is re-fetched every second by every viewer.
+    // Segments stay on disk (no delete_segments): finalizeLive()
+    // stitches the recording from the files, not the playlist.
+    return ["-f", "hls", "-hls_time", "1", "-hls_list_size", "60",
       "-hls_flags", flags, "-hls_segment_type", "fmp4",
       "-hls_fmp4_init_filename", init,
       "-hls_segment_filename", seg, "-y", playlist];
@@ -191,7 +196,7 @@ async function destArgs(state, gen) {
   const rtmpLeg = state.rtmpUrl.startsWith("file:")
     ? `[f=flv:onfail=ignore]${state.rtmpUrl.slice(5)}`
     : `[f=flv:onfail=ignore]${state.rtmpUrl}`;
-  const hlsLeg = `[f=hls:hls_time=1:hls_list_size=0:hls_flags=${flags}:` +
+  const hlsLeg = `[f=hls:hls_time=1:hls_list_size=60:hls_flags=${flags}:` +
     `hls_segment_type=fmp4:hls_fmp4_init_filename=${init}:hls_segment_filename=${seg}]${playlist}`;
   return ["-f", "tee", "-use_fifo", "1", "-y", `${hlsLeg}|${rtmpLeg}`];
 }
@@ -590,7 +595,7 @@ async function refreshNow(state) {
   }
 }
 
-export function refreshStream(roomId) {
+export function refreshStream(roomId, delayMs = 2000) {
   const state = streams.get(roomId);
   if (!state || state.stopping) return;
   // Don't disturb an intro takeover - its own timer relaunches the grid
@@ -609,7 +614,7 @@ export function refreshStream(roomId) {
     } finally {
       state.relaunching = false;
     }
-  }, 2000);
+  }, delayMs);
 }
 
 // Relaunch immediately with a one-shot overlay in the graph

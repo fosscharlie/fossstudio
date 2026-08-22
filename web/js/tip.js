@@ -20,6 +20,10 @@
   const watch = new MutationObserver(() => { if (tipFor) show(tipFor); });
 
   function show(el) {
+    // The anchor can be rebuilt out from under us (the guest rows
+    // redraw on every control change) - a detached anchor measures
+    // 0,0 and would teleport the bubble to the corner
+    if (!el.isConnected) return hide();
     const text = el.dataset.tip;
     if (!text) return hide();
     if (tipFor !== el) {
@@ -80,5 +84,8 @@
     if (el && el.matches(":focus-visible")) show(el);
   });
   document.addEventListener("focusout", () => { if (tipFor) hide(); });
-  window.addEventListener("scroll", () => { if (tipFor) show(tipFor); }, true);
+  // Scrolling hides rather than repositions: repositioning forced a
+  // layout read per scroll frame, and a moving anchor means the user
+  // has moved on anyway
+  window.addEventListener("scroll", () => hide(), true);
 })();

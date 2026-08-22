@@ -16,6 +16,10 @@
 // sender included.
 import { WebSocketServer } from "ws";
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import fsSync from "node:fs";
+import path from "node:path";
+import { config } from "./config.js";
 import { readJson, writeJson } from "./storage.js";
 import { filterText } from "./wordfilter.js";
 import { isAuthedRequest } from "./auth.js";
@@ -32,15 +36,30 @@ const rooms = new Map(); // roomId -> { clients:Set, history:[], live:bool }
 const BLOCKLIST_FILE = "chat-blocklist.json";
 let blocklist = null; // [{id, name, ip, by, blockedAt}]
 
-// Append-only moderation log (data/chat-modlog.json): every ban,
-// unban and hide, with the moment, the name and the address. It is
-// deliberately not served by any endpoint - the reversible blocklist
-// is the UI; this is the durable record for when one is needed.
-const MODLOG_FILE = "chat-modlog.json";
-async function modlog(entry) {
-  const log = await readJson(MODLOG_FILE, []);
-  log.push({ at: new Date().toISOString(), ...entry });
-  await writeJson(MODLOG_FILE, log);
+// Append-only moderation log (data/chat-modlog.jsonl, one JSON entry
+// per line): every ban, unban and hide, with the moment, the name and
+// the address. It is deliberately not served by any endpoint - the
+// reversible blocklist is the UI; this is the durable record for when
+// one is needed. A real append (serialised through one chain so
+// concurrent moderation can never lose an entry) rather than a
+// read-modify-write of a growing array.
+const MODLOG_FILE = "chat-modlog.jsonl";
+let modlogChain = Promise.resolve();
+function modlog(entry) {
+  modlogChain = modlogChain.then(async () => {
+    const file = path.join(config.dataDir, MODLOG_FILE);
+    // One-time migration from the early array-file format
+    const legacy = path.join(config.dataDir, "chat-modlog.json");
+    if (!fsSync.existsSync(file) && fsSync.existsSync(legacy)) {
+      const old = JSON.parse(await fs.readFile(legacy, "utf8").catch(() => "[]"));
+      await fs.writeFile(file, old.map((e) => JSON.stringify(e) + "\n").join(""), { mode: 0o600 });
+      await fs.rename(legacy, legacy + ".migrated");
+    }
+    await fs.appendFile(file,
+      JSON.stringify({ at: new Date().toISOString(), ...entry }) + "\n",
+      { mode: 0o600 });
+  }).catch((err) => console.error("modlog append failed:", err.message));
+  return modlogChain;
 }
 
 async function loadBlocklist() {

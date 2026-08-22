@@ -663,6 +663,21 @@ api.get("/recordings/:id/files/:file", requireAuth, async (req, res) => {
 // see on joining. The slug is either a session id (one show) or a
 // host's username - their permanent channel page (/live/fossnerds),
 // which switches to whichever of their sessions is live right now.
+// Idle channel pages poll their status every 5s per viewer; a hundred
+// waiting viewers is 20 disk-JSON parses a second for an answer that
+// barely changes. Three seconds of memory turns that into noise.
+const liveStatusCache = new Map(); // key -> { at, body }
+function cachedStatus(key, res, build) {
+  const hit = liveStatusCache.get(key);
+  if (hit && Date.now() - hit.at < 3000) return res.json(hit.body);
+  return build().then((body) => {
+    if (!body) return res.status(404).json({ error: "not found" });
+    liveStatusCache.set(key, { at: Date.now(), body });
+    if (liveStatusCache.size > 500) liveStatusCache.clear(); // bound it
+    res.json(body);
+  });
+}
+
 // The owner's podcast logo, if they uploaded one - the offline watch
 // page wears it instead of the stock icon
 async function channelLogo(ownerId) {
@@ -671,47 +686,51 @@ async function channelLogo(ownerId) {
   return s.logo ? `/api/logo/${ownerId}` : null;
 }
 
-api.get("/live/:slug", async (req, res) => {
+api.get("/live/:slug", (req, res) => {
   const slug = path.basename(req.params.slug);
-  const session = await findSession(slug);
-  if (session) {
-    const outs = liveOutputs(slug);
-    return res.json({
-      live: outs.channel,
-      since: outs.channelSince,
-      roomId: slug,
-      title: session.title || "",
-      logo: await channelLogo(session.ownerId)
-    });
-  }
-  const user = await findByUsername(slug.toLowerCase());
-  if (!user || user.role === "admin") return res.status(404).json({ error: "not found" });
-  const roomId = channelRoomForOwner(user.id);
-  const live = roomId ? await findSession(roomId) : null;
-  res.json({
-    live: !!roomId,
-    since: roomId ? streamingSince(roomId) : null,
-    roomId: roomId || null,
-    title: live?.title || user.username,
-    logo: await channelLogo(user.id)
-  });
+  cachedStatus(`slug:${slug}`, res, async () => {
+    const session = await findSession(slug);
+    if (session) {
+      const outs = liveOutputs(slug);
+      return {
+        live: outs.channel,
+        since: outs.channelSince,
+        roomId: slug,
+        title: session.title || "",
+        logo: await channelLogo(session.ownerId)
+      };
+    }
+    const user = await findByUsername(slug.toLowerCase());
+    if (!user || user.role === "admin") return null;
+    const roomId = channelRoomForOwner(user.id);
+    const live = roomId ? await findSession(roomId) : null;
+    return {
+      live: !!roomId,
+      since: roomId ? streamingSince(roomId) : null,
+      roomId: roomId || null,
+      title: live?.title || user.username,
+      logo: await channelLogo(user.id)
+    };
+  }).catch(() => { if (!res.headersSent) res.status(500).end(); });
 });
 
 // The same status for a page served at the root of a host's custom
 // channel domain (live.fossnerds.org), where there is no slug in the
 // path - the Host header says whose channel this is.
-api.get("/live-here", async (req, res) => {
-  const user = await findByChannelDomain(req.hostname);
-  if (!user) return res.status(404).json({ error: "not found" });
-  const roomId = channelRoomForOwner(user.id);
-  const live = roomId ? await findSession(roomId) : null;
-  res.json({
-    logo: await channelLogo(user.id),
-    live: !!roomId,
-    since: roomId ? streamingSince(roomId) : null,
-    roomId: roomId || null,
-    title: live?.title || user.username
-  });
+api.get("/live-here", (req, res) => {
+  cachedStatus(`host:${req.hostname}`, res, async () => {
+    const user = await findByChannelDomain(req.hostname);
+    if (!user) return null;
+    const roomId = channelRoomForOwner(user.id);
+    const live = roomId ? await findSession(roomId) : null;
+    return {
+      logo: await channelLogo(user.id),
+      live: !!roomId,
+      since: roomId ? streamingSince(roomId) : null,
+      roomId: roomId || null,
+      title: live?.title || user.username
+    };
+  }).catch(() => { if (!res.headersSent) res.status(500).end(); });
 });
 
 // Chat moderation: the reversible block list. Any host can manage it -

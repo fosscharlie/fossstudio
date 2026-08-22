@@ -313,12 +313,19 @@ export function attachSignaling() {
                 // Host dragged the logo/title block; fractions of the
                 // free space so every screen and the compositors agree
                 const clamp = (v) => Math.min(1, Math.max(0, Number(v) || 0));
-                c.titlePos = { x: clamp(data.x), y: clamp(data.y) };
+                const next = { x: clamp(data.x), y: clamp(data.y) };
+                // A drag that ends where it started is a no-op - never
+                // worth a stream relaunch
+                const prev = c.titlePos || { x: 0.5, y: 0 };
+                if (next.x === prev.x && next.y === prev.y) break;
+                c.titlePos = next;
                 const recPos = activeRecording(room.id);
                 if (recPos) recPos.titlePos = c.titlePos;
                 // The stream bakes the position into its filter graph,
-                // so a move relaunches it (debounced) - same as resize
-                if (isStreaming(room.id)) refreshStream(room.id);
+                // so a move relaunches it - debounced generously, since
+                // a host nudging the block into place drags repeatedly
+                // and each relaunch is a multi-second encode restart
+                if (isStreaming(room.id)) refreshStream(room.id, 5000);
                 break;
               }
               case "titleScale": {
