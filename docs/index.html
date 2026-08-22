@@ -447,6 +447,9 @@
   .aside p { font-size: 0.86rem; color: var(--muted); }
   .aside a { color: var(--accent); }
   .aside code { font-family: var(--mono); font-size: 0.82em; }
+  .aside ol { margin: 0.5rem 0 0.6rem; padding-left: 1.2rem; font-size: 0.86rem; color: var(--muted); }
+  .aside ol li { margin: 0.35rem 0; }
+  .aside b { color: var(--text); }
   .compose {
     background: var(--code-bg);
     border: 1px solid var(--line);
@@ -729,9 +732,32 @@
           WebSocket upgrades and add HSTS; the
           <a href="https://github.com/lightmorphic/fossstudio#bring-your-own-reverse-proxy-nginx-apache-etc">README
           has a ready nginx config</a>, plus Cloudflare Tunnel and
-          Tailscale-only setups - and the proxy can even live on a
-          different machine (guests' media never passes through it;
-          three settings, all in the same README section).</p>
+          Tailscale-only setups.</p>
+        </div>
+        <div class="aside">
+          <h4>Proxy on a different machine?</h4>
+          <p>Also fine - the proxy only ever carries the web half.
+          Guests' video and the TURN relay go straight to the studio
+          machine, so its public IP and UDP ports stay open wherever
+          the proxy lives. On top of deleting <code>caddy</code>, add
+          three lines to the config block:</p>
+          <ol>
+            <li><code>BIND_HOST: "0.0.0.0"</code> (or the studio
+            machine's private/VPN address), then firewall port 3000 so
+            <b>only the proxy's IP</b> can reach it - never the open
+            internet.</li>
+            <li><code>PUBLIC_IP</code> stays the <b>studio machine's</b>
+            public IPv4, with the UDP ranges open there, not on the
+            proxy box.</li>
+            <li><code>TURN_HOST:</code> an address that reaches the
+            studio machine directly. Your domain now points at the
+            proxy, so without this the relay traffic knocks on the
+            wrong door.</li>
+          </ol>
+          <p>Then point your proxy's <code>proxy_pass</code> at the
+          studio machine's address instead of <code>127.0.0.1:3000</code> -
+          <a href="https://github.com/lightmorphic/fossstudio#bring-your-own-reverse-proxy-nginx-apache-etc">same
+          nginx block, full recipe in the README</a>.</p>
         </div>
         <div class="aside">
           <h4>Updating</h4>
