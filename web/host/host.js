@@ -683,6 +683,7 @@
     updateWallpaperPreview(s.wallpaper);
     updateLogoPreview(!!s.logo);
     updateAdPreview(!!s.adBanner);
+    initLogoBg().catch(() => {});
   }
 
   function updateWallpaperPreview(name) {
@@ -934,10 +935,12 @@
     if (!file) return;
     await fetch("/api/logo", { method: "POST", headers: { "Content-Type": file.type }, body: file });
     updateLogoPreview(true);
+    initLogoBg().catch(() => {});
   };
   $("logoRemove").onclick = async () => {
     await apiFetch("/api/logo", { method: "DELETE" });
     updateLogoPreview(false);
+    initLogoBg().catch(() => {});
   };
 
   $("wallpaperPick").onclick = () => $("wallpaperFile").click();
@@ -951,7 +954,89 @@
     }).then(async (r) => { if (!r.ok) throw new Error((await r.json()).error); });
     updateWallpaperPreview("yes");
   };
-  $("wallpaperRemove").onclick = async () => {
+  // ---------- logo background: the collage generator ----------
+  // The host's logo scattered in dozens of ghosted, tilted positions
+  // over their background colour - drawn here in the browser, saved
+  // through the ordinary wallpaper slot so the whole pipeline
+  // (pinning, recordings, streams) treats it as any other wallpaper.
+  function drawLogoCollage(canvas, img, baseColour) {
+    const x = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.filter = "none";
+    x.globalAlpha = 1;
+    x.fillStyle = baseColour;
+    x.fillRect(0, 0, W, H);
+    const ar = img.width / img.height;
+    // Back layer: a few enormous, blurred, barely-there copies for depth
+    const place = (count, minS, maxS, minA, maxA, blur) => {
+      for (let i = 0; i < count; i++) {
+        const w = minS + Math.random() * (maxS - minS);
+        const h = w / ar;
+        const px = Math.random() * W, py = Math.random() * H;
+        const rot = (Math.random() - 0.5) * 1.6;           // up to ~46 deg
+        const tiltX = (Math.random() - 0.5) * 0.7;         // skew = the 3D lean
+        const tiltY = (Math.random() - 0.5) * 0.7;
+        const squash = 0.55 + Math.random() * 0.45;        // foreshortening
+        x.setTransform(1, 0, 0, 1, px, py);
+        x.rotate(rot);
+        x.transform(1, tiltY, tiltX, squash, 0, 0);
+        x.globalAlpha = minA + Math.random() * (maxA - minA);
+        x.filter = blur ? `blur(${blur + Math.random() * blur}px)` : "none";
+        x.drawImage(img, -w / 2, -h / 2, w, h);
+      }
+    };
+    place(5, 700, 1300, 0.02, 0.04, 6);   // deep, huge, soft
+    place(14, 220, 520, 0.03, 0.06, 2);   // middle distance
+    place(16, 80, 220, 0.04, 0.08, 0);    // near, small, crisp-ish
+    // Gentle vignette so tiles sit on a calmer centre
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.filter = "none";
+    x.globalAlpha = 1;
+    const g = x.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H);
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(1, "rgba(0,0,0,0.22)");
+    x.fillStyle = g;
+    x.fillRect(0, 0, W, H);
+  }
+
+  let logoBgImg = null;
+  async function initLogoBg() {
+    const canvas = $("logoBgCanvas");
+    const s = await apiFetch("/api/settings");
+    const base = s.bg || "#14161a";
+    if (!s.logo) {
+      $("logoBgHint").hidden = false;
+      $("logoBgShuffle").disabled = true;
+      $("logoBgUse").disabled = true;
+      const x = canvas.getContext("2d");
+      x.fillStyle = base;
+      x.fillRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+    $("logoBgHint").hidden = true;
+    $("logoBgShuffle").disabled = false;
+    $("logoBgUse").disabled = false;
+    logoBgImg = new Image();
+    logoBgImg.onload = () => drawLogoCollage(canvas, logoBgImg, base);
+    logoBgImg.src = `/api/logo?${Date.now()}`;
+  }
+  $("logoBgShuffle").onclick = async () => {
+    if (!logoBgImg) return;
+    const s = await apiFetch("/api/settings");
+    drawLogoCollage($("logoBgCanvas"), logoBgImg, s.bg || "#14161a");
+  };
+  $("logoBgUse").onclick = () => {
+    $("logoBgCanvas").toBlob(async (blob) => {
+      if (!blob) return;
+      await fetch("/api/wallpaper", { method: "POST", headers: { "Content-Type": "image/png" }, body: blob });
+      updateWallpaperPreview(true);
+      $("logoBgMsg").hidden = false;
+      setTimeout(() => { $("logoBgMsg").hidden = true; }, 2200);
+    }, "image/png");
+  };
+
+    $("wallpaperRemove").onclick = async () => {
     await apiFetch("/api/wallpaper", { method: "DELETE" });
     updateWallpaperPreview(null);
   };

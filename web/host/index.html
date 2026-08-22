@@ -120,6 +120,17 @@
           </div>
           <p class="hint" style="margin-top:0.5rem">Shown behind the video grid. 1920×1080 pixels is the ideal size (anything with the same 16:9 shape works). JPEG, PNG or WebP, up to 8 MB.</p>
         </div>
+        <div class="panel">
+          <h2>Logo background</h2>
+          <p class="hint" style="margin-bottom:0.5rem">A third option: your logo, scattered and tilted in dozens of ghosted positions over your background colour - a very subtle collage, generated right here. Shuffle until one feels right, then set it as the wallpaper.</p>
+          <canvas id="logoBgCanvas" width="1920" height="1080" style="width:100%; aspect-ratio:16/9; border-radius:10px; border:1px solid var(--border); display:block; background:var(--bg)"></canvas>
+          <div style="display:flex; gap:0.6rem; margin-top:0.8rem; align-items:center">
+            <button class="btn" id="logoBgShuffle">Shuffle</button>
+            <button class="btn primary" id="logoBgUse">Use as wallpaper</button>
+            <span class="msg ok" id="logoBgMsg" hidden>✓ Set as wallpaper</span>
+          </div>
+          <p class="hint" id="logoBgHint" style="margin-top:0.5rem" hidden>Upload a logo first - the collage is drawn from it.</p>
+        </div>
       </section>
 
       <!-- Settings: ad banner -->

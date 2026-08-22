@@ -99,6 +99,10 @@ dashboard.
   Browser Source and stream the show from OBS to any platform. The feed
   is invisible to everyone in the session and can never appear in the
   recording. Copy it from the session row in the dashboard.
+- **Backgrounds three ways:** a flat colour, an uploaded wallpaper, or
+  a generated **logo background** - your logo scattered and tilted in
+  dozens of ghosted positions over your colour, shuffled in the
+  dashboard until one feels right, saved as the wallpaper.
 - **One look per show:** the theme (wallpaper, background colour, logo,
   episode title) is pinned the moment the first person joins and holds
   until the session empties - everyone, the recording and the stream see
