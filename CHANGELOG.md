@@ -4,6 +4,14 @@ All notable changes to FOSSStudio are documented here.
 
 ## Unreleased
 
+- fossstudio.org rebuilt as a run-sheet: light and dark modes with a
+  remembered toggle, cue-numbered sections, screenshots of the current
+  UI in broadcast-monitor frames (fresh fake guests included), an
+  interactive program monitor that switches between grid, spotlight
+  and the watch page, the actual waiting-room Asteroids playable on
+  the page, and the one-paste Docker Compose shown in full with a
+  copy button. Still zero third-party requests - the font, the
+  screenshots and the game are all self-hosted.
 - A true one-paste install: `quickstart-compose.yml` is a single
   Docker Compose file - fill in five values at the top and
   `docker compose up -d` does the rest. No clone, no `.env`, no other
