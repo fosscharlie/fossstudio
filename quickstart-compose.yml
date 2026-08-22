@@ -13,11 +13,11 @@
 # dashboard.
 
 x-config: &config
-  DOMAIN: studio.example.com          # your domain (DNS already pointing here)
-  PUBLIC_IP: "203.0.113.7"            # this server's public IPv4
-  HOST_PASSWORD: change-me            # first-login password for "admin"
-  SESSION_SECRET: change-me-too       # random; e.g. openssl rand -hex 32
-  TURN_SECRET: change-me-three        # random; e.g. openssl rand -hex 32
+  DOMAIN: studio.example.com                    # your public address
+  PUBLIC_IP: "203.0.113.7"                      # this server's public IPv4
+  HOST_PASSWORD: change-me-to-something-long    # the first "admin" login
+  SESSION_SECRET: also-change-me-to-random      # openssl rand -hex 32
+  TURN_SECRET: and-change-me-to-random-too      # openssl rand -hex 32
   HTTP_PORT: "3000"
 
 services:

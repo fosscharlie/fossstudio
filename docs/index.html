@@ -772,11 +772,11 @@
 #   docker compose up -d</span>
 
 <span class="k">x-config: &amp;config</span>
-  <span class="k">DOMAIN:</span> <span class="hl">studio.example.com</span>
-  <span class="k">PUBLIC_IP:</span> <span class="hl">"203.0.113.7"</span>
-  <span class="k">HOST_PASSWORD:</span> <span class="hl">change-me</span>
-  <span class="k">SESSION_SECRET:</span> <span class="hl">change-me-too</span>       <span class="c"># openssl rand -hex 32</span>
-  <span class="k">TURN_SECRET:</span> <span class="hl">change-me-three</span>     <span class="c"># openssl rand -hex 32</span>
+  <span class="k">DOMAIN:</span> <span class="hl">studio.example.com</span>                    <span class="c"># your public address</span>
+  <span class="k">PUBLIC_IP:</span> <span class="hl">"203.0.113.7"</span>                      <span class="c"># this server's public IPv4</span>
+  <span class="k">HOST_PASSWORD:</span> <span class="hl">change-me-to-something-long</span>    <span class="c"># the first "admin" login</span>
+  <span class="k">SESSION_SECRET:</span> <span class="hl">also-change-me-to-random</span>      <span class="c"># openssl rand -hex 32</span>
+  <span class="k">TURN_SECRET:</span> <span class="hl">and-change-me-to-random-too</span>      <span class="c"># openssl rand -hex 32</span>
   <span class="k">HTTP_PORT:</span> <span class="v">"3000"</span>
 
 <span class="k">services:</span>
