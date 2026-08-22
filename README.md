@@ -186,7 +186,27 @@ docker compose -f docker-compose.byo-proxy.yml up -d --build
 This still binds the app to `127.0.0.1:${HTTP_PORT}` (3000 by
 default), exactly like the Caddy stack does - your proxy just needs to
 run on the same host (or in another host-networked container) and
-point at that address. Two things Nginx doesn't do automatically that
+point at that address.
+
+**Proxy on a different machine?** Also fine - the proxy only ever
+carries the web half; guests' WebRTC media and the TURN relay go
+directly to this machine and never pass through a proxy. Three
+settings make it work:
+
+- `BIND_HOST` - set it to this machine's private/VPN address (or
+  `0.0.0.0`) so the proxy can reach the app, then firewall the app
+  port so **only the proxy's IP** can connect to it. The app must
+  never be reachable from the open internet directly: cameras and
+  cookies only work through the HTTPS front door.
+- `PUBLIC_IP` stays this machine's public IPv4, and the UDP ranges
+  (3478, 40000-40100, 49160-49200) stay open **here**, not on the
+  proxy box - media doesn't follow the proxy.
+- `TURN_HOST` - set it to an address that reaches this machine
+  directly. `DOMAIN` now resolves to the proxy, so without this the
+  relay traffic would knock on the wrong door.
+
+The Nginx block below is then identical, with `proxy_pass` pointing
+at this machine's address instead of `127.0.0.1:3000`. Two things Nginx doesn't do automatically that
 Caddy does, both required or the app silently breaks:
 
 1. **WebSocket upgrade headers.** The app's live signaling runs over
