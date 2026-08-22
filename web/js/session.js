@@ -1753,16 +1753,17 @@
     els.hpLiveBtn.textContent = outputs.channel
       ? `■ ${fmtElapsed(Date.now() - (channelSince || Date.now()))}`
       : "Go live";
-    els.hpLiveBtn.dataset.tip = outputs.channel
-      ? "End the channel stream"
-      : "Go live on your channel page - video, chat and a saved copy, all on your own domain";
+    // The state-aware wording lives on the info dot beside the button
+    $("hpLiveInfo").dataset.tip = outputs.channel
+      ? "End the channel stream. The exact video the audience watched files itself as a ready recording."
+      : "Go live on your channel page - video, chat and a saved copy, all on your own domain.";
     els.hpLiveBtn.classList.toggle("rec-on", outputs.channel);
     els.hpYtBtn.textContent = outputs.rtmp
       ? `■ ${fmtElapsed(Date.now() - (rtmpSince || Date.now()))}`
       : "YouTube";
-    els.hpYtBtn.dataset.tip = outputs.rtmp
-      ? "End the YouTube stream"
-      : "Also stream to YouTube (needs the stream key from the dashboard)";
+    $("hpYtInfo").dataset.tip = outputs.rtmp
+      ? "End the YouTube stream. Your channel page carries on if it is running."
+      : "Also stream to YouTube - it needs the stream key from the dashboard, and can run alongside your channel page on one encode.";
     els.hpYtBtn.classList.toggle("rec-on", outputs.rtmp);
     updateServerRecLock();
     if (live()) scheduleBannerSnapshots();

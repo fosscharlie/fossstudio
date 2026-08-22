@@ -1042,6 +1042,19 @@ body.dim-ui .host-panel:hover { opacity: 1; }
   .grid { align-content: flex-start; gap: 12px; padding: 12px; padding-top: 84px; }
 }
 
+/* Host panel info dots: the same ⓘ as the join screen, but their text
+   rides the floating #tipBubble so it never clips inside the panel */
+.hp-stack-row { display: flex; align-items: center; gap: 0.3rem; }
+.hp-stack-row .hp-btn { flex: 1; min-width: 0; }
+.hp-row > .info-btn { margin-left: auto; flex: none; }
+/* The dot shares the line with its buttons - they give up the ~1.7rem
+   it needs rather than pushing it onto a row of its own */
+/* Grow from each label's own width (an equal split starves "Banner
+   colours" while its neighbour has room spare), with tighter padding
+   and gap to make room for the dot - the fit is a few px fine */
+.hp-row:has(> .info-btn) { flex-wrap: nowrap; gap: 0.2rem; }
+.hp-row:has(> .info-btn) .hp-btn { flex: 1 1 auto; min-width: 0; padding-inline: 0.3rem; }
+
 /* ---------- Tooltips ----------
    One fixed bubble on <body> (#tipBubble, run by session.js), so a
    long tip is never clipped by the scrolling panel it points into.

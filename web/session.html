@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FOSSStudio session</title>
-<link rel="stylesheet" href="/css/session.css?v=20260822g">
+<link rel="stylesheet" href="/css/session.css?v=20260823a">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#14161a">
@@ -131,22 +131,35 @@
     <!-- Record and the two live outputs stacked full width: each shows
          its own elapsed clock while running, so they never shrink -->
     <div class="hp-stack">
-      <button id="hpRecordBtn" class="hp-btn record">● Record</button>
-      <button id="hpLiveBtn" class="hp-btn record" data-tip="Go live on your channel page - video, chat and a saved copy, all on your own domain">Go live</button>
-      <button id="hpYtBtn" class="hp-btn record" data-tip="Also stream to YouTube (needs the stream key from the dashboard)">YouTube</button>
+      <div class="hp-stack-row">
+        <button id="hpRecordBtn" class="hp-btn record">● Record</button>
+        <button type="button" class="info-btn" id="hpRecordInfo" data-tip="Records the show: one combined video plus lossless audio per person, ready in the dashboard when you stop." aria-label="About recording"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5h.01"/></svg></button>
+      </div>
+      <div class="hp-stack-row">
+        <button id="hpLiveBtn" class="hp-btn record">Go live</button>
+        <button type="button" class="info-btn" id="hpLiveInfo" data-tip="Go live on your channel page - video, chat and a saved copy, all on your own domain." aria-label="About going live"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5h.01"/></svg></button>
+      </div>
+      <div class="hp-stack-row">
+        <button id="hpYtBtn" class="hp-btn record">YouTube</button>
+        <button type="button" class="info-btn" id="hpYtInfo" data-tip="Also stream to YouTube - it needs the stream key from the dashboard, and can run alongside your channel page on one encode." aria-label="About the YouTube output"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5h.01"/></svg></button>
+      </div>
     </div>
     <div class="hp-row">
       <button id="hpServerRec" type="button" class="hp-btn hp-icon" data-tip="Recording in the browser (click for server recording - best for 2-3 guests)" aria-label="Recording mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg></button>
       <button id="hpAutoGain" class="hp-btn hp-icon" data-tip="Auto level" aria-label="Auto level"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 20v-6"/><path d="M6 10V4"/><path d="M12 20v-4"/><path d="M12 12V4"/><path d="M18 20v-9"/><path d="M18 7V4"/><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="14" r="1.7"/><circle cx="18" cy="9" r="1.7"/></svg></button>
       <button id="hpMuteAllBtn" class="hp-btn" data-tip="Mute everyone at once, including you">Mute all</button>
-      <button id="hpSubBtn" class="hp-btn" data-tip="Play the subscribe + bell reminder for everyone (and on stream/recording)">Sub</button>
-      <button id="hpAdBtn" class="hp-btn" data-tip="Show your advertising banner for ~18 seconds">Ad</button>
+    </div>
+    <div class="hp-row">
+      <button id="hpSubBtn" class="hp-btn">Sub</button>
+      <button id="hpAdBtn" class="hp-btn">Ad</button>
+      <button type="button" class="info-btn" data-tip="Sub plays the subscribe-and-bell reminder over the show; Ad shows your advertising banner for about 18 seconds. Both appear for everyone - screen, stream and recording." aria-label="About Sub and Ad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5h.01"/></svg></button>
     </div>
     <!-- Colours live behind two small buttons: guests' banners, and the
          logo/title block background -->
     <div class="hp-row">
-      <button id="hpBannerColorsBtn" class="hp-btn" data-tip="Colours for everyone's name banners">Banner colours</button>
-      <button id="hpTitleColorsBtn" class="hp-btn" data-tip="Background colour of the logo/title block">Title colour</button>
+      <button id="hpBannerColorsBtn" class="hp-btn">Banner colours</button>
+      <button id="hpTitleColorsBtn" class="hp-btn">Title colour</button>
+      <button type="button" class="info-btn" data-tip="Banner colours picks the colour of everyone's name banners; Title colour sets the background of the logo/title block. Each opens swatches and a hex box." aria-label="About the colour tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5h.01"/></svg></button>
     </div>
     <!-- Both palettes share one layout: three rows of six, the hex box
          filling the right half of the third row -->
@@ -191,6 +204,6 @@
 </div>
 
 <script src="/assets/mediasoup-client.js?v=20260807e"></script>
-<script src="/js/session.js?v=20260822g"></script>
+<script src="/js/session.js?v=20260823a"></script>
 </body>
 </html>

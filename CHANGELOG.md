@@ -13,6 +13,12 @@ All notable changes to FOSSStudio are documented here.
   the stream too (a brief relaunch blip, same as resizing always
   did); and with co-hosts, tiles sit in the same order on screen as
   in the output.
+- The host panel's explainers moved onto little info dots, the same
+  as the join screen's: one beside each of Record, Go live and
+  YouTube (whose wording follows the state - starting vs ending a
+  stream), one for Sub and Ad together, one for the two colour
+  tools. Hover the dot and the bubble appears; the buttons stay
+  clean. Sub and Ad sit on their own row now to make room.
 - Tooltips are a proper bubble now - rounded, colour-inverted, with
   the little arrow pointing at the control - floated over the page
   rather than trapped inside the host panel, so long ones no longer
